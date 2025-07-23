@@ -1,0 +1,1473 @@
+<div class="relative flex flex-col md:w-fit -m-6">
+
+    <!-- Header -->
+    <!--     -->
+    <div class="border border-slate-300 border-solid flex flex-col sm:flex-row items-center sm:items-start py-2 px-4">
+        <ng-container *ngIf="data.dismissible">
+            <div class="absolute top-0 right-0 py-2 pr-4">
+                <button (click)="matDialogRef.close()" mat-icon-button [matDialogClose]="undefined">
+                    <mat-icon class="text-secondary" [svgIcon]="'heroicons_outline:x'"></mat-icon>
+                </button>
+            </div>
+        </ng-container>
+        <!-- Icon -->
+        <ng-container *ngIf="data.icon.show">
+            <div class="flex flex-0 items-center justify-center w-10 h-10 sm:mr-4 rounded-full" [ngClass]="{'text-primary-600 bg-primary-100 dark:text-primary-50 dark:bg-primary-600': data.icon.color === 'primary',
+                            'text-accent-600 bg-accent-100 dark:text-accent-50 dark:bg-accent-600': data.icon.color === 'accent',
+                            'text-warn-600 bg-warn-100 dark:text-warn-50 dark:bg-warn-600': data.icon.color === 'warn',
+                            'text-gray-600 bg-gray-100 dark:text-gray-50 dark:bg-gray-600': data.icon.color === 'basic',
+                            'text-blue-600 bg-blue-100 dark:text-blue-50 dark:bg-blue-600': data.icon.color === 'info',
+                            'text-green-500 bg-green-100 dark:text-green-50 dark:bg-green-500': data.icon.color === 'success',
+                            'text-amber-500 bg-amber-100 dark:text-amber-50 dark:bg-amber-500': data.icon.color === 'warning',
+                            'text-red-600 bg-red-100 dark:text-red-50 dark:bg-red-600': data.icon.color === 'error'
+                            }">
+                <mat-icon class="text-current" [svgIcon]="data.icon.name"></mat-icon>
+            </div>
+        </ng-container>
+
+        <ng-container *ngIf="data.title || data.message">
+            <div
+                class="flex flex-col items-center justify-center sm:items-start mt-4 pt-2 sm:mt-0 sm:pr-8 space-y-1 text-center sm:text-left">
+
+                <!-- Title -->
+                <ng-container *ngIf="data.title">
+                    <div class="text-xl leading-6 font-medium" [innerHTML]="data.title"></div>
+                </ng-container>
+
+                <!-- Message -->
+
+            </div>
+        </ng-container>
+
+    </div>
+    <div class="absolute inset-x-0 bottom-0" *ngIf="isLoading">
+        <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+    </div>
+    <!-- Content -->
+    <div *ngIf="requestTypeId === 1000525 && !isLoading"
+        class="flex flex-col sm:flex-row items-center sm:items-start p-8 pb-6 sm:pb-8 w-full">
+
+
+        <ng-container *ngIf="data.title || data.message">
+            <div class="flex flex-col  sm:items-start mt-4 sm:mt-0 sm:pr-8 text-center sm:text-left">
+
+
+                <div class="font-bold text-xl leading-6 font-medium">
+
+                    <span>Payer</span>
+
+                </div>
+                <div class="flex flex-row items-center justify-center  text-lg leading-6 font-medium">
+                    <mat-icon class="pr-1" *ngIf="revenueInfo.payerTypeId===1000612 ||
+                    revenueInfo.payerTypeId=== 1000614 || revenueInfo.payerTypeId=== 1000615"
+                        svgIcon="mat_solid:person"></mat-icon>
+                    <mat-icon class="pr-1" *ngIf="revenueInfo.payerTypeId===1000613" svgIcon="mat_solid:engineering">
+                    </mat-icon>
+                    <mat-icon class="pr-1" *ngIf="revenueInfo.payerTypeId===1000611" svgIcon="mat_solid:business">
+                    </mat-icon>
+                    {{revenueInfo.payerName}}
+                </div>
+                <div class="flex flex-row items-center justify-center pl-6  text-sm leading-6 font-medium">
+                    {{revenueInfo.payerTypeName}}
+                </div>
+
+                <div class="font-bold text-xl mt-8 font-medium">
+                    <span>Recipient</span>
+                </div>
+                <div class="flex flex-row items-center justify-center  text-lg leading-6 font-medium ">
+                    <mat-icon class="pr-1" *ngIf="revenueInfo.recipientTypeId===1000612 ||
+                    revenueInfo.recipientTypeId=== 1000614 || revenueInfo.recipientTypeId=== 1000615"
+                        svgIcon="mat_solid:person"></mat-icon>
+                    <mat-icon class="pr-1" *ngIf="revenueInfo.recipientTypeId===1000613"
+                        svgIcon="mat_solid:engineering">
+                    </mat-icon>
+                    <mat-icon class="pr-1" *ngIf="revenueInfo.recipientTypeId===1000611" svgIcon="mat_solid:business">
+                    </mat-icon>
+                    {{revenueInfo.recipientName}}
+                </div>
+                <div class="flex flex-row items-center justify-center pl-6  text-sm leading-6 font-medium">
+                    {{revenueInfo.recipientTypeName}}<span
+                        *ngIf="revenueInfo.recipientFinancialResourceName != null">-{{revenueInfo.recipientFinancialResourceName}}</span>
+                </div>
+
+                <div class="font-bold text-xl mt-8 font-medium">
+
+                    <span>Revenue Date</span>
+                </div>
+                <div class="flex flex-row items-center justify-center  text-lg leading-6 font-medium ">
+                    <mat-icon svgIcon="mat_outline:schedule"></mat-icon>
+                    {{revenueInfo.revenueLocalDate}}
+                </div>
+            </div>
+        </ng-container>
+
+        <ng-container>
+
+            <div class="flex flex-row gt-xs:flex-col px-3 w-fit items-center flex-wrap content-center">
+                <div *ngIf="revenueInfo.paymentTypeId === 1001063"
+                    class="rounded-lg border-solid border-2 w-full px-10 py-4">
+                    <div class="grid grid-cols-3 h-14">
+                        <div class="text-sm flex flex-row justify-start font-bold">
+                            <img class="inline-block w-10 h-10 items-center content-center"
+                                src="../../../../../../assets/images/financial/cheque-qr-code.png" />
+                            <span class="w-30 h-8 px-3 text-lg pt-2 border-solid border-b border-gray-300"
+                                style="font-family: 'Yekan';">
+                                {{revenueInfo.chequeNumber}}
+                            </span>
+                        </div>
+                        <div class="text-base flex flex-row justify-center items-start">
+                            <img class="inline-block w-16 items-center content-center"
+                                src="../../../../../../assets/images/financial/banks/{{revenueInfo.bankUrl}}">
+                        </div>
+                        <div class="text-base flex flex-col justify-start items-end">
+                            <div class="flex flex-row justify-end items-start pt-2">
+
+                                <div style=" font-family: 'Yekan'" class="  grid grid-cols-8 h-6 w-36 font-bold">
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year1">{{revenueInfo.revenueLocalDateClean.substring(0,
+                                            1)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year2">{{revenueInfo.revenueLocalDateClean.substring(1,
+                                            2)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year3">{{revenueInfo.revenueLocalDateClean.substring(2,
+                                            3)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year4">{{revenueInfo.revenueLocalDateClean.substring(3,
+                                            4)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="month1">{{revenueInfo.revenueLocalDateClean.substring(4,
+                                            5)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="month2">{{revenueInfo.revenueLocalDateClean.substring(5,
+                                            6)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="day1">{{revenueInfo.revenueLocalDateClean.substring(6,
+                                            7)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="day2">{{revenueInfo.revenueLocalDateClean.substring(7,
+                                            8)}}</span>
+                                    </div>
+                                </div>
+                                <div class="pt-1.5 pl-2 flex flex-row justify-end items-start"
+                                    style="font-family: 'IranNastaliq'">
+                                    <span>
+                                        تاریخ
+                                    </span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div style="direction: rtl;" class="flex flex-row justify-start items-start pt-4">
+                        <div class="pl-1.5" style="font-family: 'IranNastaliq';">
+                            <span>
+                                تاریخ به تمام حروف:
+                            </span>
+                        </div>
+                        <div class="font-bold" style="font-family: 'Yekan';">
+                            <span>
+                                {{revenueInfo.revenueLocalDateClean.substring(6, 8) |
+                                numberToPersian}}
+                                {{revenueInfo.revenueLocalDateClean.substring(4, 6) |
+                                persianMonthName}}
+                                {{revenueInfo.revenueLocalDateClean.substring(0, 4) |
+                                numberToPersian}}
+                            </span>
+
+                        </div>
+                    </div>
+                    <div class="text-xl h-16 flex flex-row pt-5" style="direction:rtl;">
+                        <span class="w-48 pl-4 pt-3" style="font-family: 'IranNastaliq';">
+                            به موجب این چک مبلغ (به حروف)
+                        </span>
+                        <span style="font-family: 'Yekan';width: 27rem;"
+                            class="ml-4 h-8 text-lg border-solid border-b border-gray-300">
+                            {{revenueInfo.amount | numberToPersian}}
+                        </span>
+                        <span class="pt-3" style="font-family: 'IranNastaliq';">
+                            ریال
+                        </span>
+                    </div>
+                    <div class="h-20 text-xl flex flex-row justify-start items-center"
+                        style="font-family: 'IranNastaliq';direction:rtl;">
+                        <span class="pl-4 w-16">
+                            در وجه
+                        </span>
+                        <span style="font-family: 'Yekan';" class="ml-6 w-44 border-solid border-b border-gray-300">
+                        </span>
+                        <div class="flex flex-col text-base items-center w-32">
+                            <span
+                                class="border-solid border-b border-gray-300 w-full flex flex-col items-center justify-end h-6">
+                                به شماره ملی
+                            </span>
+                            <span
+                                class="border-solid border-b border-gray-300 w-full flex flex-col items-center justify-end h-6">
+                                به شناسه ملی
+                            </span>
+                            <span class="w-full flex flex-col items-center justify-end h-6">
+                                به شماره اختصاصی اتباع خارجی
+                            </span>
+                        </div>
+                        <span style="font-family: 'Yekan';"
+                            class="ml-4 mr-6 border-solid border-b border-gray-300 w-28">
+                        </span>
+                        <span class="w-28">
+                            یا به حواله کرد بپردازید.
+                        </span>
+                    </div>
+                    <div class="h-16 text-xl flex flex-col justify-start items-end"
+                        style="font-family: 'IranNastaliq';direction:rtl;">
+                        <span>
+                            (مبلغ به عدد) ریال
+                        </span>
+                        <div style="direction: ltr; font-family: 'Yekan';">
+                            <mat-label appearance="legacy" class="w-full text-lg border-solid border-b border-gray-300"
+                                style="font-family: 'Yekan';">
+                                {{revenueInfo.amount|number:'1.0-5'}}
+                            </mat-label>
+
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1" style="font-family: 'IranNastaliq';">
+                        <img class="inline-block w-26 h-10 items-center content-center"
+                            src="../../../../../../assets/images/financial/chakavak.png" />
+                    </div>
+                </div>
+                <div *ngIf="revenueInfo.paymentTypeId === 1001061"
+                    class="rounded-lg border-solid border-2 w-full px-10 py-4">
+                    <div class="grid grid-cols-3 pl-14">
+                        <div class="text-sm flex flex-row justify-start font-bold">
+
+                        </div>
+                        <div class="text-base flex flex-row justify-center items-start">
+                            <img class="inline-block w-12 items-center content-center"
+                                src="../../../../../../assets/images/financial/banks/{{revenueInfo.bankUrl}}">
+                        </div>
+                        <div class="text-base flex flex-col justify-start items-end">
+                            <div class="flex flex-row justify-end items-start pt-2">
+
+                                <div style=" font-family: 'Yekan'" class="  grid grid-cols-8 h-6 w-36 font-bold">
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year1">{{revenueInfo.revenueLocalDateClean.substring(0,
+                                            1)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year2">{{revenueInfo.revenueLocalDateClean.substring(1,
+                                            2)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year3">{{revenueInfo.revenueLocalDateClean.substring(2,
+                                            3)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year4">{{revenueInfo.revenueLocalDateClean.substring(3,
+                                            4)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="month1">{{revenueInfo.revenueLocalDateClean.substring(4,
+                                            5)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="month2">{{revenueInfo.revenueLocalDateClean.substring(5,
+                                            6)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="day1">{{revenueInfo.revenueLocalDateClean.substring(6,
+                                            7)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="day2">{{revenueInfo.revenueLocalDateClean.substring(7,
+                                            8)}}</span>
+                                    </div>
+                                </div>
+                                <div class="pt-1.5 pl-2 flex flex-row justify-end items-start"
+                                    style="font-family: 'IranNastaliq'">
+                                    <span>
+                                        تاریخ
+                                    </span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="h-20  text-lg flex flex-row justify-start items-end"
+                        style="font-family: 'Yekan';direction:rtl;">
+                        <span class="w-36">
+                            مبلغ: (به عدد)
+                        </span>
+                        <div class="w-fit" style="direction: ltr; font-family: 'Yekan';">
+                            <mat-label appearance="legacy" class="w-full text-lg border-solid border-b border-gray-300"
+                                style="font-family: 'Yekan';">
+                                {{revenueInfo.amount|number:'1.0-5'}}
+                            </mat-label>
+                        </div>
+                        <span class="w-28 mr-4">
+                            ریال (به حروف)
+                        </span>
+                        <span style="font-family: 'Yekan';"
+                            class="w-72	ml-4 text-lg border-solid border-b border-gray-300">
+                            {{revenueInfo.amount | numberToPersian}}
+                        </span>
+                        <span class="pt-3" style="font-family: 'Yekan';">
+                            ریال
+                        </span>
+                    </div>
+                    <div class="w-full h-20 mb-20 text-lg flex flex-row justify-start items-center"
+                        style="font-family: 'Yekan';direction:rtl;">
+                        <div class="flex flex-row w-1/3">
+                            <span class="ml-1">
+                                شناسه قبض
+                            </span>
+                            <div style="direction: ltr; font-family: 'Yekan';">
+                                <mat-label appearance="legacy"
+                                    class="w-full text-lg border-solid border-b border-gray-300"
+                                    style="font-family: 'Yekan';">
+                                    {{revenueInfo.billId}}
+                                </mat-label>
+                            </div>
+                        </div>
+                        <div class="flex flex-row w-1/3">
+                            <span class="ml-1">
+                                شناسه پرداخت
+                            </span>
+                            <div style="direction: ltr; font-family: 'Yekan';">
+                                <mat-label appearance="legacy"
+                                    class="w-full text-lg border-solid border-b border-gray-300"
+                                    style="font-family: 'Yekan';">
+                                    {{revenueInfo.paymentId}}
+                                </mat-label>
+                            </div>
+                        </div>
+                        <div class="flex flex-row  zw-1/3">
+                            <span class="ml-1">
+                                شماره پیگیری
+                            </span>
+                            <div style="direction: ltr; font-family: 'Yekan';">
+                                <mat-label appearance="legacy"
+                                    class="w-full text-lg border-solid border-b border-gray-300"
+                                    style="font-family: 'Yekan';">
+                                    {{revenueInfo.trackingId}}
+                                </mat-label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div *ngIf="revenueInfo.paymentTypeId === 1001062"
+                    class="rounded-lg border-solid border-2 w-full px-10 py-4">
+                    <div class="grid grid-cols-3">
+                        <div class="text-sm flex flex-row justify-start font-bold">
+
+                        </div>
+                        <div class="text-base flex flex-row justify-center items-start">
+                            <img class="inline-block w-12 items-center content-center"
+                                src="../../../../../../assets/images/financial/banks/{{revenueInfo.bankUrl}}">
+                        </div>
+                        <div class="text-base flex flex-col justify-start items-end">
+                            <div class="flex flex-row justify-end items-start pt-2">
+
+                                <div style=" font-family: 'Yekan'" class="  grid grid-cols-8 h-6 w-36 font-bold">
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year1">{{revenueInfo.revenueLocalDateClean.substring(0,
+                                            1)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year2">{{revenueInfo.revenueLocalDateClean.substring(1,
+                                            2)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year3">{{revenueInfo.revenueLocalDateClean.substring(2,
+                                            3)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year4">{{revenueInfo.revenueLocalDateClean.substring(3,
+                                            4)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="month1">{{revenueInfo.revenueLocalDateClean.substring(4,
+                                            5)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="month2">{{revenueInfo.revenueLocalDateClean.substring(5,
+                                            6)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="day1">{{revenueInfo.revenueLocalDateClean.substring(6,
+                                            7)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="day2">{{revenueInfo.revenueLocalDateClean.substring(7,
+                                            8)}}</span>
+                                    </div>
+                                </div>
+                                <div class="pt-1.5 pl-2 flex flex-row justify-end items-start"
+                                    style="font-family: 'IranNastaliq'">
+                                    <span>
+                                        تاریخ
+                                    </span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="mb-24 h-20  text-lg flex flex-row justify-start items-end"
+                        style="font-family: 'Yekan';direction:rtl;">
+                        <span class="w-36">
+                            مبلغ: (به عدد)
+                        </span>
+                        <div class="w-fit" style="direction: ltr; font-family: 'Yekan';">
+                            <mat-label appearance="legacy" class="w-full text-lg border-solid border-b border-gray-300"
+                                style="font-family: 'Yekan';">
+                                {{revenueInfo.amount|number:'1.0-5'}}
+                            </mat-label>
+                        </div>
+                        <span class="w-28 mr-4">
+                            ریال (به حروف)
+                        </span>
+                        <span style="font-family: 'Yekan';"
+                            class="w-72	ml-4 text-lg border-solid border-b border-gray-300">
+                            {{revenueInfo.amount | numberToPersian}}
+                        </span>
+                        <span class="pt-3" style="font-family: 'Yekan';">
+                            ریال
+                        </span>
+                    </div>
+                </div>
+
+            </div>
+        </ng-container>
+
+    </div>
+    <div *ngIf="requestTypeId === 1000526 && !isLoading"
+        class="flex flex-col sm:flex-row items-center sm:items-start p-8 pb-6 sm:pb-8 w-full">
+
+
+        <ng-container *ngIf="data.title || data.message">
+            <div class="flex flex-col  sm:items-start mt-4 sm:mt-0 sm:pr-8 text-center sm:text-left">
+
+
+                <div class="text-xl leading-6 font-medium">
+
+                    <span>Payer</span>
+
+                </div>
+                <div class="flex flex-row items-center justify-center  text-lg leading-6 font-medium">
+                    <mat-icon class="pr-1" *ngIf="expenseInfo.payerTypeId===1000612 ||
+                    expenseInfo.payerTypeId=== 1000614" svgIcon="mat_solid:person"></mat-icon>
+                    <mat-icon class="pr-1" *ngIf="expenseInfo.payerTypeId===1000613" svgIcon="mat_solid:engineering">
+                    </mat-icon>
+                    <mat-icon class="pr-1" *ngIf="expenseInfo.payerTypeId===1000611" svgIcon="mat_solid:business">
+                    </mat-icon>
+                    {{expenseInfo.payerName}}
+                </div>
+                <div class="flex flex-row items-center justify-center pl-6  text-sm leading-6 font-medium">
+                    {{expenseInfo.payerTypeName}}-{{expenseInfo.payerFinancialResourceName}}
+                </div>
+
+                <div class="text-xl mt-8 font-medium">
+
+                    <span>Recipient</span>
+                </div>
+                <div class="flex flex-row items-center justify-center  text-lg leading-6 font-medium ">
+                    <mat-icon class="pr-1" *ngIf="expenseInfo.recipientTypeId===1000612 ||
+                    expenseInfo.recipientTypeId=== 1000614" svgIcon="mat_solid:person"></mat-icon>
+                    <mat-icon class="pr-1" *ngIf="expenseInfo.recipientTypeId===1000613"
+                        svgIcon="mat_solid:engineering">
+                    </mat-icon>
+                    <mat-icon class="pr-1" *ngIf="expenseInfo.recipientTypeId===1000611" svgIcon="mat_solid:business">
+                    </mat-icon>
+                    {{expenseInfo.recipientName}}
+                </div>
+                <div class="flex flex-row items-center justify-center pl-6  text-sm leading-6 font-medium">
+                    {{expenseInfo.recipientTypeName}}-{{expenseInfo.recipientFinancialResourceName}}
+                </div>
+
+                <div class="text-xl mt-8 font-medium">
+
+                    <span>Expense Date</span>
+                </div>
+                <div class="flex flex-row items-center justify-center  text-lg leading-6 font-medium ">
+                    <mat-icon svgIcon="mat_outline:schedule"></mat-icon>
+                    {{expenseInfo.expenseLocalDate}}
+                </div>
+            </div>
+        </ng-container>
+
+        <ng-container>
+
+            <div class="flex flex-row gt-xs:flex-col px-3 w-fit items-center flex-wrap content-center">
+                <div *ngIf="expenseInfo.paymentTypeId === 1001063"
+                    class="rounded-lg border-solid border-2 w-full px-10 py-4">
+                    <div class="grid grid-cols-3 h-14">
+                        <div class="text-sm flex flex-row justify-start font-bold">
+                            <img class="inline-block w-10 h-10 items-center content-center"
+                                src="../../../../../../assets/images/financial/cheque-qr-code.png" />
+                            <span class="w-30 h-8 px-3 text-lg pt-2 border-solid border-b border-gray-300"
+                                style="font-family: 'Yekan';">
+                                {{expenseInfo.chequeNumber}}
+                            </span>
+                        </div>
+                        <div class="text-base flex flex-row justify-center items-start">
+                            <img class="inline-block w-16 items-center content-center"
+                                src="../../../../../../assets/images/financial/banks/{{expenseInfo.bankUrl}}">
+                        </div>
+                        <div class="text-base flex flex-col justify-start items-end">
+                            <div class="flex flex-row justify-end items-start pt-2">
+
+                                <div style=" font-family: 'Yekan'" class="  grid grid-cols-8 h-6 w-36 font-bold">
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year1">{{expenseInfo.expenseLocalDateClean.substring(0,
+                                            1)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year2">{{expenseInfo.expenseLocalDateClean.substring(1,
+                                            2)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year3">{{expenseInfo.expenseLocalDateClean.substring(2,
+                                            3)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year4">{{expenseInfo.expenseLocalDateClean.substring(3,
+                                            4)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="month1">{{expenseInfo.expenseLocalDateClean.substring(4,
+                                            5)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="month2">{{expenseInfo.expenseLocalDateClean.substring(5,
+                                            6)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="day1">{{expenseInfo.expenseLocalDateClean.substring(6,
+                                            7)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="day2">{{expenseInfo.expenseLocalDateClean.substring(7,
+                                            8)}}</span>
+                                    </div>
+                                </div>
+                                <div class="pt-1.5 pl-2 flex flex-row justify-end items-start"
+                                    style="font-family: 'IranNastaliq'">
+                                    <span>
+                                        تاریخ
+                                    </span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div style="direction: rtl;" class="flex flex-row justify-start items-start pt-4">
+                        <div class="pl-1.5" style="font-family: 'IranNastaliq';">
+                            <span>
+                                تاریخ به تمام حروف:
+                            </span>
+                        </div>
+                        <div class="font-bold" style="font-family: 'Yekan';">
+                            <span>
+                                {{expenseInfo.expenseLocalDateClean.substring(6, 8) |
+                                numberToPersian}}
+                                {{expenseInfo.expenseLocalDateClean.substring(4, 6) |
+                                persianMonthName}}
+                                {{expenseInfo.expenseLocalDateClean.substring(0, 4) |
+                                numberToPersian}}
+                            </span>
+
+                        </div>
+                    </div>
+                    <div class="text-xl h-16 flex flex-row pt-5" style="direction:rtl;">
+                        <span class="w-48 pl-4 pt-3" style="font-family: 'IranNastaliq';">
+                            به موجب این چک مبلغ (به حروف)
+                        </span>
+                        <span style="font-family: 'Yekan';width: 27rem;"
+                            class="ml-4 h-8 text-lg border-solid border-b border-gray-300">
+                            {{expenseInfo.amount | numberToPersian}}
+                        </span>
+                        <span class="pt-3" style="font-family: 'IranNastaliq';">
+                            ریال
+                        </span>
+                    </div>
+                    <div class="h-20 text-xl flex flex-row justify-start items-center"
+                        style="font-family: 'IranNastaliq';direction:rtl;">
+                        <span class="pl-4 w-16">
+                            در وجه
+                        </span>
+                        <span style="font-family: 'Yekan';" class="ml-6 w-44 border-solid border-b border-gray-300">
+                        </span>
+                        <div class="flex flex-col text-base items-center w-32">
+                            <span
+                                class="border-solid border-b border-gray-300 w-full flex flex-col items-center justify-end h-6">
+                                به شماره ملی
+                            </span>
+                            <span
+                                class="border-solid border-b border-gray-300 w-full flex flex-col items-center justify-end h-6">
+                                به شناسه ملی
+                            </span>
+                            <span class="w-full flex flex-col items-center justify-end h-6">
+                                به شماره اختصاصی اتباع خارجی
+                            </span>
+                        </div>
+                        <span style="font-family: 'Yekan';"
+                            class="ml-4 mr-6 border-solid border-b border-gray-300 w-28">
+                        </span>
+                        <span class="w-28">
+                            یا به حواله کرد بپردازید.
+                        </span>
+                    </div>
+                    <div class="h-16 text-xl flex flex-col justify-start items-end"
+                        style="font-family: 'IranNastaliq';direction:rtl;">
+                        <span>
+                            (مبلغ به عدد) ریال
+                        </span>
+                        <div style="direction: ltr; font-family: 'Yekan';">
+                            <mat-label appearance="legacy" class="w-full text-lg border-solid border-b border-gray-300"
+                                style="font-family: 'Yekan';">
+                                {{expenseInfo.amount|number:'1.0-5'}}
+                            </mat-label>
+
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1" style="font-family: 'IranNastaliq';">
+                        <img class="inline-block w-26 h-10 items-center content-center"
+                            src="../../../../../../assets/images/financial/chakavak.png" />
+                    </div>
+                </div>
+                <div *ngIf="expenseInfo.paymentTypeId === 1001061"
+                    class="rounded-lg border-solid border-2 w-full px-10 py-4">
+                    <div class="grid grid-cols-3 pl-14">
+                        <div class="text-sm flex flex-row justify-start font-bold">
+
+                        </div>
+                        <div class="text-base flex flex-row justify-center items-start">
+                            <img class="inline-block w-12 items-center content-center"
+                                src="../../../../../../assets/images/financial/banks/{{expenseInfo.bankUrl}}">
+                        </div>
+                        <div class="text-base flex flex-col justify-start items-end">
+                            <div class="flex flex-row justify-end items-start pt-2">
+
+                                <div style=" font-family: 'Yekan'" class="  grid grid-cols-8 h-6 w-36 font-bold">
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year1">{{expenseInfo.expenseLocalDateClean.substring(0,
+                                            1)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year2">{{expenseInfo.expenseLocalDateClean.substring(1,
+                                            2)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year3">{{expenseInfo.expenseLocalDateClean.substring(2,
+                                            3)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year4">{{expenseInfo.expenseLocalDateClean.substring(3,
+                                            4)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="month1">{{expenseInfo.expenseLocalDateClean.substring(4,
+                                            5)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="month2">{{expenseInfo.expenseLocalDateClean.substring(5,
+                                            6)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="day1">{{expenseInfo.expenseLocalDateClean.substring(6,
+                                            7)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="day2">{{expenseInfo.expenseLocalDateClean.substring(7,
+                                            8)}}</span>
+                                    </div>
+                                </div>
+                                <div class="pt-1.5 pl-2 flex flex-row justify-end items-start"
+                                    style="font-family: 'IranNastaliq'">
+                                    <span>
+                                        تاریخ
+                                    </span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="h-20  text-lg flex flex-row justify-start items-end"
+                        style="font-family: 'Yekan';direction:rtl;">
+                        <span class="w-36">
+                            مبلغ: (به عدد)
+                        </span>
+                        <div class="w-fit" style="direction: ltr; font-family: 'Yekan';">
+                            <mat-label appearance="legacy" class="w-full text-lg border-solid border-b border-gray-300"
+                                style="font-family: 'Yekan';">
+                                {{expenseInfo.amount|number:'1.0-5'}}
+                            </mat-label>
+                        </div>
+                        <span class="w-28 mr-4">
+                            ریال (به حروف)
+                        </span>
+                        <span style="font-family: 'Yekan';"
+                            class="w-72	ml-4 text-lg border-solid border-b border-gray-300">
+                            {{expenseInfo.amount | numberToPersian}}
+                        </span>
+                        <span class="pt-3" style="font-family: 'Yekan';">
+                            ریال
+                        </span>
+                    </div>
+                    <div class="w-full h-20 mb-20 text-lg flex flex-row justify-start items-center"
+                        style="font-family: 'Yekan';direction:rtl;">
+                        <div class="flex flex-row w-1/3">
+                            <span class="ml-1">
+                                شناسه قبض
+                            </span>
+                            <div style="direction: ltr; font-family: 'Yekan';">
+                                <mat-label appearance="legacy"
+                                    class="w-full text-lg border-solid border-b border-gray-300"
+                                    style="font-family: 'Yekan';">
+                                    {{expenseInfo.billId}}
+                                </mat-label>
+                            </div>
+                        </div>
+                        <div class="flex flex-row w-1/3">
+                            <span class="ml-1">
+                                شناسه پرداخت
+                            </span>
+                            <div style="direction: ltr; font-family: 'Yekan';">
+                                <mat-label appearance="legacy"
+                                    class="w-full text-lg border-solid border-b border-gray-300"
+                                    style="font-family: 'Yekan';">
+                                    {{expenseInfo.paymentId}}
+                                </mat-label>
+                            </div>
+                        </div>
+                        <div class="flex flex-row  zw-1/3">
+                            <span class="ml-1">
+                                شماره پیگیری
+                            </span>
+                            <div style="direction: ltr; font-family: 'Yekan';">
+                                <mat-label appearance="legacy"
+                                    class="w-full text-lg border-solid border-b border-gray-300"
+                                    style="font-family: 'Yekan';">
+                                    {{expenseInfo.trackingId}}
+                                </mat-label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div *ngIf="expenseInfo.paymentTypeId === 1001062"
+                    class="rounded-lg border-solid border-2 w-full px-10 py-4">
+                    <div class="grid grid-cols-3">
+                        <div class="text-sm flex flex-row justify-start font-bold">
+
+                        </div>
+                        <div class="text-base flex flex-row justify-center items-start">
+                            <img class="inline-block w-12 items-center content-center"
+                                src="../../../../../../assets/images/financial/banks/{{expenseInfo.bankUrl}}">
+                        </div>
+                        <div class="text-base flex flex-col justify-start items-end">
+                            <div class="flex flex-row justify-end items-start pt-2">
+
+                                <div style=" font-family: 'Yekan'" class="  grid grid-cols-8 h-6 w-36 font-bold">
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year1">{{expenseInfo.expenseLocalDateClean.substring(0,
+                                            1)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year2">{{expenseInfo.expenseLocalDateClean.substring(1,
+                                            2)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year3">{{expenseInfo.expenseLocalDateClean.substring(2,
+                                            3)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year4">{{expenseInfo.expenseLocalDateClean.substring(3,
+                                            4)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="month1">{{expenseInfo.expenseLocalDateClean.substring(4,
+                                            5)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="month2">{{expenseInfo.expenseLocalDateClean.substring(5,
+                                            6)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="day1">{{expenseInfo.expenseLocalDateClean.substring(6,
+                                            7)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="day2">{{expenseInfo.expenseLocalDateClean.substring(7,
+                                            8)}}</span>
+                                    </div>
+                                </div>
+                                <div class="pt-1.5 pl-2 flex flex-row justify-end items-start"
+                                    style="font-family: 'IranNastaliq'">
+                                    <span>
+                                        تاریخ
+                                    </span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="mb-24 h-20  text-lg flex flex-row justify-start items-end"
+                        style="font-family: 'Yekan';direction:rtl;">
+                        <span class="w-36">
+                            مبلغ: (به عدد)
+                        </span>
+                        <div class="w-fit" style="direction: ltr; font-family: 'Yekan';">
+                            <mat-label appearance="legacy" class="w-full text-lg border-solid border-b border-gray-300"
+                                style="font-family: 'Yekan';">
+                                {{expenseInfo.amount|number:'1.0-5'}}
+                            </mat-label>
+                        </div>
+                        <span class="w-28 mr-4">
+                            ریال (به حروف)
+                        </span>
+                        <span style="font-family: 'Yekan';"
+                            class="w-72	ml-4 text-lg border-solid border-b border-gray-300">
+                            {{expenseInfo.amount | numberToPersian}}
+                        </span>
+                        <span class="pt-3" style="font-family: 'Yekan';">
+                            ریال
+                        </span>
+                    </div>
+                </div>
+
+            </div>
+        </ng-container>
+
+    </div>
+    <div fuseScrollbar *ngIf="requestTypeId === 1000521 && !isLoading" style="max-height: 650px;"
+        class="flex flex-col sm:flex-row items-center sm:items-start pb-6 sm:pb-8 w-full">
+        <div *ngIf="!isLoading" class="inline-block p-6 sm:p-10 text-left  print:p-0">
+
+            <!-- Invoice -->
+            <div
+                class="w-240 p-16 rounded-2xl shadow bg-card print:w-auto print:rounded-none print:shadow-none print:bg-transparent">
+
+                <div class="flex items-start justify-between">
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+                        <div class="text-4xl tracking-tight text-secondary">ORDER</div>
+                        <div class="text-4xl">#{{customerOrderInfo.orderCode}}</div>
+                        <div class="font-medium tracking-tight text-secondary">REMITTANCE</div>
+                        <div class="font-medium">#{{customerOrderInfo.remittanceCode}}</div>
+                        <div class="font-medium tracking-tight text-secondary">SHIPPED DATE</div>
+                        <div class="font-medium">{{customerOrderInfo.localChangeDate}}</div>
+                        <div class="font-medium tracking-tight text-secondary">TOTAL DUE</div>
+                        <div class="font-medium">{{customerOrderInfo.total |number:'1.0-5'}}&nbsp;IRR</div>
+                    </div>
+                    <div class="grid auto-cols-max grid-flow-col gap-x-8 -mr-16 py-6 px-8 rounded-l-2xl bg-accent dark">
+                        <div class="place-self-center w-24">
+                            <img class="w-24" src="assets/images/logo/logo.svg">
+                        </div>
+                        <div class="pl-10 border-l text-md">
+                            <div class="font-medium">Arian System Ro</div>
+                            <div>No 56 East Third Street</div>
+                            <div>Khoramdasht, Tehran, Iran</div>
+                            <div>+98 21 4448 9776</div>
+                            <div>sales@asr-elevator.ir</div>
+                            <div>www.asr-elevator.ir</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-md">
+                    <div class="text-xl font-medium">{{customerInfo.customerName}}&nbsp;
+                        {{customerInfo.customerFamily}}</div>
+                    <div>{{customerInfo.address}}</div> organizationName
+                    <div>{{customerInfo.organizationName}}</div>
+                    <div>{{customerInfo.phone}}</div>
+                </div>
+
+                <div class="grid grid-cols-12 gap-x-1 mt-12">
+                    <!-- Columns -->
+                    <div class="col-span-8 font-medium text-md text-secondary">PRODUCT</div>
+                    <div class="font-medium text-md text-right text-secondary">RATE</div>
+                    <div class="font-medium text-md text-right text-secondary">QTY</div>
+                    <div class="col-span-2 font-medium text-md text-right text-secondary">TOTAL</div>
+                    <div class="col-span-12 grid grid-cols-12 gap-x-1"
+                        *ngFor="let item of customerOrderInfo.productList">
+                        <!-- Divider -->
+                        <div class="col-span-12 my-4 border-b"></div>
+
+                        <!-- Item -->
+                        <div class="col-span-8">{{item.brandName}}-{{item.productName}}-{{item.productCode}}</div>
+                        <div class="self-center text-right">{{item.unitPrice |number:'1.0-5'}}</div>
+                        <div class="self-center text-right">{{item.quantity}}</div>
+                        <div class="col-span-2 self-center text-right">{{item.total |number:'1.0-5'}}
+                        </div>
+                    </div>
+
+
+                    <!-- Spacer -->
+                    <div class="col-span-12 mt-16"></div>
+
+                    <!-- Subtotal -->
+                    <div class="col-span-10 self-center font-medium tracking-tight text-secondary">SUBTOTAL</div>
+                    <div class="col-span-2 text-right text-lg">{{customerOrderInfo.subTotal |number:'1.0-5'}}</div>
+
+                    <!-- Divider -->
+                    <div class="col-span-12 my-3 border-b"></div>
+
+                    <!-- Tax -->
+                    <div class="col-span-10 self-center font-medium tracking-tight text-secondary">TAX</div>
+                    <div class="col-span-2 text-right text-lg">{{customerOrderInfo.tax === 0? 0 : customerOrderInfo.tax
+                        |number:'1.0-5'}}</div>
+
+                    <!-- Divider -->
+                    <div class="col-span-12 my-3 border-b"></div>
+
+                    <!-- Discount -->
+                    <div class="col-span-10 self-center font-medium tracking-tight text-secondary">CUSTOMER DISCOUNT
+                    </div>
+                    <div class="col-span-2 text-right text-lg">
+                        {{customerOrderInfo.customerDiscount===0?0:customerOrderInfo.customerDiscount |number:'1.0-5'}}
+                    </div>
+                    <!-- Divider -->
+                    <div class="col-span-12 my-3 border-b"></div>
+
+                    <!-- Discount -->
+                    <div class="col-span-10 self-center font-medium tracking-tight text-secondary">EXTRA DISCOUNT
+                    </div>
+                    <div class="col-span-2 text-right text-lg">
+                        {{customerOrderInfo.extraDiscount === 0 ?0:
+                        customerOrderInfo.extraDiscount |number:'1.0-5'}}<span
+                            *ngIf="customerOrderInfo.extraDiscount> 0">
+                            ({{(customerOrderInfo.extraDiscount/customerOrderInfo.total)
+                            |
+                            percent}})</span></div>
+                    <div class="col-span-12 my-3 border-b"></div>
+
+                    <!-- Discount -->
+                    <div class="col-span-10 self-center font-medium tracking-tight text-secondary">TOTAL DISCOUNT
+                    </div>
+                    <div class="col-span-2 text-right text-lg">{{(customerOrderInfo.extraDiscount +
+                        customerOrderInfo.customerDiscount)===0?0: (customerOrderInfo.extraDiscount +
+                        customerOrderInfo.customerDiscount)|number:'1.0-5'}}<span
+                            *ngIf="customerOrderInfo.extraDiscount> 0">
+                            ({{((customerOrderInfo.extraDiscount +
+                            customerOrderInfo.customerDiscount)/customerOrderInfo.total)
+                            |
+                            percent}})</span></div>
+                    <!-- Divider -->
+                    <div class="col-span-12 my-3 border-b"></div>
+
+                    <!-- Total -->
+                    <div class="col-span-10 self-center text-2xl font-medium tracking-tight text-secondary">TOTAL
+                    </div>
+                    <div class="col-span-2 text-right text-2xl font-medium">{{customerOrderInfo.total
+                        |number:'1.0-5'}}</div>
+                </div>
+
+                <div class="mt-16">
+                    <div class="font-medium">Please pay within 15 days. Thank you for your business.</div>
+                    <div class="flex items-start mt-4">
+                        <img class="flex-0 w-10 mt-2" src="assets/images/logo/logo.svg">
+                        <div class="ml-6 text-sm text-secondary">
+                            In condimentum malesuada efficitur. Mauris volutpat placerat auctor. Ut ac congue dolor.
+                            Quisque scelerisque lacus sed feugiat fermentum.
+                            Cras aliquet facilisis pellentesque. Nunc hendrerit quam at leo commodo, a suscipit
+                            tellus dapibus. Etiam at felis volutpat est mollis lacinia.
+                            Mauris placerat sem sit amet velit mollis, in porttitor ex finibus. Proin eu nibh id
+                            libero tincidunt lacinia et eget.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+    <div fuseScrollbar *ngIf="requestTypeId === 1000527 && !isLoading" style="max-height: 650px;"
+        class="inline-block p-6 sm:p-10 text-left  print:p-0">
+
+        <!-- Invoice -->
+        <div
+            class="w-240 p-16 rounded-2xl shadow bg-card print:w-auto print:rounded-none print:shadow-none print:bg-transparent">
+
+            <div class="flex items-start justify-between">
+                <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+                    <div class="text-4xl tracking-tight text-secondary">INVOICE</div>
+                    <div class="text-4xl">#{{invoiceInfo.invoiceNumber}}</div>
+                    <div class="font-medium tracking-tight text-secondary">Date</div>
+                    <div class="font-medium">{{invoiceInfo.localChangeDate}}</div>
+                    <div class="font-medium tracking-tight text-secondary">ISSUER</div>
+                    <div class="font-medium">{{invoiceInfo.ownerName}}</div>
+                    <div class="font-medium tracking-tight text-secondary">WAREHOUSE</div>
+                    <div class="font-medium">{{invoiceInfo.sourceWarehouseName}}</div>
+                    <div class="font-medium tracking-tight text-secondary">TOTAL DUE</div>
+                    <div class="font-medium">{{invoiceInfo.total |number:'1.0-5'}}&nbsp;IRR</div>
+                </div>
+                <div class="grid auto-cols-max grid-flow-col gap-x-8 -mr-16 py-6 px-8 rounded-l-2xl bg-accent dark">
+                    <div class="place-self-center w-24">
+                        <img class="w-24" src="assets/images/logo/logo.svg">
+                    </div>
+                    <div class="pl-10 border-l text-md">
+                        <div class="font-medium">Arian System Ro</div>
+                        <div>No 56 East Third Street</div>
+                        <div>Khoramdasht, Tehran, Iran</div>
+                        <div>+98 21 4448 9776</div>
+                        <div>sales@asr-elevator.ir</div>
+                        <div>www.asr-elevator.ir</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-md">
+                <div class="text-xl font-medium">BILL TO</div>
+                <div class="text-xl font-medium">{{invoiceInfo.destinationOwnerName}}</div>
+                <div>{{invoiceInfo.destinationWarehouseName}}</div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-x-1 mt-12">
+                <!-- Columns -->
+                <div class="col-span-8 font-medium text-md text-secondary">DESCRIPTION</div>
+                <div class="font-medium text-md text-right text-secondary">RATE</div>
+                <div class="font-medium text-md text-right text-secondary">QTY</div>
+                <div class="col-span-2 font-medium text-md text-right text-secondary">TOTAL</div>
+                <div class="col-span-12 grid grid-cols-12 gap-x-1" *ngFor="let item of invoiceInfo.invoiceDetailList">
+                    <!-- Divider -->
+                    <div class="col-span-12 my-4 border-b"></div>
+
+                    <!-- Item -->
+                    <div class="col-span-8">{{item.itemName}}</div>
+                    <!-- <div class="self-center text-right">{{item.unitPrice |number:'1.0-5'}}</div> -->
+                    <div class="self-center text-right">{{item.unitPrice |number:'1.0-5'}}</div>
+                    <div class="self-center text-right">{{item.measure}}</div>
+                    <div class="col-span-2 self-center text-right">{{item.total |number:'1.0-5'}}
+                    </div>
+                </div>
+
+
+                <!-- Spacer -->
+                <div class="col-span-12 mt-16"></div>
+
+
+
+
+
+                <!-- Total -->
+                <div class="col-span-10 self-center text-2xl font-medium tracking-tight text-secondary">
+                    TOTAL
+                </div>
+                <div class="col-span-2 text-right text-2xl font-medium">{{invoiceInfo.total
+                    |number:'1.0-5'}}</div>
+            </div>
+
+            <div class="mt-16">
+                <div class="font-medium">Please pay within 15 days. Thank you for your business.</div>
+                <div class="flex items-start mt-4">
+                    <img class="flex-0 w-10 mt-2" src="assets/images/logo/logo.svg">
+                    <div class="ml-6 text-sm text-secondary">
+                        In condimentum malesuada efficitur. Mauris volutpat placerat auctor. Ut ac congue
+                        dolor.
+                        Quisque scelerisque lacus sed feugiat fermentum.
+                        Cras aliquet facilisis pellentesque. Nunc hendrerit quam at leo commodo, a suscipit
+                        tellus dapibus. Etiam at felis volutpat est mollis lacinia.
+                        Mauris placerat sem sit amet velit mollis, in porttitor ex finibus. Proin eu nibh id
+                        libero tincidunt lacinia et eget.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+    <div fuseScrollbar *ngIf="requestTypeId === 1000528 && !isLoading" style="max-height: 580px;"
+        class="inline-block p-6 sm:p-10 text-left  print:p-0">
+        <div *ngIf="!isLoading" class="inline-block p-6 sm:p-10 text-left  print:p-0">
+
+            <!-- Invoice -->
+            <div
+                class="w-240 p-16 rounded-2xl shadow bg-card print:w-auto print:rounded-none print:shadow-none print:bg-transparent">
+
+                <div class="flex items-start justify-between">
+                    <div class="flex flex-col w-full">
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+                            <div class="text-4xl tracking-tight text-secondary">INVOICE</div>
+                            <div class="text-4xl"><span>#</span>{{manualInvoiceInfo.invoiceNumber}}
+                            </div>
+                        </div>
+                        <div class="font-medium text-sm	 tracking-tight" style="color: #b9c1ca;">TITLE</div>
+                        <div class="border-slate-200 border-b border-solid font-medium w-44 mb-4">
+                            <span>{{manualInvoiceInfo.title}}</span>
+                        </div>
+                        <div class="font-medium text-sm	 tracking-tight" style="color: #b9c1ca;">DATE *</div>
+                        <div class="font-medium  border-slate-200 border-b border-solid w-44 mb-4">
+                            <span>{{manualInvoiceInfo.invoiceLocalDate}}</span>
+                        </div>
+                        <div class="font-medium tracking-tight text-secondary">ISSUER</div>
+                        <div class="border-slate-200 border-b border-solid font-medium w-44 mb-4">
+                            <span>{{manualInvoiceInfo.ownerName}}</span>
+                        </div>
+                        <div class="font-medium tracking-tight text-secondary">BILL TO</div>
+                        <div class="border-slate-200 border-b border-solid font-medium w-44 mb-4">
+                            <span>{{manualInvoiceInfo.payerName}}</span>
+                        </div>
+
+                    </div>
+                    <div class="grid auto-cols-max grid-flow-col gap-x-8 -mr-16 py-6 px-8 rounded-l-2xl bg-accent dark">
+                        <div class="place-self-center w-24">
+                            <img class="w-24" src="assets/images/logo/logo.svg">
+                        </div>
+                        <div class="pl-10 border-l text-md">
+                            <div class="font-medium">Arian System Ro</div>
+                            <div>No 56 East Third Street</div>
+                            <div>Khoramdasht, Tehran, Iran</div>
+                            <div>+98 21 4448 9776</div>
+                            <div>sales@asr-elevator.ir</div>
+                            <div>www.asr-elevator.ir</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col">
+                    <div class="grid grid-cols-12 gap-x-1 mt-12 border-slate-200 border-b border-solid w-full mb-6">
+                        <div class="col-span-7 font-medium text-md text-secondary">ITEM</div>
+                        <div class="col-span-2 font-medium text-md text-right text-secondary">RATE</div>
+                        <div class="col-span-1 font-medium text-md text-right text-secondary">QTY</div>
+                        <div class="col-span-2 font-medium text-md text-right text-secondary">TOTAL</div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-x-1"
+                        *ngFor="let item of manualInvoiceInfo.manualInvoiceDetailList">
+                        <!-- Divider -->
+
+                        <!-- Item -->
+                        <div class="col-span-7 ">{{item.itemDesc}}</div>
+                        <!-- <div class="self-center text-right">{{item.unitPrice |number:'1.0-5'}}</div> -->
+                        <div class="col-span-2 text-right">{{item.unitPrice |number:'1.0-5'}}</div>
+                        <div class="col-span-1 text-right">{{item.measure}}</div>
+                        <div class="col-span-2 self-center text-right">{{item.total |number:'1.0-5'}}
+                        </div>
+
+                        <div class="col-span-12 my-4 border-b"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-12 gap-x-1">
+
+                    <!-- Spacer -->
+                    <div class="col-span-12 mt-16"></div>
+
+                    <!-- Total -->
+                    <div class="col-span-10 self-center text-2xl font-medium tracking-tight text-secondary">
+                        TOTAL
+                    </div>
+                    <div class="col-span-2 text-right text-2xl font-medium">{{manualInvoiceInfo.total
+                        |number:'1.0-5'}}</div>
+                </div>
+                <div class="mt-16">
+
+
+                    <div class="w-full h-8 flex flex-col text-md">
+                        <span class="text-xl font-medium">Financial Category </span>
+                        <span id="categorySpan">{{manualInvoiceInfo.financialCategoryName}}</span>
+                    </div>
+                    <div class="mt-8 border-slate-200 border-b border-solid">
+                        <span id="categorySpan">{{manualInvoiceInfo.invoiceDescription}}</span>
+                    </div>
+                </div>
+                <div class="mt-8">
+                    <div class="font-medium">Please pay within 15 days. Thank you for your business.</div>
+                    <div class="flex items-start mt-4">
+                        <img class="flex-0 w-10 mt-2" src="assets/images/logo/logo.svg">
+                        <div class="ml-6 text-sm text-secondary">
+                            In condimentum malesuada efficitur. Mauris volutpat placerat auctor. Ut ac congue
+                            dolor.
+                            Quisque scelerisque lacus sed feugiat fermentum.
+                            Cras aliquet facilisis pellentesque. Nunc hendrerit quam at leo commodo, a suscipit
+                            tellus dapibus. Etiam at felis volutpat est mollis lacinia.
+                            Mauris placerat sem sit amet velit mollis, in porttitor ex finibus. Proin eu nibh id
+                            libero tincidunt lacinia et eget.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+    <div *ngIf="requestTypeId === 1000529 && !isLoading"
+        class="flex flex-col sm:flex-row items-center sm:items-start p-8 pb-6 sm:pb-8 w-full">
+
+
+        <!-- Invoice -->
+        <ng-container *ngIf="data.title || data.message">
+            <div class="flex flex-col  sm:items-start mt-4 sm:mt-0 sm:pr-8 text-center sm:text-left">
+
+
+                <div class="text-xl leading-6 font-medium">
+
+                    <span>Payer</span>
+
+                </div>
+                <div class="flex flex-row items-center justify-center  text-lg leading-6 font-medium">
+                    <mat-icon class="pr-1" *ngIf="chequeInfo.payerTypeId===1000612 ||
+                        chequeInfo.payerTypeId=== 1001104" svgIcon="mat_solid:person"></mat-icon>
+                    <mat-icon class="pr-1" *ngIf="chequeInfo.payerTypeId===1000613" svgIcon="mat_solid:engineering">
+                    </mat-icon>
+                    <mat-icon class="pr-1" *ngIf="chequeInfo.payerTypeId===1000611" svgIcon="mat_solid:business">
+                    </mat-icon>
+                    {{chequeInfo.payerName}}
+                </div>
+                <div class="flex flex-row items-center justify-center pl-6  text-sm leading-6 font-medium">
+                    {{chequeInfo.payerTypeName}}
+                </div>
+
+                <div class="text-xl mt-8 font-medium">
+
+                    <span>Recipient</span>
+                </div>
+                <div class="flex flex-row items-center justify-center  text-lg leading-6 font-medium ">
+                    <mat-icon class="pr-1" *ngIf="chequeInfo.recipientTypeId===1000612 ||
+                        chequeInfo.recipientTypeId=== 1001104" svgIcon="mat_solid:person"></mat-icon>
+                    <mat-icon class="pr-1" *ngIf="chequeInfo.recipientTypeId===1000613" svgIcon="mat_solid:engineering">
+                    </mat-icon>
+                    <mat-icon class="pr-1" *ngIf="chequeInfo.recipientTypeId===1000611" svgIcon="mat_solid:business">
+                    </mat-icon>
+                    {{chequeInfo.recipientName}}
+                </div>
+                <div class="flex flex-row items-center justify-center pl-6  text-sm leading-6 font-medium">
+                    {{chequeInfo.recipientTypeName}}
+                </div>
+
+                <div class="text-xl mt-8 font-medium">
+                    <span>Transaction Date</span>
+                </div>
+                <div class="flex flex-row items-center justify-center  text-lg leading-6 font-medium ">
+                    <mat-icon svgIcon="mat_outline:schedule"></mat-icon>
+                    {{chequeInfo.localChangeDate}}-{{chequeInfo.localChangeTime}}
+                </div>
+                <div class="text-xl mt-8 font-medium">
+                    <span>User</span>
+                </div>
+                <div class="flex flex-row items-center justify-center  text-lg leading-6 font-medium ">
+                    <mat-icon svgIcon="mat_solid:person"></mat-icon>
+                    {{chequeInfo.registerUserName}}
+                </div>
+                <div class="text-xl mt-8 font-medium">
+                    <span>Status</span>
+                </div>
+                <div class="flex flex-row items-center justify-center  text-lg leading-6 font-medium ">
+
+                    <div>
+                        <div style="background-color: rgb(245 245 245)!important;"
+                            class="bg-neutral-400 text-xs rounded-sm py-0.5 px-2 inline-block" matTooltip="Status">
+                            <div class="rounded-3xl w-2 h-2 mr-2 inline-block" [ngClass]="chequeInfo.statusColor">
+                            </div>
+                            <div class="inline-block">{{chequeInfo.statusDescription}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+
+        <ng-container>
+            <div class="flex flex-row gt-xs:flex-col px-3 w-fit items-center flex-wrap content-center">
+                <div class="rounded-lg border-solid border-2 w-full px-10 py-4">
+                    <div class="grid grid-cols-3 h-14">
+                        <div class="text-sm flex flex-row justify-start font-bold">
+                            <img class="inline-block w-10 h-10 items-center content-center"
+                                src="../../../../../../assets/images/financial/cheque-qr-code.png" />
+                            <span class="w-30 h-8 px-3 text-lg pt-2 border-solid border-b border-gray-300"
+                                style="font-family: 'Yekan';">
+                                {{chequeInfo.chequeNumber}}
+                            </span>
+                        </div>
+                        <div class="text-base flex flex-row justify-center items-start">
+                            <img class="inline-block w-16 items-center content-center"
+                                src="../../../../../../assets/images/financial/banks/{{chequeInfo.bankUrl}}">
+                        </div>
+                        <div class="text-base flex flex-col justify-start items-end">
+                            <div class="flex flex-row justify-end items-start pt-2">
+
+                                <div style=" font-family: 'Yekan'" class="  grid grid-cols-8 h-6 w-36 font-bold">
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year1">{{chequeInfo.chequeLocalDateClean.substring(0,
+                                            1)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year2">{{chequeInfo.chequeLocalDateClean.substring(1,
+                                            2)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year3">{{chequeInfo.chequeLocalDateClean.substring(2,
+                                            3)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="year4">{{chequeInfo.chequeLocalDateClean.substring(3,
+                                            4)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="month1">{{chequeInfo.chequeLocalDateClean.substring(4,
+                                            5)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="month2">{{chequeInfo.chequeLocalDateClean.substring(5,
+                                            6)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="day1">{{chequeInfo.chequeLocalDateClean.substring(6,
+                                            7)}}</span>
+                                    </div>
+                                    <div
+                                        class=" border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                        <span id="day2">{{chequeInfo.chequeLocalDateClean.substring(7,
+                                            8)}}</span>
+                                    </div>
+                                </div>
+                                <div class="pt-1.5 pl-2 flex flex-row justify-end items-start"
+                                    style="font-family: 'IranNastaliq'">
+                                    <span>
+                                        تاریخ
+                                    </span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div style="direction: rtl;" class="flex flex-row justify-start items-start pt-4">
+                        <div class="pl-1.5" style="font-family: 'IranNastaliq';">
+                            <span>
+                                تاریخ به تمام حروف:
+                            </span>
+                        </div>
+                        <div class="font-bold" style="font-family: 'Yekan';">
+                            <span>
+                                {{chequeInfo.chequeLocalDateClean.substring(6, 8) |
+                                numberToPersian}}
+                                {{chequeInfo.chequeLocalDateClean.substring(4, 6) |
+                                persianMonthName}}
+                                {{chequeInfo.chequeLocalDateClean.substring(0, 4) |
+                                numberToPersian}}
+                            </span>
+
+                        </div>
+                    </div>
+                    <div class="text-xl h-16 flex flex-row pt-5" style="direction:rtl;">
+                        <span class="w-48 pl-4 pt-3" style="font-family: 'IranNastaliq';">
+                            به موجب این چک مبلغ (به حروف)
+                        </span>
+                        <span style="font-family: 'Yekan';width: 27rem;"
+                            class="ml-4 h-8 text-lg border-solid border-b border-gray-300">
+                            {{chequeInfo.amount | numberToPersian}}
+                        </span>
+                        <span class="pt-3" style="font-family: 'IranNastaliq';">
+                            ریال
+                        </span>
+                    </div>
+                    <div class="h-20 text-xl flex flex-row justify-start items-center"
+                        style="font-family: 'IranNastaliq';direction:rtl;">
+                        <span class="pl-4 w-16">
+                            در وجه
+                        </span>
+                        <span style="font-family: 'Yekan';" class="ml-6 w-44 border-solid border-b border-gray-300">
+                        </span>
+                        <div class="flex flex-col text-base items-center w-32">
+                            <span
+                                class="border-solid border-b border-gray-300 w-full flex flex-col items-center justify-end h-6">
+                                به شماره ملی
+                            </span>
+                            <span
+                                class="border-solid border-b border-gray-300 w-full flex flex-col items-center justify-end h-6">
+                                به شناسه ملی
+                            </span>
+                            <span class="w-full flex flex-col items-center justify-end h-6">
+                                به شماره اختصاصی اتباع خارجی
+                            </span>
+                        </div>
+                        <span style="font-family: 'Yekan';"
+                            class="ml-4 mr-6 border-solid border-b border-gray-300 w-28">
+                        </span>
+                        <span class="w-28">
+                            یا به حواله کرد بپردازید.
+                        </span>
+                    </div>
+                    <div class="h-16 text-xl flex flex-col justify-start items-end"
+                        style="font-family: 'IranNastaliq';direction:rtl;">
+                        <span>
+                            (مبلغ به عدد) ریال
+                        </span>
+                        <div style="direction: ltr; font-family: 'Yekan';">
+                            <mat-label appearance="legacy" class="w-full text-lg border-solid border-b border-gray-300"
+                                style="font-family: 'Yekan';">
+                                {{chequeInfo.amount|number:'1.0-5'}}
+                            </mat-label>
+
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1" style="font-family: 'IranNastaliq';">
+                        <img class="inline-block w-26 h-10 items-center content-center"
+                            src="../../../../../../assets/images/financial/chakavak.png" />
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+    </div>
+    <!-- Actions -->
+
+
+</div>

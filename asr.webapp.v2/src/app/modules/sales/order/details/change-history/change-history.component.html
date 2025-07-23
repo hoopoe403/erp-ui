@@ -1,0 +1,52 @@
+<div class="w-full max-w-3xl">
+
+    <!-- Form -->
+    <form [formGroup]="changeHistoryForm">
+
+        <!-- Section -->
+        <div class="w-full">
+            <div class="text-secondary">You can see history of the order</div>
+        </div>
+
+        <!-- Divider -->
+        <div class="my-10 border-t"></div>
+
+
+        <div class="bg-card py-3 px-6 rounded shadow">
+            <div class="grid">
+                <!-- Header -->
+                <div class="status-grid z-10 sticky top-0 grid gap-4 py-4 px-2 text-md font-semibold text-secondary"
+                    matSort matSortDisableClear>
+                    <div>
+                        Status
+                    </div>
+                    <div>Date</div>
+                    <div>
+                        User
+                    </div>
+                </div>
+                <!-- Rows -->
+                <ng-container>
+                    <ng-container *ngFor="let status of statusHistory">
+                        <div class="status-grid grid items-center gap-4 py-3 px-2 border-b">
+                            <div class="hidden lg:block print:block">
+                                <p style="width: fit-content;" class="p-1 rounded block truncate text-white"
+                                    [ngClass]="status.statusColour">{{status.statusDesc}}</p>
+
+                            </div>
+                            <div class="truncate">
+                                <p>{{status.localChangeDate}} {{status.localChangeTime}}</p>
+                            </div>
+                            <div class="truncate">
+                                {{status.registerUserName}}
+                            </div>
+                        </div>
+                    </ng-container>
+                </ng-container>
+            </div>
+        </div>
+
+
+    </form>
+
+</div>

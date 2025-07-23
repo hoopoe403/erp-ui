@@ -1,0 +1,870 @@
+<!-- Main -->
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+    <div
+        class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between sm:px-3   bg-card dark:bg-transparent">
+        <!-- Title -->
+
+        <div
+            class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-3 sm:px-10 bg-card dark:bg-transparent">
+            <div class="flex-1 min-w-0">
+                <!-- Breadcrumbs -->
+                <div class="flex flex-wrap items-center font-medium">
+                    <div>
+                        <a>Transactions</a>
+                    </div>
+                    <div class="flex items-center ml-1 whitespace-nowrap">
+                        <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'">
+                        </mat-icon>
+                        <a *ngIf="pageType==='new'" [routerLink]="['../list']" style="cursor: pointer;"
+                            class="whitespace-nowrap text-primary-500">Expenses</a>
+                        <a *ngIf="pageType==='edit'" [routerLink]="['../../list']" style="cursor: pointer;"
+                            class="whitespace-nowrap text-primary-500">Expenses</a>
+                    </div>
+                </div>
+                <!-- Title -->
+                <div class="min-h-10">
+                    <h2 class="text-base md:text-base font-extrabold tracking-tight leading-7 sm:leading-10 truncate">
+                        {{titleInfo}}
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+
+    </div>
+
+
+    <ng-container>
+        <div class="flex-auto px-6 py-3" fuseScrollbar #scrollContainer id="scrollDiv">
+
+            <mat-tab-group #tabGroup fxLayout="column" fxFlex>
+                <mat-tab label="Information">
+                    <form [formGroup]="frmExpense"
+                        class="flex rounded-b-md rounded-tr-md flex-col px-8 py-4 bg-card shadow">
+                        <div class="h-2">
+                            <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+                        </div>
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+                            <div class="w-1/2 px-3">
+                                <mat-form-field appearance="outline"
+                                    [ngClass]="{'w-full':selectedPaymentType != '1001063' || expenseInfo.payerBankAccountTypeId != 1001541}"
+                                    class=" w-9/12">
+                                    <mat-label>Payment Type</mat-label>
+                                    <mat-select required formControlName="paymentType">
+                                        <mat-option (onSelectionChange)="setPaymentType($event)"
+                                            *ngFor="let item of paymentTypes" [value]="item.key">
+                                            {{item.value}}
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                                <mat-form-field
+                                    *ngIf="selectedPaymentType =='1001063' && expenseInfo.payerBankAccountTypeId == 1001541 "
+                                    appearance="outline" class="w-3/12">
+                                    <mat-label>Cheque Type</mat-label>
+                                    <mat-select required formControlName="chequeType">
+                                        <mat-option *ngFor="let item of chequeTypes" [value]="item.chequeTypeId">
+                                            {{item.chequeTypeName}}
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </div>
+                            <div class="w-1/2 px-3">
+                                <mat-form-field appearance="outline" class="w-full">
+                                    <mat-label>Description</mat-label>
+                                    <textarea matInput cdkTextareaAutosize cdkAutosizeMinRows="1" cdkAutosizeMaxRows="5"
+                                        class="h-4" spellcheck="false" formControlName="description" matInput
+                                        maxlength="100"></textarea>
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+                        <div class="flex md:flex-row flex-col w-full">
+                            <mat-form-field class="md:w-1/2 w-full px-3" appearance="outline">
+                                <mat-label>Payer</mat-label>
+                                <input spellcheck="false" required type=" text" placeholder="Pick a Payer"
+                                    aria-label="Number" matInput [formControl]="payerControl" [matAutocomplete]="auto">
+                                <mat-autocomplete required autoActiveFirstOption #auto="matAutocomplete">
+                                    <mat-option (onSelectionChange)="setPayer($event)"
+                                        *ngFor="let option of payerFilteredOptions | async" [value]="option.ownerName">
+                                        {{option.ownerName}}
+                                    </mat-option>
+                                </mat-autocomplete>
+                                <mat-error *ngIf="payerControl.hasError('forbiddenNames')">
+                                    You should enter value from suggested one only.
+                                    <strong>'{{payerControl.errors.forbiddenNames.value}}'</strong> is not allowed.
+                                </mat-error>
+                                <mat-error *ngIf="payerControl.hasError('required')">
+                                    Payer is required
+                                </mat-error>
+                            </mat-form-field>
+
+                            <div class="md:w-1/2 w-full px-3 flex flex-row">
+
+                                <mat-form-field appearance="outline" class="w-full">
+                                    <mat-label>Payer Financial Resource</mat-label>
+                                    <input spellcheck="false" type=" text" placeholder="Pick a Financial Resource"
+                                        aria-label="Number" matInput [formControl]="payerFinancialResourceControl"
+                                        [matAutocomplete]="autoPayFinRsc" required>
+                                    <mat-autocomplete required autoActiveFirstOption #autoPayFinRsc="matAutocomplete">
+                                        <mat-option (onSelectionChange)="changePayerFinancialResource($event)"
+                                            *ngFor="let option of payerFinancialResourceFilteredOptions | async"
+                                            [value]="option.drpName">
+                                            {{option.drpName}}
+                                        </mat-option>
+                                    </mat-autocomplete>
+                                    <mat-error *ngIf="payerFinancialResourceControl.hasError('forbiddenNames')">
+                                        You should enter value from suggested one only.
+                                        <strong>'{{payerFinancialResourceControl.errors.forbiddenNames.value}}'</strong>
+                                        is not
+                                        allowed.
+                                    </mat-error>
+
+                                </mat-form-field>
+                            </div>
+
+                        </div>
+
+                        <div class="flex flex-col md:flex-row  w-full items-center flex-wrap content-center">
+                            <div class="md:w-1/2 w-full px-3 flex flex-row">
+                                <div style="width: 5%;" class="pt-5">
+                                    <mat-checkbox matTooltip="{{hasRecipientPlaceholder}}"
+                                        (change)="changeHasRecipient($event)" matPrefix formControlName="hasRecipient">
+                                    </mat-checkbox>
+                                </div>
+                                <mat-form-field appearance="outline" style="width: 95%;">
+                                    <mat-label>Recipient</mat-label>
+                                    <input spellcheck="false" type=" text" placeholder="Pick a Recipient"
+                                        aria-label="Number" matInput [formControl]="recipientControl"
+                                        [matAutocomplete]="autoRec" required>
+                                    <mat-autocomplete required autoActiveFirstOption #autoRec="matAutocomplete">
+                                        <mat-option (onSelectionChange)="setRecipient($event)"
+                                            *ngFor="let option of recipientFilteredOptions | async"
+                                            [value]="option.ownerName">
+                                            {{option.ownerName}}
+                                        </mat-option>
+                                    </mat-autocomplete>
+                                    <mat-error *ngIf="recipientControl.hasError('forbiddenNames')">
+                                        You should enter value from suggested one only.
+                                        <strong>'{{recipientControl.errors.forbiddenNames.value}}'</strong> is not
+                                        allowed.
+                                    </mat-error>
+
+                                </mat-form-field>
+                            </div>
+                            <div class="md:w-1/2 w-full px-3 flex flex-row">
+
+                                <mat-form-field appearance="outline" class="w-full">
+                                    <mat-label>Recipient Financial Resource</mat-label>
+                                    <input spellcheck="false" type=" text" placeholder="Pick a Financial Resource"
+                                        aria-label="Number" matInput [formControl]="recipientFinancialResourceControl"
+                                        [matAutocomplete]="autoRecFinRsc" required>
+                                    <mat-autocomplete required autoActiveFirstOption #autoRecFinRsc="matAutocomplete">
+                                        <mat-option
+                                            *ngFor="let option of recipientFinancialResourceFilteredOptions | async"
+                                            [value]="option.drpName">
+                                            {{option.drpName}}
+                                        </mat-option>
+                                    </mat-autocomplete>
+                                    <mat-error *ngIf="recipientFinancialResourceControl.hasError('forbiddenNames')">
+                                        You should enter value from suggested one only.
+                                        <strong>'{{recipientFinancialResourceControl.errors.forbiddenNames.value}}'</strong>
+                                        is not
+                                        allowed.
+                                    </mat-error>
+
+                                </mat-form-field>
+                            </div>
+
+
+                        </div>
+                        <div class="px-3">
+                            <ng-container>
+                                <div
+                                    *ngIf="selectedPaymentType == '1001061' && financialResourceDetailInfo.financialResourceId!=0">
+                                    <div *ngIf="financialResourceDetails$.length>0; else noCheques"
+                                        class="border rounded-xl p-4">
+                                        <div class="flex flex-col" *ngFor="let item of financialResourceDetails$;">
+                                            <div class="grid grid-cols-3 pl-20">
+                                                <div style="direction: rtl; font-family: 'Yekan'"
+                                                    class="text-lg flex flex-row justify-end font-bold">
+                                                    <span>موجودی</span>
+                                                    <span>&nbsp;&nbsp;&nbsp;</span>
+                                                    <span>{{item.balance | number:'1.0-5'}}</span>
+                                                    <span>&nbsp;&nbsp;</span>
+                                                    <span>ریال</span>
+                                                </div>
+                                                <div class="text-base flex flex-row justify-center items-start">
+                                                    <img *ngIf="selectedPayerFinancialResourceTypeId == 1001051"
+                                                        class="inline-block w-20 items-center content-center"
+                                                        src="../../../../../../assets/images/financial/banks/{{item.url}}">
+                                                    <mat-form-field
+                                                        *ngIf="selectedPayerFinancialResourceTypeId == 1001052"
+                                                        appearance="legacy" class="w-20 h-20 px-3">
+                                                        <mat-select (value)="1001082" required formControlName="bank">
+                                                            <mat-select-trigger>
+                                                                <img *ngIf="selectedBankUrl != ''"
+                                                                    class="inline-block w-8 items-center content-center"
+                                                                    src="../../../../../../assets/images/financial/banks/{{selectedBankUrl}}" />
+                                                            </mat-select-trigger>
+                                                            <mat-option (onSelectionChange)="setBank($event)"
+                                                                *ngFor="let item of banks" [value]="item.bankId">
+                                                                <img class="inline-block w-8 items-center content-center"
+                                                                    src="../../../../../../assets/images/financial/banks/{{item.url}}">
+                                                            </mat-option>
+                                                        </mat-select>
+                                                    </mat-form-field>
+                                                </div>
+                                                <div class="text-base flex flex-col justify-start items-end">
+                                                    <div class="flex flex-row justify-end items-start pt-1">
+
+                                                        <div style=" font-family: 'Yekan'"
+                                                            class=" cursor-pointer grid grid-cols-8 h-6 w-36 font-bold">
+                                                            <div
+                                                                class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                                <span id="year1"></span>
+                                                            </div>
+                                                            <div
+                                                                class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                                <span id="year2"></span>
+                                                            </div>
+                                                            <div
+                                                                class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                                <span id="year3"></span>
+                                                            </div>
+                                                            <div
+                                                                class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                                <span id="year4"></span>
+                                                            </div>
+                                                            <div
+                                                                class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                                <span id="month1"></span>
+                                                            </div>
+                                                            <div
+                                                                class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                                <span id="month2"></span>
+                                                            </div>
+                                                            <div
+                                                                class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                                <span id="day1"></span>
+                                                            </div>
+                                                            <div
+                                                                class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                                <span id="day2"></span>
+                                                            </div>
+                                                        </div>
+                                                        <ngx-jdatepicker format="jYYYYjMMjD"
+                                                            (onChange)="onDateChange($event)" class="absolute"
+                                                            formControlName="jdatepicker" dir="rtl"
+                                                            [(ngModel)]="dateObject" mode="day" theme="dp-material">
+                                                        </ngx-jdatepicker>
+                                                        <div class="pt-1.5 pl-2 flex flex-row justify-end items-start"
+                                                            style="font-family: 'Yekan'">
+                                                            <span>
+                                                                تاریخ
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="h-20  text-lg flex flex-row justify-start items-end"
+                                                style="font-family: 'Yekan';direction:rtl;">
+                                                <span>
+                                                    مبلغ: (به عدد)
+                                                </span>
+                                                <div style="direction: ltr; font-family: 'Yekan';">
+                                                    <input class="text-lg border-solid border-b border-gray-300"
+                                                        formControlName="amount"
+                                                        (keyup)="processPrice($event.target.value)">
+                                                </div>
+                                                <span class="mx-3">
+                                                    ریال (به حروف)
+                                                </span>
+                                                <span style="font-family: 'Yekan';width: 54%;"
+                                                    class="ml-4 text-lg border-solid border-b border-gray-300">
+                                                    {{price | numberToPersian}}
+                                                </span>
+                                                <span class="pt-3" style="font-family: 'Yekan';">
+                                                    ریال
+                                                </span>
+                                            </div>
+                                            <div *ngIf="!hideFee"
+                                                class="h-20  text-lg flex flex-row justify-start items-end"
+                                                style="font-family: 'Yekan';direction:rtl;">
+                                                <span>
+                                                    کارمزد: (به عدد)
+                                                </span>
+                                                <div style="direction: ltr; font-family: 'Yekan';">
+                                                    <input class="text-lg border-solid border-b border-gray-300"
+                                                        formControlName="fee" (keyup)="processFee($event.target.value)">
+                                                </div>
+                                                <span class="mx-3">
+                                                    ریال (به حروف)
+                                                </span>
+                                                <span style="font-family: 'Yekan';width: 20%;"
+                                                    class="ml-4 text-lg border-solid border-b border-gray-300">
+                                                    {{fee | numberToPersian}}
+                                                </span>
+                                                <span class="pt-3" style="font-family: 'Yekan';">
+                                                    ریال
+                                                </span>
+                                            </div>
+                                            <div class="h-20 mb-20 text-lg flex flex-row justify-start items-end"
+                                                style="font-family: 'Yekan';direction:rtl;">
+                                                <span>
+                                                    شناسه قبض
+                                                </span>
+                                                <div style="direction: ltr; font-family: 'Yekan';">
+                                                    <input class="text-lg border-solid border-b border-gray-300"
+                                                        formControlName="billId">
+                                                </div>
+                                                <span class="mr-12">
+                                                    شناسه پرداخت
+                                                </span>
+                                                <div style="direction: ltr; font-family: 'Yekan';">
+                                                    <input class="text-lg border-solid border-b border-gray-300"
+                                                        formControlName="paymentId">
+                                                </div>
+                                                <span class="mr-12">
+                                                    شماره پیگیری
+                                                </span>
+                                                <div style="direction: ltr; font-family: 'Yekan';">
+                                                    <input class="text-lg border-solid border-b border-gray-300"
+                                                        formControlName="trackingId">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div
+                                    *ngIf="selectedPaymentType === '1001062' && financialResourceDetailInfo.financialResourceId!==0">
+
+                                    <div *ngIf="financialResourceDetails$.length>0; else noCheques"
+                                        class="border rounded-xl py-8 ">
+                                        <div
+                                            class=" left-0 grid grid-flow-row auto-rows-fr lg:grid-flow-col lg:auto-cols-fr lg:max-w-none divide-y lg:divide-y-0 lg:divide-x shadow-lg lg:shadow-none border-r lg:border-r-0 bg-card rounded-l lg:rounded-l-none">
+                                            <div class="flex flex-col" *ngFor="let item of financialResourceDetails$;">
+                                                <div class="flex flex-col justify-center p-4 pt-3 ">
+                                                    <div class="text-xl lg:text-2xl font-medium">
+                                                        <span *ngIf="item.currencyId===1000481">ریال</span>
+                                                        <mat-icon *ngIf="item.currencyId===1000482"
+                                                            svgIcon="heroicons_solid:currency-dollar"></mat-icon>
+                                                        <mat-icon *ngIf="item.currencyId===1000483"
+                                                            svgIcon="heroicons_solid:currency-euro"></mat-icon>
+                                                    </div>
+                                                    <div class="text-xl lg:text-2xl font-medium">
+                                                        Cash-{{item.currencyName}}</div>
+                                                    <div class="flex items-baseline lg:mt-4 whitespace-nowrap">
+
+                                                        <div class="text-xl lg:text-xl font-bold tracking-tight">
+                                                            <ng-container>
+                                                                {{item.balance| number:'1.0-5'}}
+                                                                {{item.currencyAbbreviation}}
+                                                            </ng-container>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mt-1 lg:mt-3 text-sm lg:text-base text-secondary">
+                                                        <ng-container>
+                                                            <div>Payable</div>
+                                                            <div><b>{{item.balance | number:'1.0-5'}}</b>
+                                                                {{item.currencyAbbreviation}}</div>
+                                                        </ng-container>
+                                                    </div>
+                                                    <div class="h-11 mt-1 lg:mt-3 text-sm lg:text-base text-secondary">
+                                                        <ng-container
+                                                            *ngIf="expenseInfo.payerFinancialResourceDetailId === item.financialResourceDetailId">
+                                                            <div [@fadeIn]="animationStates.fadeIn.in"
+                                                                [@fadeOut]="animationStates.fadeOut.out"
+                                                                class="max-w-xs">
+                                                                <mat-form-field appearance="outline" class="w-full">
+                                                                    <mat-label>Amount</mat-label>
+                                                                    <input (keyup)="processPrice($event.target.value)"
+                                                                        [autocomplete]="'off'" matInput value=""
+                                                                        formControlName="amount" maxlength="50">
+                                                                    <span matSuffix
+                                                                        *ngIf="item.currencyId===1000481">ریال</span>
+                                                                    <mat-icon matSuffix
+                                                                        *ngIf="item.currencyId===1000482"
+                                                                        svgIcon="heroicons_solid:currency-dollar">
+                                                                    </mat-icon>
+                                                                    <mat-icon matSuffix
+                                                                        *ngIf="item.currencyId===1000483"
+                                                                        svgIcon="heroicons_solid:currency-euro">
+                                                                    </mat-icon>
+                                                                </mat-form-field>
+                                                            </div>
+                                                        </ng-container>
+                                                    </div>
+                                                    <button
+                                                        *ngIf="expenseInfo.payerFinancialResourceDetailId !== item.financialResourceDetailId"
+                                                        (click)="selectFinancialDetail(item.financialResourceDetailId)"
+                                                        class="max-w-xs w-full min-h-8 h-8 lg:min-h-10 lg:h-10 mt-3 lg:mt-6"
+                                                        mat-stroked-button [color]="'primary'">
+                                                        <span>Select</span>
+                                                    </button>
+                                                    <button
+                                                        *ngIf="expenseInfo.payerFinancialResourceDetailId === item.financialResourceDetailId"
+                                                        class="max-w-xs w-full min-h-8 h-8 lg:min-h-10 lg:h-10 mt-3 lg:mt-6"
+                                                        (click)="deselectFinancialDetail()" mat-raised-button
+                                                        [color]="'primary'">
+                                                        <span>Deselect</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <div *ngIf="selectedPaymentType === '1001063' && expenseInfo.payerBankAccountTypeId == 1001541 
+                                && expenseInfo.payerFinancialResourceTypeId == 1001051">
+                                    <div class="shadow-2xl border-solid border-2 w-full px-10 py-4">
+                                        <div class="grid grid-cols-3 h-14">
+                                            <div class="text-sm flex flex-row justify-start font-bold">
+                                                <img class="inline-block w-14 h-14 items-center content-center"
+                                                    src="../../../../../../assets/images/financial/cheque-qr-code.png" />
+                                                <mat-form-field appearance="legacy" class="w-44 h-10 px-3"
+                                                    style="font-family: 'Yekan';">
+                                                    <input autocomplete="off" required formControlName="chequeNumber"
+                                                        matInput>
+                                                </mat-form-field>
+                                            </div>
+                                            <div class="text-base flex flex-row justify-center items-start">
+                                                <img *ngIf="selectedBankUrl != ''"
+                                                    class="inline-block w-8 items-center content-center"
+                                                    src="../../../../../../assets/images/financial/banks/{{selectedBankUrl}}" />
+                                            </div>
+                                            <div class="text-base flex flex-col justify-start items-end">
+                                                <div class="flex flex-row justify-end items-start pt-5">
+
+                                                    <div style=" font-family: 'Yekan'"
+                                                        class=" cursor-pointer grid grid-cols-8 h-6 w-36 font-bold">
+                                                        <div
+                                                            class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                            <span id="year1"></span>
+                                                        </div>
+                                                        <div
+                                                            class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                            <span id="year2"></span>
+                                                        </div>
+                                                        <div
+                                                            class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                            <span id="year3"></span>
+                                                        </div>
+                                                        <div
+                                                            class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                            <span id="year4"></span>
+                                                        </div>
+                                                        <div
+                                                            class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                            <span id="month1"></span>
+                                                        </div>
+                                                        <div
+                                                            class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                            <span id="month2"></span>
+                                                        </div>
+                                                        <div
+                                                            class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                            <span id="day1"></span>
+                                                        </div>
+                                                        <div
+                                                            class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                            <span id="day2"></span>
+                                                        </div>
+                                                    </div>
+                                                    <ngx-jdatepicker format="jYYYYjMMjD"
+                                                        (onChange)="onDateChange($event)" class="absolute"
+                                                        formControlName="jdatepicker" dir="rtl" [(ngModel)]="dateObject"
+                                                        mode="day" theme="dp-material">
+                                                    </ngx-jdatepicker>
+                                                    <div class="pt-1.5 pl-2 flex flex-row justify-end items-start"
+                                                        style="font-family: 'IranNastaliq'">
+                                                        <span>
+                                                            تاریخ
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                        <div style="direction: rtl;"
+                                            class="flex flex-row justify-start items-start pt-4">
+                                            <div class="pl-1.5" style="font-family: 'IranNastaliq';">
+                                                <span>
+                                                    تاریخ به تمام حروف:
+                                                </span>
+                                            </div>
+                                            <div class="font-bold" style="font-family: 'Yekan';">
+                                                <span>
+                                                    {{day | numberToPersian}}
+                                                    {{month | persianMonthName}}
+                                                    {{year | numberToPersian}}
+                                                </span>
+
+                                            </div>
+                                        </div>
+                                        <div class="text-2xl h-16 flex flex-row pt-8" style="direction:rtl;">
+                                            <span class="pl-4 pt-3" style="font-family: 'IranNastaliq';">
+                                                به موجب این چک مبلغ (به حروف)
+                                            </span>
+                                            <span style="font-family: 'Yekan';width: 74%;"
+                                                class="ml-4 text-xl border-solid border-b border-gray-300">
+                                                {{price | numberToPersian}}
+                                            </span>
+                                            <span class="pt-3" style="font-family: 'IranNastaliq';">
+                                                ریال
+                                            </span>
+                                        </div>
+                                        <div class="h-32 text-2xl flex flex-row justify-start items-center"
+                                            style="font-family: 'IranNastaliq';direction:rtl;">
+                                            <span class="pl-4">
+                                                در وجه
+                                            </span>
+                                            <span style="font-family: 'Yekan';width: 43%;"
+                                                class="ml-6 border-solid border-b border-gray-300">
+                                            </span>
+                                            <div class="flex flex-col text-base items-center">
+                                                <span
+                                                    class="border-solid border-b border-gray-300 w-full flex flex-col items-center">
+                                                    به شماره ملی
+                                                </span>
+                                                <span
+                                                    class="border-solid border-b border-gray-300 w-full flex flex-col items-center">
+                                                    به شناسه ملی
+                                                </span>
+                                                <span class="w-full flex flex-col items-center">
+                                                    به شماره اختصاصی اتباع خارجی
+                                                </span>
+                                            </div>
+                                            <span style="font-family: 'Yekan';width: 25%;"
+                                                class="ml-4 mr-6 border-solid border-b border-gray-300">
+                                            </span>
+                                            <span>
+                                                یا به حواله کرد بپردازید.
+                                            </span>
+                                        </div>
+                                        <div class="h-20 text-2xl flex flex-col justify-start items-end"
+                                            style="font-family: 'IranNastaliq';direction:rtl;">
+                                            <span>
+                                                (مبلغ به عدد) ریال
+                                            </span>
+                                            <div style="direction: ltr; font-family: 'Yekan';">
+                                                <input class="text-xl border-solid border-b border-gray-300"
+                                                    formControlName="amount"
+                                                    (keyup)="processPrice($event.target.value)">
+                                            </div>
+                                        </div>
+                                        <div class="grid grid-cols-1" style="font-family: 'IranNastaliq';">
+                                            <img class="inline-block w-32 h-14 items-center content-center"
+                                                src="../../../../../../assets/images/financial/chakavak.png" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div *ngIf="selectedPaymentType === '1001063' && expenseInfo.payerBankAccountTypeId == 0 
+                                    && expenseInfo.payerFinancialResourceTypeId == 1001052
+                                    && financialResourceDetailInfo.financialResourceId!==0">
+                                    <div class="mb-2 mt-5">
+                                        <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
+                                            <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                                            <input [disabled]="selectButtonText==='Deselect'"
+                                                (keyup)="applyFilterOnFinancialResourceDetail($event.target.value)"
+                                                matInput [autocomplete]="'off'" [placeholder]="'Search'">
+                                            <mat-icon matPostfix (click)="financialResourceDtAdvancedSearch.toggle()"
+                                                matTooltip="Advanced Search" class="cursor-pointer">
+                                                settings
+                                            </mat-icon>
+                                        </mat-form-field>
+                                    </div>
+                                    <div *ngIf="financialResourceDetails$.length>0; else noCheques"
+                                        class="border rounded-xl pr-12 py-8">
+                                        <div class="flex flex-row pl-4" *ngFor="let item of financialResourceDetails$;">
+                                            <div
+                                                class="rounded-l-xl w-48 bg-gray-100 px-10 py-4 mb-5 flex items-center">
+                                                <button
+                                                    *ngIf="item.chequeStatus != 1000061 && expenseInfo.payerFinancialResourceDetailId !== item.financialResourceDetailId"
+                                                    (click)="selectFinancialDetail(item.financialResourceDetailId)"
+                                                    class="w-24 min-h-8 h-8 lg:min-h-10 lg:h-10 mt-3 lg:mt-6"
+                                                    mat-stroked-button [color]="'primary'">
+                                                    <span class="hidden lg:inline-flex">Select</span>
+                                                </button>
+                                                <button
+                                                    *ngIf="expenseInfo.payerFinancialResourceDetailId === item.financialResourceDetailId"
+                                                    class="w-24 min-h-8 h-8 lg:min-h-10 lg:h-10 mt-3 lg:mt-6"
+                                                    (click)="deselectFinancialDetail()" mat-raised-button
+                                                    [color]="'primary'">
+                                                    <span class="hidden lg:inline-flex">Deselect</span>
+                                                </button>
+                                                <div class="w-24 min-h-8 h-8 lg:min-h-10 lg:h-10 mt-3 lg:mt-6 text-white bg-red-600 rounded-3xl text-center py-2"
+                                                    *ngIf="item.chequeStatus == 1000061  && expenseInfo.payerFinancialResourceDetailId !== item.financialResourceDetailId">
+                                                    <span
+                                                        class="hidden lg:inline-flex">{{item.chequeStatusDescription}}</span>
+                                                </div>
+                                            </div>
+                                            <div class="rounded-r-xl w-full border-solid border-2 px-10 py-4 mb-5">
+                                                <div class="grid grid-cols-3 h-10">
+                                                    <div class="text-sm flex flex-row justify-start h-6 font-bold">
+                                                        <img class="inline-block w-10 h-10 items-center content-center"
+                                                            src="../../../../../../assets/images/financial/cheque-qr-code.png" />
+                                                        <span
+                                                            class="w-36  px-3 text-sm pt-2 border-solid border-b border-gray-300"
+                                                            style="font-family: 'Yekan';">
+                                                            {{item.chequeNumber}}
+                                                        </span>
+                                                    </div>
+                                                    <div class="text-base flex flex-row justify-center items-start">
+                                                        <img class="inline-block w-8 items-center content-center"
+                                                            src="../../../../../../assets/images/financial/banks/{{item.url}}">
+                                                    </div>
+                                                    <div class="text-sm flex flex-col justify-start items-end">
+                                                        <div class="flex flex-row justify-end items-start pt-2">
+
+                                                            <div style=" font-family: 'Yekan'"
+                                                                class="grid grid-cols-8 h-5 w-32 font-bold">
+                                                                <div
+                                                                    class="border-solid border border-gray-400 flex flex-row justify-center items-center">
+                                                                    <span
+                                                                        id="year1">{{item.chequeLocalDateClean.substring(0,
+                                                                        1)}}</span>
+                                                                </div>
+                                                                <div
+                                                                    class=" border-solid border border-gray-400 flex flex-row justify-center items-center">
+                                                                    <span
+                                                                        id="year2">{{item.chequeLocalDateClean.substring(1,
+                                                                        2)}}</span>
+                                                                </div>
+                                                                <div
+                                                                    class="border-solid border border-gray-400 flex flex-row justify-center items-center">
+                                                                    <span
+                                                                        id="year3">{{item.chequeLocalDateClean.substring(2,
+                                                                        3)}}</span>
+                                                                </div>
+                                                                <div
+                                                                    class="border-solid border border-gray-400 flex flex-row justify-center items-center">
+                                                                    <span
+                                                                        id="year4">{{item.chequeLocalDateClean.substring(3,
+                                                                        4)}}</span>
+                                                                </div>
+                                                                <div
+                                                                    class="border-solid border border-gray-400 flex flex-row justify-center items-center">
+                                                                    <span
+                                                                        id="month1">{{item.chequeLocalDateClean.substring(4,
+                                                                        5)}}</span>
+                                                                </div>
+                                                                <div
+                                                                    class="border-solid border border-gray-400 flex flex-row justify-center items-center">
+                                                                    <span
+                                                                        id="month2">{{item.chequeLocalDateClean.substring(5,
+                                                                        6)}}</span>
+                                                                </div>
+                                                                <div
+                                                                    class="border-solid border border-gray-400 flex flex-row justify-center items-center">
+                                                                    <span
+                                                                        id="day1">{{item.chequeLocalDateClean.substring(6,
+                                                                        7)}}</span>
+                                                                </div>
+                                                                <div
+                                                                    class="border-solid border border-gray-400 flex flex-row justify-center items-center">
+                                                                    <span
+                                                                        id="day2">{{item.chequeLocalDateClean.substring(7,
+                                                                        8)}}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="pt-1.5 pl-2 flex flex-row justify-end items-start"
+                                                                style="font-family: 'IranNastaliq'">
+                                                                <span>
+                                                                    تاریخ
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                                <div style="direction: rtl;"
+                                                    class="flex flex-row justify-start items-start">
+                                                    <div class="pl-1.5" style="font-family: 'IranNastaliq';">
+                                                        <span>
+                                                            تاریخ به تمام حروف:
+                                                        </span>
+                                                    </div>
+                                                    <div class="font-bold" style="font-family: 'Yekan';">
+                                                        <span>
+                                                            {{item.chequeLocalDateClean.substring(6, 8) |
+                                                            numberToPersian}}
+                                                            {{item.chequeLocalDateClean.substring(4, 6) |
+                                                            persianMonthName}}
+                                                            {{item.chequeLocalDateClean.substring(0, 4) |
+                                                            numberToPersian}}
+                                                        </span>
+
+                                                    </div>
+                                                </div>
+                                                <div class="text-lg h-16 flex flex-row pt-4" style="direction:rtl;">
+                                                    <span class="pt-3" style="font-family: 'IranNastaliq';width:25%">
+                                                        به موجب این چک مبلغ (به حروف)
+                                                    </span>
+                                                    <span style="font-family: 'Yekan';width: 72%;"
+                                                        class="h-8 ml-4 text-lg border-solid border-b border-gray-300">
+                                                        {{item.balance | numberToPersian}}
+                                                    </span>
+                                                    <span class="pt-3" style="font-family: 'IranNastaliq';width:3%">
+                                                        ریال
+                                                    </span>
+                                                </div>
+                                                <div class="h-12 text-lg flex flex-row justify-center items-center"
+                                                    style="font-family: 'IranNastaliq';direction:rtl;">
+                                                    <span style="width: 6%;">
+                                                        در وجه
+                                                    </span>
+                                                    <span style="font-family: 'Yekan';width: 33%;"
+                                                        class="ml-6 border-solid border-b border-gray-300">
+                                                    </span>
+                                                    <div class="flex flex-col text-base items-center justify-center"
+                                                        style="width: 16%;">
+                                                        <span
+                                                            class="border-solid border-b border-gray-300 w-full flex flex-col items-center">
+                                                            به شماره ملی
+                                                        </span>
+                                                        <span
+                                                            class="border-solid border-b border-gray-300 w-full flex flex-col items-center">
+                                                            به شناسه ملی
+                                                        </span>
+                                                        <span class="w-full flex flex-col items-center">
+                                                            به شماره اختصاصی اتباع خارجی
+                                                        </span>
+                                                    </div>
+                                                    <span style="font-family: 'Yekan';width: 25%;"
+                                                        class="ml-4 mr-6 border-solid border-b border-gray-300">
+                                                    </span>
+                                                    <span style="width: 14%;">
+                                                        یا به حواله کرد بپردازید.
+                                                    </span>
+                                                </div>
+                                                <div class="pt-1 h-14 text-lg flex flex-col justify-start items-end"
+                                                    style="font-family: 'IranNastaliq';direction:rtl;">
+                                                    <span>
+                                                        (مبلغ به عدد) ریال
+                                                    </span>
+                                                    <div style="direction: ltr; font-family: 'Yekan';" class="w-72">
+                                                        <mat-label appearance="legacy"
+                                                            class="w-full text-lg border-solid border-b border-gray-300"
+                                                            style="font-family: 'Yekan';">
+                                                            {{item.balance | number:'1.0-5' }}
+                                                        </mat-label>
+                                                    </div>
+                                                </div>
+                                                <div class="grid grid-cols-1" style="font-family: 'IranNastaliq';">
+                                                    <img class="inline-block w-24 h-8 items-center content-center"
+                                                        src="../../../../../../assets/images/financial/chakavak.png" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="w-full mt-12"
+                                    style="display: flex; align-items: center; place-content: center">
+                                    <button class="mr-1" mat-flat-button color="primary"
+                                        [disabled]="disabledActionBtn || isLoading || (pageType === 'edit' && expenseInfo.status !== 1000007)"
+                                        (click)="save()" matStepperNext>{{pageType ===
+                                        'new'?'Register' : 'Update'}}</button>
+                                    <button class="ml-1" mat-flat-button color="primary"
+                                        [disabled]="disabledActionBtn || isLoading || pageType !=='edit' || expenseInfo.status !== 1000007"
+                                        (click)="confirm()" matStepperNext>Confirm</button>
+                                </div>
+                                <div class="flex items-center flex-wrap content-center w-full py-2">
+                                    <div class="w-auto h-auto min-h-15 m-auto">
+                                        <fuse-alert *ngIf="_result.message" [appearance]="'soft'" [dismissible]=" true"
+                                            [dismissed]="true" [name]="'successMessage'" [type]="'success'">
+                                            <b>Result: </b> {{_result.message}}.
+                                        </fuse-alert>
+                                        <fuse-alert *ngIf="_result.message" [appearance]="'soft'" [dismissible]="true"
+                                            [dismissed]="true" [name]="'errorMessage'" [type]="'error'">
+                                            <b>Result: </b> {{_result.message}}.
+                                        </fuse-alert>
+                                    </div>
+                                </div>
+                            </ng-container>
+                        </div>
+                    </form>
+                </mat-tab>
+            </mat-tab-group>
+        </div>
+    </ng-container>
+    <ng-template #noCheques>
+        <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">There are no Cheques!
+        </div>
+    </ng-template>
+</div>
+
+<fuse-drawer class="w-screen min-w-screen sm:w-80 sm:min-w-80" fixed transparentOverlay
+    [name]="'financialResourceDtAdvancedSearch'" [position]="'left'" #financialResourceDtAdvancedSearch [mode]="'over'">
+    <div class="flex flex-col w-full" fuseScrollbar>
+        <div class="bg-gray-900 relative h-14 max-h-14 z-10 w-full">
+            <div class="inset-y-0 left-0 flex w-1/2">
+                <mat-icon class="mt-4 ml-1 text-white flex-auto" matPrefix [svgIcon]="'heroicons_outline:search'">
+                </mat-icon>
+                <h3 class="ml-2 mt-4 text-white flex-auto "><span>Advanced
+                        Search</span></h3>
+            </div>
+            <div class="inline-block">
+                <mat-icon class="mt-3 mr-2 absolute inset-y-0 right-0 cursor-pointer text-white"
+                    (click)="financialResourceDtAdvancedSearch.toggle()">close
+                </mat-icon>
+            </div>
+        </div>
+
+        <form [formGroup]="frmFinancialResourceDtAdSearch">
+            <div class="pt-8 px-4 pb-4">
+                <div
+                    class="border border-solid border-gray-200 rounded-sm flex flex-initial flex-col relative mb-10 pt-4 px-4 pb-3">
+                    <h2 class="absolute -top-2.5 left-1.5 m-0 px-2 bg-white">Search Fields</h2>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Cheque Number%</mat-label>
+                            <input [autocomplete]="'off'" matInput value="" formControlName="chequeNumber"
+                                maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Bank</mat-label>
+                            <mat-select multiple formControlName="bank">
+                                <mat-option *ngFor="let item of banks" [value]="item.bankId">
+                                    {{item.bankName}}
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Cheque Date</mat-label>
+                            <input [autocomplete]="'off'" matInput value="" formControlName="chequeDate" maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Balance</mat-label>
+                            <input [autocomplete]="'off'" matInput value="" formControlName="balance" maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+
+                </div>
+                <div class="flex flex-row w-full">
+                    <div class="py-2 w-1/2 pl-10 items-center align-middle">
+                        <button mat-raised-button style="color: darkgreen" (click)="applyAdvancedSearch()">Apply
+                        </button>
+                    </div>
+                    <div class="py-2 w-1/2 items-center align-middle">
+                        <button (click)="resetAdSearch()" mat-raised-button style="color: darkred">Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+    </div>
+</fuse-drawer>

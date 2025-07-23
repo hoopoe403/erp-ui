@@ -1,0 +1,462 @@
+<div class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
+
+    <!-- Header -->
+    <div
+        class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4 px-6 md:px-8 border-b">
+        <!-- Loader -->
+        <div class="absolute inset-x-0 bottom-0" *ngIf="isLoading">
+            <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+        </div>
+        <!-- Title -->
+        <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+            <div class="text-4xl font-extrabold tracking-tight">Invoices</div>
+            <div class="cursor-pointer ml-3 mt-2">
+                <button mat-icon-button (click)="changeSearchHistory('previous')" matTooltip="Previous Search"
+                    [disabled]="searchHistorySelectedIndex <=0 || isLoading">
+                    <mat-icon svgIcon="mat_solid:arrow_left"></mat-icon>
+                </button>
+                <button mat-icon-button (click)="changeSearchHistory('next')" matTooltip="Next Search"
+                    [disabled]="searchHistoryList.length <=1|| searchHistoryList.length -1 ==  searchHistorySelectedIndex  || isLoading">
+                    <mat-icon svgIcon="mat_solid:arrow_right"></mat-icon>
+                </button>
+
+            </div>
+        </div>
+        <!-- Actions -->
+        <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+            <!-- Search -->
+
+            <div>
+                <mat-icon class="cursor-pointer" [matMenuTriggerFor]="sortMenu" svgIcon="sort"></mat-icon>
+            </div>
+            <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
+                <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                <input [autocomplete]="'off'" [formControl]="searchInputControl" matInput [autocomplete]="'off'"
+                    [placeholder]="'Search'">
+                <mat-icon matPostfix (click)="invoicesAdvancedSearch.toggle()" matTooltip="Advanced Search"
+                    class="cursor-pointer">
+                    settings
+                </mat-icon>
+            </mat-form-field>
+            <button [matMenuTriggerFor]="moreMenu" class="ml-4" mat-flat-button [color]="'primary'">
+                <mat-icon svgIcon="heroicons_outline:menu"></mat-icon>
+            </button>
+        </div>
+    </div>
+
+    <div class="flex flex-auto overflow-hidden">
+
+        <!-- Products list -->
+        <div class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto" #scrollContainer>
+            <ng-container *ngIf="(combinedInvoices$ | async) as invoices">
+                <ng-container *ngIf="invoices.length > 0; else noInvoices">
+                    <div class="grid" id="section-to-print">
+                        <!-- Header -->
+                        <div [ngClass]="{'accumulative-invoice-fin-cat-month-year-grid2': [1, 2].includes(reportMode), 
+                                         'accumulative-invoice-fin-cat-total-grid': [3].includes(reportMode), 
+                                         'accumulative-invoice-profit-loss-cat-month-year-grid' : [4,5].includes(reportMode),
+                                         'accumulative-invoice-profit-loss-cat-total-grid' : [6].includes(reportMode),
+                                         'invoices-grid' : reportMode == 7 ,'invoices-details-grid' : reportMode == 8 }"
+                            class="z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
+                            matSort matSortDisableClear>
+                            <div *ngIf="reportMode == 8" [mat-sort-header]="'row'">
+                                #
+                            </div>
+                            <div *ngIf="reportMode > 6" [mat-sort-header]="'invoiceNumber'">
+                                Number
+                            </div>
+
+                            <div *ngIf="reportMode == 8" [mat-sort-header]="'item'">
+                                Item
+                            </div>
+
+                            <div *ngIf="reportMode > 6" [mat-sort-header]="'creditorName'">
+                                Creditor
+                            </div>
+                            <div *ngIf="reportMode > 6" [mat-sort-header]="'debtorName'">
+                                Debtor
+                            </div>
+                            <div *ngIf="[1,2,3,7].includes(reportMode)" [mat-sort-header]="'financialCategoryName'">
+                                Financial Category
+                            </div>
+                            <div *ngIf="reportMode <= 7" [mat-sort-header]="'profitLossCategoryName'">
+                                Profit Loss Category
+                            </div>
+                            <div *ngIf="[1, 2,4,5,7,8].includes(reportMode)" [mat-sort-header]="'invoiceLocalDate'">
+                                Date
+                            </div>
+                            <div style="direction: rtl;" class="pr-8 grid justify-items-start print:block"
+                                *ngIf="reportMode == 8" [mat-sort-header]="'rate'">
+                                Rate
+                            </div>
+                            <div style="direction: rtl;" class="pr-8 grid justify-items-start print:block"
+                                *ngIf="reportMode == 8" [mat-sort-header]="'measure'">
+                                Measure
+                            </div>
+                            <div style="direction: rtl;" class="pr-8 grid justify-items-start print:block"
+                                *ngIf="reportMode <= 6" [mat-sort-header]="'invoiceCount'">
+                                Inv. Count
+                            </div>
+                            <div style="direction: rtl;" class="pr-8 grid justify-items-start print:block"
+                                [mat-sort-header]="'total'">
+                                Total
+                            </div>
+                        </div>
+                        <!-- Rows -->
+                        <ng-container *ngIf="(combinedInvoices$ | async) as invoices">
+                            <div *ngFor="let invoice of invoices; trackBy: trackByFn"
+                                (contextmenu)="handleContextMenu($event, invoice)">
+                                <div [ngClass]="{'accumulative-invoice-fin-cat-month-year-grid2': [1, 2].includes(reportMode), 
+                                                 'accumulative-invoice-fin-cat-total-grid': [3].includes(reportMode), 
+                                                 'accumulative-invoice-profit-loss-cat-month-year-grid' : [4,5].includes(reportMode),
+                                                 'accumulative-invoice-profit-loss-cat-total-grid' : [6].includes(reportMode),
+                                                 'invoices-grid' : reportMode == 7 ,'invoices-details-grid' : reportMode == 8 }"
+                                    class="grid items-center gap-4 py-3 px-6 md:px-8 border-b"
+                                    (mouseenter)="hoveredItem = invoice" (mouseleave)="hoveredItem = null"
+                                    [ngStyle]="{'background-color': hoveredItem === invoice ? 'rgb(250 250 250)' : 'rgb(255 255 255)'}">
+                                    <div *ngIf="reportMode == 8" class="text-left print:block">
+                                        {{invoice.rowNumber}}
+                                    </div>
+                                    <div *ngIf="reportMode > 6" class="truncate">
+                                        {{invoice.invoiceNumber}}
+                                    </div>
+
+                                    <div *ngIf="reportMode == 8" class=" print:block">
+                                        {{invoice.itemDesc}}
+                                    </div>
+
+                                    <!-- SKU -->
+                                    <div *ngIf="reportMode > 6" class=" truncate">
+                                        {{invoice.creditorName}}
+                                        <div>
+                                            <div style="background-color: rgb(245 245 245)!important;"
+                                                class="bg-neutral-400 text-xs rounded-sm py-0.5 px-2 inline-block"
+                                                matTooltip="Creditor Type">
+                                                <div *ngIf="invoice.ownerTypeId!==0"
+                                                    class="rounded-3xl w-2 h-2 mr-2 inline-block bg-green-500"></div>
+                                                <div *ngIf="invoice.ownerTypeId===0"
+                                                    class="rounded-3xl w-2 h-2 mr-2 inline-block bg-red-500"></div>
+                                                <div class="inline-block">{{invoice.creditorTypeName}}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+                                    <div *ngIf="reportMode > 6" class=" truncate">
+                                        {{invoice.debtorName}}
+                                        <div>
+                                            <div style="background-color: rgb(245 245 245)!important;"
+                                                class="bg-neutral-400 text-xs rounded-sm py-0.5 px-2 inline-block"
+                                                matTooltip="Debtor Type">
+                                                <div class="rounded-3xl w-2 h-2 mr-2 inline-block bg-green-500"></div>
+                                                <div class="inline-block">{{invoice.debtorTypeName}}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="[1, 2,3,7].includes(reportMode)" class="truncate">
+                                        {{invoice.financialCategoryName}}
+                                    </div>
+                                    <div *ngIf="reportMode<=7" class="truncate">
+                                        {{invoice.profitLossCategoryName}}
+                                    </div>
+                                    <!-- SKU -->
+                                    <div *ngIf="[1, 2,4,5,7,8].includes(reportMode)" class=" truncate">
+                                        {{invoice.invoiceLocalDate}}
+                                    </div>
+                                    <div *ngIf="reportMode == 8" class="pr-8 text-right print:block">
+                                        {{invoice.unitPrice|number:'1.0-5'}}
+                                    </div>
+
+                                    <div *ngIf="reportMode == 8" class="pr-8 text-right print:block">
+                                        {{invoice.measure|number:'1.0-5'}}
+                                    </div>
+                                    <div *ngIf="reportMode<=6" class="pr-8 text-right print:block">
+                                        {{invoice.invoiceCount|number:'1.0-5'}}
+                                    </div>
+                                    <div class="pr-8 text-right print:block">
+                                        {{invoice.total|number:'1.0-5'}}
+                                    </div>
+
+                                </div>
+                            </div>
+                        </ng-container>
+                    </div>
+
+                    <mat-paginator
+                        class="sm:absolute sm:inset-x-0 sm:bottom-0 border-b sm:border-t sm:border-b-0 z-10 bg-gray-50 dark:bg-transparent"
+                        [ngClass]="{'pointer-events-none': isLoading}" [length]="pagination.length"
+                        [pageIndex]="pagination.pageIndex" [pageSize]="pagination.pageSize"
+                        [pageSizeOptions]="[50, 100,200,300,400]" [showFirstLastButtons]="true">
+                    </mat-paginator>
+
+                </ng-container>
+            </ng-container>
+
+        </div>
+    </div>
+    <ng-template #noInvoices>
+        <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">There are no invoices!
+        </div>
+    </ng-template>
+
+</div>
+<mat-menu #infoMenu="matMenu" xPosition="before">
+    <div class="p-2">
+        <h4 class="mb-1 text-gray-900 font-bold text-xl	">{{selectedInfoRow.financialCategoryName}}</h4>
+        <div class="flex flex-col mb-1">
+            <span class="text-gray-400 text-sm">Creator User Name</span>
+            <p>{{selectedInfoRow.registerUserName}}</p>
+        </div>
+        <div class="flex flex-col mb-1">
+            <span class="text-gray-400 text-sm">Creator IP</span>
+            <p class="text-gray-900">{{selectedInfoRow.clientIP}}</p>
+        </div>
+        <div class="flex flex-col mb-1">
+            <span class="text-gray-400 text-sm">Update Date & time</span>
+            <p class="text-gray-900">{{selectedInfoRow.localChangeDate + ' ' + selectedInfoRow.localChangeTime}}</p>
+        </div>
+    </div>
+
+</mat-menu>
+
+<mat-menu #contextMenu="matMenu">
+    <ng-template matMenuContent>
+        <button mat-menu-item [routerLink]="['../details',selectedInfoRow.manualInvoiceId]">View
+        </button>
+    </ng-template>
+</mat-menu>
+
+<mat-menu #moreMenu="matMenu">
+    <ng-template matMenuContent>
+        <button mat-menu-item>
+            <mat-icon svgIcon="mat_outline:file_download"></mat-icon>
+            PDF
+        </button>
+        <button mat-menu-item (click)="exportTable()">
+            <mat-icon svgIcon="mat_outline:file_download"></mat-icon>
+            EXCEL
+        </button>
+    </ng-template>
+</mat-menu>
+
+<mat-menu class="pb-0" #sortMenu="matMenu" xPosition="before">
+    <ng-template matMenuContent class="pb-0">
+        <!-- Wrap with cdkDrop to enable drag-and-drop -->
+        <div cdkDropList [cdkDropListData]="getSortItems()" (cdkDropListDropped)="dropSortList($event)">
+            <div *ngFor="let item of getSortItems(); let i = index" cdkDrag>
+                <div (click)="$event.stopPropagation()"
+                    class="flex justify-between items-center border-b border-gray-200 py-4 px-3 w-64 h-12">
+
+                    <div (click)="$event.stopPropagation();" class="w-full flex justify-between items-center">
+                        <!-- Drag Handle & Text -->
+                        <span (click)="toggleSortChecked(item)" class="cursor-move w-10/12">{{ item.sortItem }}</span>
+                        <!-- Icon on the right, only visible when checked -->
+                        <mat-icon (click)="toggleSortChecked(item)" class="w-2/12 cursor-pointer" *ngIf="item.checked"
+                            svgIcon="feather:check"></mat-icon>
+                        <div *ngIf="item.checked">
+                            <mat-icon (click)="toggleSortOrderType(item)" class="text-xs  cursor-pointer"
+                                svgIcon="heroicons_outline:arrow-sm-up" *ngIf="item.orderType == 'DESC'"></mat-icon>
+                            <mat-icon (click)="toggleSortOrderType(item)" class="text-xs cursor-pointer"
+                                svgIcon="heroicons_outline:arrow-sm-down" *ngIf="item.orderType == 'ASC'"></mat-icon>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-between p-[8px]" (click)="$event.stopPropagation()">
+            <button class="flex-1 border-r border-gray-200 p-3" (click)="resetChanges()">
+                Reset
+            </button>
+            <button class="flex-1 p-3" (click)="invoicesSearch()">
+                Apply
+            </button>
+        </div>
+    </ng-template>
+</mat-menu>
+
+
+<fuse-drawer class="w-screen min-w-screen sm:w-80 sm:min-w-80" fixed transparentOverlay [mode]="'over'"
+    [name]="'invoicesAdvancedSearch'" [position]="'left'" #invoicesAdvancedSearch>
+    <div class="flex flex-col w-full" fuseScrollbar>
+        <div class="bg-gray-900 relative h-14 max-h-14 z-10 w-full">
+            <div class="inset-y-0 left-0 flex w-1/2">
+                <mat-icon class="mt-4 ml-1 text-white flex-auto" matPrefix [svgIcon]="'heroicons_outline:search'">
+                </mat-icon>
+
+                <h3 class="ml-2 mt-4 text-white flex-auto "><span>Advanced
+                        Search</span></h3>
+            </div>
+            <div class="inline-block">
+                <mat-icon class="mt-3 mr-2 absolute inset-y-0 right-0 cursor-pointer text-white"
+                    (click)="invoicesAdvancedSearch.toggle()">close
+                </mat-icon>
+            </div>
+        </div>
+        <form [formGroup]="frmAdvancedSearch">
+            <div class="pt-8 px-4 pb-4">
+                <div
+                    class="border border-solid border-gray-200 rounded-sm flex flex-initial flex-col relative mb-10 pt-4 px-4 pb-3">
+                    <h2 class="absolute -top-2.5 left-1.5 m-0 px-2 bg-white">Search Fields</h2>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Report Type</mat-label>
+                            <mat-select placeholder="Report Type" formControlName="reportType">
+                                <mat-option (onSelectionChange)="setReportType($event)" [value]="1">Accumulative
+                                </mat-option>
+                                <mat-option (onSelectionChange)="setReportType($event)" [value]="2">Invoice
+                                </mat-option>
+                                <mat-option (onSelectionChange)="setReportType($event)" [value]="3">Invoice Detail
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div *ngIf="frmAdvancedSearch.controls['reportType'].value == 1">
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Accumulative Mode</mat-label>
+                            <mat-select placeholder="Accumulative Mode" formControlName="accumulativeMode">
+                                <mat-option [value]="'finCat'">Financial Category
+                                </mat-option>
+                                <mat-option [value]="'profLossCat'">Profit Loss Category
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+
+                    <div *ngIf="frmAdvancedSearch.controls['reportType'].value == 1">
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Report Grouping</mat-label>
+                            <mat-select placeholder="Date Mode" formControlName="groupingMode">
+                                <mat-option (onSelectionChange)="setDatePattern($event)" [value]="'month'">Month
+                                </mat-option>
+                                <mat-option (onSelectionChange)="setDatePattern($event)" [value]="'year'">Year
+                                </mat-option>
+                                <mat-option (onSelectionChange)="setDatePattern($event)" [value]="'total'">Total
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Profit Loss Category</mat-label>
+                            <mat-select placeholder="Profit Loss Category" formControlName="profitLossCategory"
+                                multiple>
+                                <mat-option (onSelectionChange)="setProfitLossCategory($event)"
+                                    *ngFor="let item of proftLossCategories" [value]="item.profitLossCategoryId">
+                                    {{item.profitLossCategoryName}}</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div class="pb-5 pt-3 h-18">
+                        <ng-container *ngFor="let item of menuArray">
+                            <ng-container *ngIf="item.children.length > 0">
+                                <button id='btnCatList{{item.id}}'
+                                    [ngClass]="{'bg-gray-900 text-sm min-w-full h-3 text-white':item.id === 0}"
+                                    mat-button [matMenuTriggerFor]="menu.buildMenu3">
+                                    {{financialCategoryIdList?.length > 0 ?
+                                    (financialCategoryIdList.length.toString().concat(" item(s) are selected")) :
+                                    "Select a category"}}
+                                </button>
+                                <app-menu-item-list #menu [items]="item.children">
+                                </app-menu-item-list>
+                            </ng-container>
+                            <ng-container *ngIf="item.children.length === 0">
+                                <button id='btnCatList{{item.id}}'
+                                    [ngClass]="{'bg-gray-900 text-sm min-w-full h-3 text-white':item.id === 0}"
+                                    mat-button color="primary">
+                                    {{item.item}}
+                                </button>
+                            </ng-container>
+                        </ng-container>
+
+                    </div>
+                    <div *ngIf="frmAdvancedSearch.controls['reportType'].value != 1">
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Invoice Number%</mat-label>
+                            <input [autocomplete]="'off'" matInput value="" formControlName="invoiceNumber"
+                                maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+                    <div *ngIf="frmAdvancedSearch.controls['reportType'].value != 1">
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Issuer Type</mat-label>
+                            <mat-select placeholder="Issuer Type" formControlName="issuerType" multiple>
+                                <mat-option value="1000613" checked="true">
+                                    Contractor</mat-option>
+                                <mat-option value="1000614" checked="true">
+                                    Personnel</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div *ngIf="frmAdvancedSearch.controls['reportType'].value != 1">
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Issuer%</mat-label>
+                            <input [autocomplete]="'off'" matInput value="" formControlName="issuer" maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Total From</mat-label>
+                            <input type="number" [autocomplete]="'off'" matInput value="" formControlName="totalFrom"
+                                maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Total To</mat-label>
+                            <input type="number" [autocomplete]="'off'" matInput value="" formControlName="totalTo"
+                                maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Date From</mat-label>
+                            <input [autocomplete]="'off'" matInput value="" formControlName="dateFrom"
+                                [placeholder]='dateFormatPlaceHolder' [pattern]="datePattern" maxlength="10" />
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Date To</mat-label>
+                            <input [placeholder]='dateFormatPlaceHolder' [autocomplete]="'off'" matInput value=""
+                                [pattern]="datePattern" formControlName="dateTo" maxlength="10" />
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+                </div>
+                <div class="flex flex-row w-full">
+                    <div class="py-2 w-1/2 pl-10 items-center align-middle">
+                        <button mat-raised-button style="color: darkgreen" (click)="invoicesSearch()">Apply
+                        </button>
+                    </div>
+                    <div class="py-2 w-1/2 items-center align-middle">
+                        <button (click)="resetAdvancedSearch()" mat-raised-button style="color: darkred">Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</fuse-drawer>
+<ng-template #userMenu let-user>
+    <section class="user-menu">
+        <div class="cursor-pointer" *ngIf="reportMode<7" (click)="changeAdvancedSearch(selectedRow,'invoice')">Show
+            Invoices</div>
+        <div class="cursor-pointer" (click)="changeAdvancedSearch(selectedRow,'invoice details')">Show Invoice Details
+        </div>
+    </section>
+</ng-template>

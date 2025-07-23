@@ -1,0 +1,289 @@
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+
+    <mat-drawer-container class="flex-auto h-full bg-card dark:bg-transparent" (backdropClick)="onBackdropClicked()">
+
+        <!-- Drawer -->
+        <mat-drawer class="w-full md:w-160 dark:bg-gray-900" [mode]="drawerMode" [opened]="false" [position]="'end'"
+            [disableClose]="true" #matDrawer>
+            <router-outlet></router-outlet>
+        </mat-drawer>
+
+        <mat-drawer-content class="flex flex-col overflow-hidden">
+
+            <!-- Main -->
+            <div
+                class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
+
+
+                <!-- Header -->
+                <div
+                    class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4 px-6 md:px-8 border-b">
+                    <div class="absolute inset-x-0 bottom-0" *ngIf="isLoading">
+                        <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+                    </div>
+                    <!-- Title -->
+                    <div>
+
+                        <div class="text-4xl font-extrabold tracking-tight leading-none">User</div>
+
+
+                    </div>
+
+                    <!-- Main actions -->
+                    <div class="flex items-center">
+                        <!-- Search -->
+                        <div class="flex-auto">
+                            <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript w-full min-w-50">
+                                <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:search'"></mat-icon>
+                                <input #filter matInput [formControl]="searchInputControl" [autocomplete]="'off'"
+                                    [placeholder]="'Search'">
+                                <mat-icon matPostfix (click)="advancedSearch.toggle()" matTooltip="Advanced Search"
+                                    class="cursor-pointer">
+                                    settings
+                                </mat-icon>
+                            </mat-form-field>
+                        </div>
+                        <!-- Add User button -->
+                        <button [matMenuTriggerFor]="actionMenu" class="ml-4" mat-flat-button [color]="'primary'">
+                            <mat-icon svgIcon="heroicons_outline:menu"></mat-icon>
+                        </button>
+                    </div>
+                </div>
+                <!-- Users list -->
+
+                <div class="flex flex-auto overflow-hidden">
+                    <div class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+                        <ng-container *ngIf="users$ | async as users">
+                            <div class="grid">
+                                <div class="user-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
+                                    matSort matSortDisableClear>
+                                    <div class="hidden lg:block" [mat-sort-header]="'username'">
+                                        UserName
+                                    </div>
+                                    <div [mat-sort-header]="'firstName'">
+                                        First Name
+                                    </div>
+                                    <div [mat-sort-header]="'lastName'">
+                                        Last Name
+                                    </div>
+                                    <div [mat-sort-header]="'email'">
+                                        Email
+                                    </div>
+
+                                    <div [mat-sort-header]="'status'">
+                                        Status
+                                    </div>
+                                    <div class="print:hidden">More</div>
+                                </div>
+                                <div *ngFor="let item of users; let i = index; trackBy: trackByFn">
+                                    <div class="user-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b">
+                                        <!-- SKU -->
+                                        <div class="truncate">
+                                            {{item.username}}
+
+                                        </div>
+                                        <div class="truncate">
+                                            {{item.firstName}}
+                                        </div>
+                                        <div class="truncate hidden lg:block">
+                                            {{ item.lastName }}
+                                        </div>
+                                        <div class="truncate hidden lg:block">
+                                            {{ item.email }}
+                                        </div>
+                                        <div class="hidden lg:block print:block">
+                                            <p style="width: fit-content" class="p-1 rounded block truncate text-white"
+                                                [ngClass]="item.statusColor">
+                                                {{ item.statusDescription }}
+                                            </p>
+                                        </div>
+                                        <div class="print:hidden">
+                                            <div class="flex items-center">
+                                                <ng-container>
+                                                    <button mat-icon-button class="info" [color]="'primary'"
+                                                        (click)="$event.stopPropagation();selectedUser = item"
+                                                        [matMenuTriggerFor]="infoMenu">
+                                                        <mat-icon class="icon-size-5">info</mat-icon>
+                                                    </button>
+                                                </ng-container>
+                                                <ng-container fxLayout="row">
+                                                    <button mat-icon-button
+                                                        (click)="$event.stopPropagation();selectedUser = item"
+                                                        [matMenuTriggerFor]="contextMenu">
+                                                        <mat-icon color="accent">more_vert</mat-icon>
+                                                    </button>
+                                                </ng-container>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </ng-container>
+
+                        <!-- No users -->
+                        <ng-template #noUsers>
+                            <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">There
+                                are no users!</div>
+                        </ng-template>
+
+                    </div>
+                </div>
+                <mat-paginator
+                    class="sm:absolute sm:inset-x-0 sm:bottom-0 border-b sm:border-t sm:border-b-0 z-10 bg-gray-50 dark:bg-transparent"
+                    [ngClass]="{'pointer-events-none': isLoading}" [length]="userInfo.page.length"
+                    [disabled]="isLoading" [pageIndex]="userInfo.page.pageNumber" [pageSize]="userInfo.page.pageSize"
+                    [pageSizeOptions]="[5, 10, 25, 100,400,1000,2000]" [showFirstLastButtons]="true"></mat-paginator>
+            </div>
+
+        </mat-drawer-content>
+
+    </mat-drawer-container>
+
+</div>
+<mat-menu #infoMenu="matMenu" xPosition="before">
+    <div class="p-2">
+        <h4 class="mb-1 text-gray-900 font-bold text-xl">
+            {{selectedUser.firstName}} {{selectedUser.lastName}}
+        </h4>
+        <div class="flex flex-col mb-1">
+            <span class="text-gray-400 text-sm">Creator User Name</span>
+            <p>{{ selectedUser.registerUserName }}</p>
+        </div>
+        <div class="flex flex-col mb-1">
+            <span class="text-gray-400 text-sm">Creator IP</span>
+            <p class="text-gray-900">{{ selectedUser.clientIP }}</p>
+        </div>
+        <div class="flex flex-col mb-1">
+            <span class="text-gray-400 text-sm">Update Date & time</span>
+            <p class="text-gray-900">
+                {{
+                selectedUser.localChangeDate +
+                " " +
+                selectedUser.localChangeTime
+                }}
+            </p>
+        </div>
+    </div>
+</mat-menu>
+
+<mat-menu #contextMenu="matMenu">
+    <ng-template matMenuContent>
+        <button mat-menu-item [routerLink]="['./details', selectedUser.userId]">
+            Edit
+        </button>
+    </ng-template>
+</mat-menu>
+
+<mat-menu #actionMenu="matMenu">
+    <ng-template matMenuContent>
+        <button mat-menu-item [routerLink]="['./details']">
+            <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+            Add
+        </button>
+        <button mat-menu-item (click)="download()">
+            <mat-icon svgIcon="mat_outline:file_download"></mat-icon>
+            PDF
+        </button>
+        <button mat-menu-item (click)="exportTable()">
+            <mat-icon svgIcon="mat_outline:file_download"></mat-icon>
+            EXCEL
+        </button>
+    </ng-template>
+</mat-menu>
+
+<fuse-drawer class="w-screen min-w-screen sm:w-80 sm:min-w-80" fixed transparentOverlay [mode]="'over'"
+    [name]="'advancedSearch'" [position]="'left'" #advancedSearch>
+    <div class="flex flex-col w-full overflow-x-hidden" fuseScrollbar>
+        <div class="bg-gray-900 relative h-14 max-h-14 z-10 w-full">
+            <div class="inset-y-0 left-0 flex w-1/2">
+                <mat-icon class="mt-4 ml-1 text-white flex-auto" matPrefix [svgIcon]="'heroicons_outline:search'">
+                </mat-icon>
+
+                <h3 class="ml-2 mt-4 text-white flex-auto "><span>Advanced
+                        Search</span></h3>
+            </div>
+            <div class="inline-block">
+                <mat-icon class="mt-3 mr-2 absolute inset-y-0 right-0 cursor-pointer text-white"
+                    (click)="advancedSearch.toggle()">close
+                </mat-icon>
+            </div>
+        </div>
+        <form [formGroup]="frmAdvancedSearch">
+            <div class="pt-8 px-4 pb-4">
+                <div
+                    class="border border-solid border-gray-200 rounded-sm flex flex-initial flex-col relative mb-10 pt-4 px-4 pb-3">
+                    <h2 class="absolute -top-2.5 left-1.5 m-0 px-2 bg-white">Search Fields</h2>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Status</mat-label>
+                            <mat-select [(value)]="userInfo.statusIdList" placeholder="Status" formControlName="status"
+                                multiple>
+                                <mat-option (onSelectionChange)="setStatusValue($event)" [value]="1000001">
+                                    Active</mat-option>
+                                <mat-option (onSelectionChange)="setStatusValue($event)" [value]="1000000">
+                                    Inactive</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Username%</mat-label>
+                            <input spellcheck="false" [autocomplete]="'off'" matInput value=""
+                                formControlName="username" maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+
+
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>First Name%</mat-label>
+                            <input spellcheck="false" [autocomplete]="'off'" matInput value=""
+                                formControlName="firstName" maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+
+
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Last Name%</mat-label>
+                            <input spellcheck="false" [autocomplete]="'off'" matInput value=""
+                                formControlName="lastName" maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Email%</mat-label>
+                            <input spellcheck="false" [autocomplete]="'off'" matInput value="" formControlName="email"
+                                maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+
+
+
+                </div>
+                <div class="flex flex-row w-full">
+                    <div class="py-2 w-1/2 pl-10 items-center align-middle">
+                        <button mat-raised-button style="color: darkgreen" (click)="search()">Apply
+                        </button>
+                    </div>
+                    <div class="py-2 w-1/2 items-center align-middle">
+                        <button (click)="resetAdvancedSearch()" mat-raised-button style="color: darkred">Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</fuse-drawer>

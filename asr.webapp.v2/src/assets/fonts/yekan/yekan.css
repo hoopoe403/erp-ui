@@ -1,0 +1,8 @@
+@font-face {
+    font-family: 'Yekan';
+    font-weight: 100 900;
+    font-display: swap;
+    font-style: italic;
+    font-named-instance: 'Italic';
+    src: url("Yekan.ttf?1o770y") format("truetype");
+}

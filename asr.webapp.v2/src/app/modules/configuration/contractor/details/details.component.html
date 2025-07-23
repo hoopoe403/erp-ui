@@ -1,0 +1,153 @@
+<!-- Main -->
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+  <div
+    class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between sm:px-3 bg-card dark:bg-transparent">
+    <div
+      class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-3 sm:px-10 bg-card dark:bg-transparent">
+      <div class="flex-1 min-w-0">
+        <!-- Breadcrumbs -->
+        <div class="flex flex-wrap items-center font-medium">
+          <div class="flex items-center ml-1 whitespace-nowrap">
+            <a [routerLink]="['../']" style="cursor: pointer" class="whitespace-nowrap text-primary-500">Contractors</a>
+          </div>
+
+          <!-- Title -->
+          <div class="flex items-center ml-1 whitespace-nowrap">
+            <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'">
+            </mat-icon>
+            {{ titleInfo }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-container>
+    <div class="flex-auto px-6 py-3" fuseScrollbar #scrollContainer id="scrollDiv">
+      <mat-tab-group #tabGroup fxLayout="column" fxFlex>
+        <!-- tab information, only one tab available -->
+        <mat-tab label="Information">
+          <form [formGroup]="formContractor" (ngSubmit)="save()"
+            class="flex rounded-b-md rounded-tr-md flex-col px-8 py-4 bg-card shadow">
+            <div class="h-2">
+              <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+            </div>
+
+            <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+              <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                <mat-label>Code</mat-label>
+                <input formControlName="contractorCode" spellcheck="false" [autocomplete]="'off'" matInput value="" />
+                <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
+                </mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                <mat-label>Name</mat-label>
+                <input formControlName="contractorName" spellcheck="false" [autocomplete]="'off'" matInput value="" />
+                <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
+                </mat-icon>
+                <mat-error *ngIf="myError('contractorName', 'required')">Name is required</mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+              <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                <mat-label>Type</mat-label>
+                <mat-select placeholder="Contractor Type" formControlName="contractorType">
+                  <mat-option *ngFor="let type of contractorTypes" [value]="type.key">
+                    {{type.value}}</mat-option>
+                </mat-select>
+                <mat-error *ngIf="myError('contractorType', 'required')">Type is required</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="contractorStatus" required>
+                  <mat-option [value]="1000001">Active</mat-option>
+                  <mat-option [value]="1000000">Inactive</mat-option>
+                </mat-select>
+                <mat-error *ngIf="myError('contractorStatus', 'required')">Status is required</mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+              <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                <mat-label>Phone</mat-label>
+                <input formControlName="contractorPhone" spellcheck="false" [autocomplete]="'off'" matInput value=""
+                  maxlength="50" />
+                <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
+                </mat-icon>
+                <mat-error *ngIf="myError('contractorPhone', 'pattern')">Phone is invalid</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                <mat-label>Email</mat-label>
+                <input formControlName="contractorEmail" spellcheck="false" [autocomplete]="'off'" matInput value=""
+                  maxlength="50" />
+                <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
+                </mat-icon>
+                <mat-error *ngIf="myError('contractorEmail', 'email')">Email is invalid</mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+
+              <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                <mat-label>Organization</mat-label>
+                <mat-select formControlName="organization" required>
+                  <mat-option [value]="1000010">Arian System Ro</mat-option>
+                  <mat-option [value]="0">none</mat-option>
+                </mat-select>
+                <mat-error *ngIf="myError('organization', 'required')">Organization is required</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                <mat-label>Settlement Type</mat-label>
+                <mat-select formControlName="settlementType" required>
+                  <mat-option *ngFor="let settlementType of settlementTypes" [value]="settlementType.settlementTypeId">
+                    {{settlementType.settlementTypeName}}</mat-option>
+                </mat-select>
+                <mat-error *ngIf="myError('settlementType', 'required')">Settlement Type is required</mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+
+              <mat-form-field appearance="outline" class="w-full px-3">
+                <mat-label>Address</mat-label>
+                <input formControlName="contractorAddress" spellcheck="false" required [autocomplete]="'off'" matInput
+                  value="" maxlength="50" />
+                <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
+                </mat-icon>
+                <mat-error *ngIf="myError('contractorAddress', 'required')">Address is required</mat-error>
+              </mat-form-field>
+            </div>
+
+            <!-- Button -->
+            <div class="w-full mt-6" style="display: flex; align-items: center; place-content: center">
+              <button class="mr-1" mat-flat-button color="primary" [disabled]="!formContractor.valid" type="submit"
+                [title]="
+                  formContractor.valid
+                    ? 'Save your entered data'
+                    : 'Disabled until the form data is valid'
+                " matStepperNext>
+                {{ pageType === "new" ? "Register" : "Update" }}
+              </button>
+            </div>
+
+            <div class="flex items-center flex-wrap content-center w-full py-2">
+              <div class="w-auto h-auto min-h-15 m-auto">
+                <fuse-alert *ngIf="result.succeed" [appearance]="'soft'" [dismissible]="true" [dismissed]="true"
+                  [name]="'successMessage'" [type]="'success'">
+                  <b>Result: </b> {{ result.message }}.
+                </fuse-alert>
+                <fuse-alert *ngIf="!result.succeed" [appearance]="'soft'" [dismissible]="true" [dismissed]="true"
+                  [name]="'errorMessage'" [type]="'error'">
+                  <b>Result: </b> {{ result.message }}.
+                </fuse-alert>
+              </div>
+            </div>
+          </form>
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+  </ng-container>
+</div>

@@ -1,0 +1,350 @@
+<div class="w-full max-w-4xl">
+
+    <!-- Form -->
+    <form [formGroup]="invoiceForm">
+
+        <div id="section-to-print"
+            class="shadow-xl bg-card print:w-auto px-16 py-10 rounded-2xl  overflow-auto  print:overflow-visible">
+            <div style="direction: rtl;" class="font-yekan w-full flex flex-col">
+                <div class="w-full flex flex-row">
+                    <div class="w-4/12 flex flex-col font-extrabold text-xl">
+                        <div class="w-full flex flex-row date">
+                            <span>تاریخ:</span>&nbsp;&nbsp;<span>{{orderInfo.localChangeDate}}</span>
+                        </div>
+                        <div class="w-full flex flex-row">
+                            <span>شماره:</span>&nbsp;&nbsp;<span>{{orderInfo.orderCode}}</span>
+                        </div>
+                    </div>
+                    <div class="w-3/4 flex flex-row justify-end">
+                        <div class="pl-12">
+                            <img style="width: 200px;" src="../../../../../../assets/images/print/logo-warranty.png">
+                        </div>
+                        <div>
+                            <img style="width: 150px;" src="../../../../../../assets/images/print/ASR LOGO-Blue.png">
+                        </div>
+                    </div>
+                </div>
+                <div class="w-full flex flex-row pt-5 pb-2.5 text-xl">
+                    <mat-icon svgIcon="mat_solid:receipt_long"></mat-icon>
+                    <div class="pr-0.5">
+                        <span>پیش فاکتور فروش آریان سیستم رو</span>
+                    </div>
+                </div>
+                <div
+                    class="pr-2.5 pt-1 pb-1 border-solid border border-gray-300  rounded-lg text-lg w-full flex flex-col">
+                    <div class="w-full pb-2.5 flex flex-row">
+                        <div class="w-4/5 flex flex-row">
+                            <span class="font-bold">نام
+                                مشتری:</span>&nbsp;&nbsp;<span>{{customerInfo.customerName}}
+                                {{customerInfo.customerFamily}}</span>
+                            <span *ngIf="customerInfo.organizationName != ''">({{customerInfo.organizationName}})</span>
+                        </div>
+                        <div class="w-1/5 flex flex-row">
+                            <span class="font-bold">شهر:</span>&nbsp;&nbsp;<span></span>
+                        </div>
+                    </div>
+                    <div class="w-full pb-2.5 flex flex-row">
+                        <div class="w-full flex flex-row">
+                            <span class="font-bold">همراه:</span>&nbsp;&nbsp;<span>{{customerInfo.phone}}</span>
+                        </div>
+                    </div>
+                    <div class="w-full flex flex-row">
+                        <div class="w-full flex flex-row">
+                            <span class="font-bold">آدرس:</span>&nbsp;&nbsp;<span>{{customerInfo.address}}</span>
+                        </div>
+                    </div>
+                </div>
+                <table class="text-base mt-5">
+                    <thead>
+                        <tr class="border-b border-solid border-gray-300">
+                            <th class="pl-2 w-2 text-right">#</th>
+                            <th class="w-1/4 text-left">نام محصول</th>
+                            <th class="w-2 text-left">کد</th>
+                            <th class="w-1/5 text-left">روکش چهارچوب/روکش لته</th>
+                            <th class="w-2 text-left">قیمت واحد</th>
+                            <th class="w-1 text-left">تعداد</th>
+                            <th class="pr-2 w-3 text-left">قیمت کل</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-solid border-gray-300 last:border-0"
+                            *ngFor="let item of orderInfo.productList">
+                            <td class="pl-2  text-right">
+                                <div class="font-bold flex flex-col">
+                                    <span>{{item.rowNumber}}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="font-monospace flex flex-col text-left">
+                                    <span>{{item.productName}}</span>
+                                    <span>({{item.brandName}})</span>
+                                </div>
+                            </td>
+                            <td class="text-left">
+                                <div>
+                                    <span>{{item.productCode}}</span>
+                                </div>
+                            </td>
+                            <td class="text-left">
+                                <span>{{item.productCoverName}}/{{item.panelCoverName}}</span>
+                            </td>
+                            <td class="text-left">
+                                <span>{{item.unitPrice|number:'4.0-5'}}</span>
+                            </td>
+                            <td class="text-left">
+                                <span>{{item.quantity}}</span>
+                            </td>
+                            <td class="pr-2 text-left">
+                                <span>{{item.total|number:'4.0-5'}}</span>
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+                </table>
+                <table class="mb-2.5 mt-8">
+                    <tbody class="w-full">
+                        <tr class="h-10 border-b border-solid border-gray-300">
+                            <td class="text-right font-bold text-lg">مبلغ کل</td>
+                            <td class="text-left font-bold text-lg">{{orderInfo.subTotal|number:'4.0-5'}}</td>
+                        </tr>
+                        <tr class="h-10 border-b border-solid border-gray-300">
+                            <td class="text-right font-bold text-lg">مالیات</td>
+                            <td class="text-left font-bold text-lg">{{orderInfo.tax|number:'4.0-5'}}</td>
+                        </tr>
+                        <tr style="direction:ltr" class="h-10 border-b border-solid border-gray-300">
+                            <td class="text-right font-bold text-lg">تخفیف</td>
+                            <td class="text-left font-bold text-lg">{{orderInfo.customerDiscount +
+                                orderInfo.extraDiscount|number:'4.0-5'}}</td>
+                        </tr>
+
+                        <tr class="h-10 text-2xl font-light">
+                            <td class="text-right">قابل پرداخت</td>
+                            <td class="text-left" style="direction: ltr;">{{orderInfo.total |number:'4.0-5'}}<span
+                                    class="align-sub">
+                                    IRR</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="w-full bg-contain bg-no-repeat bg-center" style="background-image: url(
+                    ../../../../../assets/images/print/ASR-logo-Lightmark.png)">
+
+                    <table class="mt-5 text-justify text-base">
+                        <tbody class="font-normal">
+                            <tr>
+                                <td>
+                                    <div class="flex flex-row pb-1.5">
+                                        <span>۱-</span>&nbsp;
+                                        <span>&nbsp;سفارش شما پس از<span class="font-bold">
+                                            </span>
+                                            <input [autocomplete]="'off'" style="direction: ltr;"
+                                                (input)="resizeDeliveryDays()" (cut)="resizeDeliveryDays()"
+                                                (paste)="resizeDeliveryDays()" matInput value=""
+                                                formControlName="estimatedDeliveryTime"
+                                                [ngStyle]="{'width.px': deliveryDaysWidth}"
+                                                [(ngModel)]="orderInfo.deliveryDays">
+                                            <span>&nbsp;روز</span>
+                                            کاری از زمان تایید مالی واحد فروش آماده تحویل
+                                            میباشد.</span>
+                                    </div>
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="flex flex-row">
+                                        <span>۲-</span>&nbsp;
+                                        <span>کلیه سفارشات
+                                            <span class="font-bold">عام و
+                                                خاص</span>
+                                            باید بصورت
+                                            <span class="font-bold">
+                                                ۱۰۰٪
+                                            </span>
+                                            تسویه و رسید مالی به واحد فروش ارسال گردد.
+                                        </span>
+                                    </div>
+                                </td>
+
+
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="flex flex-row">
+                                        <span>۳-</span>&nbsp;
+                                        <span>
+                                            پیش فاکتور های فاقد تایید مالی پس از&nbsp;
+                                        </span>
+                                        <span class="font-bold">۳ روز</span>
+                                        &nbsp;یا&nbsp;
+                                        <span class="font-bold">
+                                            در صورت تغییر لیست قیمت&nbsp;
+                                        </span>
+                                        منقضی می‌گردند.
+                                    </div>
+                                </td>
+
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <div class="flex flex-row">
+                                        <span>۴-</span>&nbsp;
+                                        <span>در صورت اعمال تغییرات روی محصول دریافتی <span class="font-bold">توسط
+                                                مشتری</span>،
+                                            مانند
+                                            روکش
+                                            استیل و غیره محصول مورد نظر، <span class="font-bold">شامل گارانتی
+                                                نمی
+                                                باشد</span>
+                                            و مجموعه هیچگونه مسئولیتی نخواهد پذیرفت.</span>
+                                    </div>
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="flex flex-row">
+                                        <span>۵-</span>&nbsp;
+                                        <span>پس از دریافت محصول و خروج آن از انبار آریان
+                                            سیستم
+                                            رو،
+                                            این
+                                            مجموعه هیچ گونه مسئولیتی در قبال موارد کمی و
+                                            کیفی
+                                            (از
+                                            لحاظ
+                                            ظاهری نخواهد داشت).</span>
+                                    </div>
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="flex flex-row">
+                                        <span>۶-</span>&nbsp;
+                                        <span>سفارشات خاص به هیچ عنوان قابل ارجاع و تعویض
+                                            نمی
+                                            باشد
+                                            (خواهشمندیم حتما قبل از تایید سفارش، پیش فاکتور
+                                            را
+                                            با
+                                            دقت
+                                            مطالعه کنید).</span>
+                                    </div>
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="flex flex-row">
+                                        <span>۷-</span>&nbsp;
+                                        <span>به مبلغ فوق ۱۰٪ مالیات بر ارزش افزوده، اضافه می
+                                            گردد.</span>
+                                    </div>
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="flex flex-row">
+                                        <span>۸-</span>&nbsp;
+                                        <span>لطفا قبل از پرداخت مبلغ پیش فاکتور، <span class="font-bold">شماره
+                                                حساب</span>
+                                            حتما
+                                            <span class="font-bold">استعلام</span>
+                                            شود.</span>
+                                    </div>
+                                </td>
+
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <div class="flex flex-row">
+                                        <span>۹-</span>&nbsp;
+                                        <span>
+                                            جهت دریافت سفارش از قبل با واحد فروش جهت دریافت
+                                            حواله و اطلاع از زمان تحویل هماهنگ شوید.
+                                        </span>
+                                    </div>
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="flex flex-row">
+                                        <span>۱۰-</span>&nbsp;
+                                        <span>مشتری گرامی در صورت عدم مراجعه برای دریافت
+                                            سفارش
+                                            خود،
+                                            پس
+                                            از <span class="font-bold">۱۰
+                                                روز</span> از
+                                            تاریخ تحویل اعلام شده، روزانه به
+                                            ازای هر درب مبلغ <span class="font-bold">۵۰۰٫۰۰۰
+                                                ریال</span>
+                                            هزینه
+                                            انبارداری
+                                            لحاظ می شود.</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr *ngFor="let item of orderInfo.descriptionList"
+                                (contextmenu)="open($event, item); $event.preventDefault();this.selectedRowNumber = item.rowNumber;">
+                                <td>
+                                    <div class="flex flex-row">
+                                        <span>{{item.rowNumber}}</span><span>-</span>
+                                        <input class="col-span-6 " [autocomplete]="'off'" matInput value=""
+                                            placeholder="اینجا تایپ کنید"
+                                            formControlName="description{{item.rowNumber}}"
+                                            [(ngModel)]="item.description">
+                                    </div>
+                                </td>
+                            </tr>
+                            <div (click)="addNewDescription()" (mouseover)="showAddItem=true"
+                                (mouseout)="showAddItem=false"
+                                class="flex flex-row h-8 justify-between items-center cursor-pointer">
+                                <div class="flex flex-row w-full justify-between items-center">
+                                    <div [ngClass]="{'border-b border-gray-600':showAddItem}" class="border-0  w-full">
+                                    </div>
+                                </div>
+                                <div *ngIf="showAddItem">
+                                    <mat-icon (click)="addNewDescription()" svgIcon="mat_outline:add_circle"></mat-icon>
+                                </div>
+                            </div>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="w-full text-left mt-12 pl-20 font-bold text-lg">
+                    <span #deliveryDaysHiddenText
+                        class="invisible whitespace-pre inline-block">{{orderInfo.deliveryDays}}</span>
+                    <span>نام امضاء مشتری:</span>
+                </div>
+                <div class="w-full mt-20 font-bold text-lg text-center">
+                    <span>آریان سیستم رو تولید کننده درب های اتوماتیک آسانسور</span>
+                </div>
+                <div class="w-full flex flex-row text-lg text-center items-center justify-center">
+
+                    <span>www.asr-elevator.ir</span>
+                    <img style="width: 60px;margin-left: 30px;"
+                        src="../../../../../../assets/images/print/Website-Icon.png">
+
+                    <span>t.me/ariansystemro | t.me/salesasr</span>
+                    <img style="width: 60px;" src="../../../../../../assets/images/print/Telegram-Icon.png">
+                </div>
+                <div class="w-full flex flex-row text-lg text-center items-center justify-center print:hidden">
+                    <button mat-icon-button ngxPrint useExistingCss="true" printSectionId="section-to-print">
+                        <mat-icon class="pl-11">printer</mat-icon>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </form>
+</div>
+<ng-template #userMenu let-user>
+    <section class="user-menu">
+        <div (click)="removeDescription(selectedRowNumber)">Remove row number {{selectedRowNumber}}</div>
+    </section>
+</ng-template>

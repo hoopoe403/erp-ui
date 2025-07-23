@@ -1,0 +1,194 @@
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+    <div
+       class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between sm:px-3 bg-card dark:bg-transparent">
+       <!-- Title -->
+
+       <div
+         class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-3 sm:px-10 bg-card dark:bg-transparent">
+         <div class="flex-1 min-w-0">
+            <!-- Breadcrumbs -->
+            <div class="flex flex-wrap items-center font-medium">
+
+                <div class="flex items-center ml-1 whitespace-nowrap">
+                    <a *ngIf="pageType==='new'"  [routerLink]="['../']" style="cursor: pointer;"
+                        class="whitespace-nowrap text-primary-500">Proprties</a>
+                    <a *ngIf="pageType==='edit'" [routerLink]="['../../']" style="cursor: pointer;"
+                        class="whitespace-nowrap text-primary-500">Proprties</a>
+                </div>
+                <div class="flex items-center ml-1 whitespace-nowrap">
+                    <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'">
+                    </mat-icon>
+                    {{titleInfo}}
+                </div>
+            </div>
+
+         </div>
+       </div>
+
+    </div>
+
+
+    <ng-container>
+        <div class="flex-auto px-6 py-3" fuseScrollbar #scrollContainer id="scrollDiv">
+            <form [formGroup]="propertyForm"
+             class="flex rounded flex-col px-8 py-4 bg-card shadow">
+                <div class="border-b flex flex-row items-center">
+                    <div class="ml-3 mr-40 pb-2">
+                        <h3>Property Info</h3>
+                    </div>
+                    <div class="ml-80 pb-2">
+                        <h3>Property Values</h3>
+                    </div>
+                </div>
+                <div class="h-2">
+                    <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+                </div>
+                <div class="w-full flex flex-row">
+                    <div class="w-1/2 flex flex-col">
+                        <mat-form-field appearance="outline" class="w-full px-3">
+                            <mat-label>Name</mat-label>
+                            <input spellcheck="false" required matInput value="" formControlName="name"
+                                maxlength="50">
+                            <mat-icon matSuffix class="secondary-text"
+                                svgIcon="mat_outline:drive_file_rename_outline">
+                            </mat-icon>
+                            <mat-error>Name is required!</mat-error>
+                        </mat-form-field>
+                        <mat-form-field appearance="outline" class="w-full px-3">
+                            <mat-label>Status</mat-label>
+                              <mat-select [(value)]="propertyInfo.statusIdList" placeholder="Status" formControlName="status">
+                                <mat-option *ngFor="let status of statuses"
+                                [value]="status.statusId" [checked]="status.isDefault === 1">
+                                {{ status.statusDescription }}</mat-option>
+                              </mat-select>
+                            <mat-error>Status is required!</mat-error>
+                        </mat-form-field>
+                        <mat-form-field appearance="outline" class="w-full px-3">
+                            <mat-label>Unit</mat-label>
+                            <mat-select required formControlName="unit">
+                                <mat-option *ngFor="let UD of unitData" [value]="UD.unitId">
+                                    {{UD.unitName}}
+                                </mat-option>
+                            </mat-select>
+                            <mat-error>Unit is required!</mat-error>
+                        </mat-form-field>
+                        <mat-form-field appearance="outline" fxFlex="100" class="w-full px-3">
+                            <mat-label>Usage</mat-label>
+                            <mat-select formControlName="usages" name="usages" required>
+                               <mat-option [value]=1000410>
+                                  All
+                               </mat-option>
+                               <mat-option [value]=1000411>
+                                  Goods
+                               </mat-option>
+                               <mat-option [value]=1000412>
+                                  Product
+                               </mat-option>
+                            </mat-select>
+                            <mat-error>Usages is required!</mat-error>
+                         </mat-form-field>
+                         <mat-form-field appearance="outline" fxFlex="100" class="w-full px-3">
+                            <mat-label>Control Type</mat-label>
+                            <mat-select #controlType formControlName="controlTypeId" name="controlTypeId" required >
+                               <mat-option [value]=1000371>
+                                  Dropdown
+                               </mat-option>
+                               <mat-option [value]=1000372>
+                                  TextBox
+                               </mat-option>
+                               <mat-option [value]=1000373>
+                                  TextArea
+                               </mat-option>
+                            </mat-select>
+                            <mat-error>Control Type is required!</mat-error>
+                         </mat-form-field>
+                         <div class="w-full px-3 flex flex-row">
+                                <mat-form-field appearance="outline"  
+                                [ngClass]="{'w-full':controlType.value != '1000371'&&'1000373'}" class=" w-10/12">
+                                    <mat-label id="lblNewVal">New Value</mat-label>
+                                    <input spellcheck="false" #inNewVal id="inNewVal" matInput value="" formControlName="newValue"
+                                        maxlength="20">
+                                    <mat-icon matSuffix class="secondary-text"
+                                        svgIcon="mat_outline:drive_file_rename_outline">
+                                    </mat-icon>
+                                    <mat-error>{{controlType.value === 1000372 ? 'Placeholder' : 'Value'}} is required!</mat-error>
+                                </mat-form-field>
+                                    <button mat-flat-button color="primary" 
+                                     *ngIf="controlType.value != 1000372" class="w-3/12 mt-3 ml-3"
+                                     (click)="addNewVal(inNewVal.value)">
+                                        <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                                    </button>
+                         </div>
+                         <mat-label id="lblAddErr" class="add-err"></mat-label>
+                        
+                        
+
+                        </div>
+                    <div class="w-1/2 ml-20">
+                        <div class="text-right">
+                            <label>Select All</label>
+                            <mat-checkbox class="ml-1"
+                            [(ngModel)]="isMasterSel" [ngModelOptions]="{standalone: true}"
+                             (change)="checkUncheckAll()"
+                             [checked]="selectAllIsChecked()" 
+                             [indeterminate]="selectAllIsIndeterminate()">
+                            </mat-checkbox>
+                        </div>
+                        <div class="flex flex-col border rounded-md mt-1 min-h-15 p-0" >
+                            <ng-container  *ngFor="let value of values">
+                              <div class="properties-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b">
+                                <div id="propertyVal" class="">
+                                    {{value.value}}
+                                </div>
+                                <div class="flex items-center">
+                                        <button style="width: 25px;" class="ml-40" mat-icon-button
+                                        (click)="$event.stopPropagation(); selectedInfoRow = value"
+                                            [matMenuTriggerFor]="contextMenu">
+                                            <mat-icon color="accent">more_vert</mat-icon>
+                                        </button>
+                                    
+                                        <div>
+                                            <mat-checkbox (change)="isAllSelected()"
+                                            [checked]="value.status" 
+                                            [ngModelOptions]="{standalone: true}"
+                                            value="{{value.id}}" ></mat-checkbox>
+                                        </div>
+                                </div>
+                             </div>
+                            </ng-container>
+                        </div>
+                       
+                    </div>
+                </div>
+                <div class="w-full mt-12" style="display: flex; align-items: center; place-content: center">
+                    <button mat-flat-button color="primary"
+                        [disabled]="isLoading && _result.succeed" (click)="save()"
+                        matStepperNext>{{pageType ===
+                        'new'?'Register' : 'Update'}}</button>
+                </div>
+                <div class="flex items-center flex-wrap content-center w-full py-2">
+                    <div class="w-auto h-auto min-h-15 m-auto">
+                        <fuse-alert *ngIf="_result.succeed" [appearance]="'soft'" [dismissible]=" true"
+                            [dismissed]="true" [name]="'successMessage'" [type]="'success'">
+                            <b>Result: </b> {{_result.message}}
+                        </fuse-alert>
+                        <fuse-alert *ngIf="!_result.succeed" [appearance]="'soft'" [dismissible]="true"
+                            [dismissed]="true" [name]="'errorMessage'" [type]="'error'">
+                            <b>Result: </b> {{_result.message}}
+                        </fuse-alert>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </ng-container>
+ 
+
+</div>
+<mat-menu #contextMenu="matMenu">
+    <ng-template matMenuContent>
+      <button mat-menu-item style="color: darkred" (click)="remove(selectedInfoRow.value)">
+        Delete
+      </button>
+    </ng-template>
+  </mat-menu>

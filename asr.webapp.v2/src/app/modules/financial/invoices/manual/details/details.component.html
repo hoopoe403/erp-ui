@@ -1,0 +1,320 @@
+<!-- Main -->
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+    <div
+        class="print:hidden flex flex-col sm:flex-row items-start sm:items-center sm:justify-between sm:px-3   bg-card dark:bg-transparent">
+        <!-- Title -->
+
+        <div class="flex flex-col w-full sm:items-center sm:justify-between p-3 sm:px-10 bg-card dark:bg-transparent">
+            <div class="flex flex-col min-w-0 w-full">
+                <!-- Breadcrumbs -->
+                <div class="flex flex-row items-center font-medium w-full">
+                    <div>
+                        <a>Financial</a>
+                    </div>
+                    <div class="flex items-center whitespace-nowrap">
+                        <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'">
+                        </mat-icon>
+                        <a *ngIf="pageType==='new'" [routerLink]="['../list']" style="cursor: pointer;"
+                            class="whitespace-nowrap text-primary-500">Manual Invoices</a>
+                        <a *ngIf="pageType==='edit'" [routerLink]="['../../list']" style="cursor: pointer;"
+                            class="whitespace-nowrap text-primary-500">Manual Invoices</a>
+                        <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'">
+                        </mat-icon>
+                        <a>{{titleInfo}}</a>
+                    </div>
+                </div>
+                <!-- Title -->
+
+            </div>
+
+        </div>
+
+        <!-- Actions -->
+
+    </div>
+    <div class="h-2 print:hidden">
+        <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+    </div>
+    <ng-container [formGroup]="frmInvoice">
+        <div class="flex-auto inset-0 min-w-0 overflow-auto text-center  print:overflow-visible">
+
+
+            <div class="inline-block p-6 sm:p-10 text-left  print:p-0">
+
+                <!-- Invoice -->
+                <div
+                    class="w-240 p-16 rounded-2xl shadow bg-card print:w-auto print:rounded-none print:shadow-none print:bg-transparent">
+
+                    <div class="flex items-start justify-between">
+                        <div class="flex flex-col w-full">
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+                                <div class="text-4xl tracking-tight text-secondary">INVOICE</div>
+                                <div class="text-4xl"><span
+                                        *ngIf="pageType=='edit'">#</span>{{invoiceInfo.invoiceNumber}}
+                                </div>
+                            </div>
+                            <div class="font-medium text-sm	 tracking-tight" style="color: #b9c1ca;"></div>
+                            <div class="font-medium ">
+
+                                <mat-form-field appearance="legacy" floatLabel="always" class="w-44">
+                                    <mat-label>TITLE</mat-label>
+                                    <input spellcheck="false" [autocomplete]="'off'" matInput value="" required
+                                        formControlName="title" maxlength="50">
+
+                                </mat-form-field>
+                            </div>
+                            <div class="font-medium text-sm	 tracking-tight" (click)='openDatePicker()'
+                                style="color: #b9c1ca;">DATE *</div>
+                            <div class="font-medium  border-slate-200 border-b border-solid w-44">
+
+                                <ngx-jdatepicker format="jYYYY/jMM/jDD" formControlName="jdatepicker"
+                                    [(ngModel)]="dateObject" mode="day" theme="dp-material">
+                                </ngx-jdatepicker>
+                            </div>
+                            <div class="font-medium tracking-tight text-secondary"></div>
+                            <div class="font-medium ">
+                                <mat-form-field appearance="legacy" class="w-26  mt-4" floatLabel="always">
+
+                                    <mat-select required placeholder="CREDITOR TYPE" formControlName="creditorType">
+                                        <mat-option (onSelectionChange)="setCreditorTypeValue($event)"
+                                            *ngFor="let item of ownerTypes" [value]="item.ownerTypeId">
+                                            {{item.ownerTypeName}}</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                                <mat-form-field class="w-44  mt-4" appearance="legacy" floatLabel="always">
+                                    <mat-label>CREDITOR</mat-label>
+                                    <input spellcheck="false" required type=" text" aria-label="Number" matInput
+                                        [formControl]="creditorControl" [matAutocomplete]="autoRec">
+                                    <mat-autocomplete required autoActiveFirstOption #autoRec="matAutocomplete">
+                                        <mat-option (onSelectionChange)="setCreditor($event)"
+                                            *ngFor="let option of creditorFilteredOptions | async"
+                                            [value]="option.ownerName">
+                                            {{option.ownerName}}
+                                        </mat-option>
+                                    </mat-autocomplete>
+                                    <mat-error *ngIf="creditorControl.hasError('forbiddenNames')">
+                                        <strong>'{{creditorControl.errors.forbiddenNames.value}}'</strong> is not
+                                        allowed.
+                                    </mat-error>
+                                    <mat-error *ngIf="creditorControl.hasError('required')">
+                                        Creditor is required
+                                    </mat-error>
+
+                                </mat-form-field>
+                            </div>
+                            <div class="font-medium tracking-tight text-secondary"></div>
+                            <div class="font-medium">
+                                <mat-form-field appearance="legacy" class="w-26  mt-4" floatLabel="always">
+
+                                    <mat-select required placeholder="DEBTOR TYPE" formControlName="debtorType">
+                                        <mat-option (onSelectionChange)="setDebtorTypeValue($event)"
+                                            *ngFor="let item of ownerTypes" [value]="item.ownerTypeId">
+                                            {{item.ownerTypeName}}</mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                                <mat-form-field class="w-44" appearance="legacy" floatLabel="always">
+
+                                    <mat-label>DEBTOR</mat-label>
+                                    <input required spellcheck="false" type=" text" aria-label="Number" matInput
+                                        [formControl]="debtorControl" [matAutocomplete]="auto">
+                                    <mat-autocomplete required autoActiveFirstOption #auto="matAutocomplete">
+                                        <mat-option (onSelectionChange)="setDebtor($event)"
+                                            *ngFor="let option of debtorFilteredOptions | async"
+                                            [value]="option.ownerName">
+                                            {{option.ownerName}}
+                                        </mat-option>
+                                    </mat-autocomplete>
+                                    <mat-error *ngIf="debtorControl.hasError('forbiddenNames')">
+                                        <strong>'{{debtorControl.errors.forbiddenNames.value}}'</strong> is not allowed.
+                                    </mat-error>
+                                    <mat-error *ngIf="debtorControl.hasError('required')">
+                                        Debtor is required
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+
+                        </div>
+                        <div
+                            class="grid auto-cols-max grid-flow-col gap-x-8 -mr-16 py-6 px-8 rounded-l-2xl bg-accent dark">
+                            <div class="place-self-center w-24">
+                                <img class="w-24" src="assets/images/logo/logo.svg">
+                            </div>
+                            <div class="pl-10 border-l text-md">
+                                <div class="font-medium">Arian System Ro</div>
+                                <div>No 56 East Third Street</div>
+                                <div>Khoramdasht, Tehran, Iran</div>
+                                <div>+98 21 4448 9776</div>
+                                <div>sales@asr-elevator.ir</div>
+                                <div>www.asr-elevator.ir</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <div class="grid grid-cols-12 gap-x-1 mt-12">
+                            <div class="col-span-6 font-medium text-md text-secondary">ITEM</div>
+                            <div class="col-span-2 font-medium text-md text-right text-secondary">RATE</div>
+                            <div class="col-span-1 font-medium text-md text-right text-secondary">QTY</div>
+                            <div class="col-span-2 font-medium text-md text-right text-secondary">TOTAL</div>
+                            <div class="print:hidden col-span-1 font-medium text-md text-right text-secondary"></div>
+                        </div>
+                        <div (click)="addNewItem()" (mouseover)="showAddItem=true" (mouseout)="showAddItem=false"
+                            class="flex flex-row h-8 justify-between items-center cursor-pointer">
+                            <div class="flex flex-row w-full justify-between items-center">
+                                <div [ngClass]="{' border-gray-600':showAddItem}"
+                                    class="border-slate-200 border-b border-solid w-full">
+
+                                </div>
+                            </div>
+                            <div *ngIf="showAddItem">
+                                <mat-icon (click)="addNewItem()" svgIcon="mat_outline:add_circle"></mat-icon>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-12 gap-x-1" *ngFor="let item of invoiceInfo.manualInvoiceDetailList">
+                            <!-- Divider -->
+
+                            <!-- Item -->
+                            <input class="col-span-6 " [autocomplete]="'off'" matInput value="" placeholder="Write here"
+                                formControlName="item{{item.manualInvoiceDetailId}}" maxlength="50">
+                            <!-- <div class="self-center text-right">{{item.unitPrice |number:'1.0-5'}}</div> -->
+                            <input class="col-span-2 text-right" placeholder="Rate"
+                                (keyup)="setUnitPrice($event.target.value,item.manualInvoiceDetailId)"
+                                [autocomplete]="'off'" matInput value=""
+                                formControlName="rate{{item.manualInvoiceDetailId}}" maxlength="50">
+                            <input class="col-span-1 text-right" placeholder="QTY"
+                                (keyup)="setMeasure($event.target.value,item.manualInvoiceDetailId)"
+                                [autocomplete]="'off'" matInput value=""
+                                formControlName="qty{{item.manualInvoiceDetailId}}" maxlength="50">
+                            <div class="col-span-2 self-center text-right">{{item.total |number:'1.0-5'}}
+                            </div>
+                            <button class="print:hidden col-span-1 font-medium text-md text-right text-secondary"
+                                (click)="removeItem(item.manualInvoiceDetailId)">
+                                <mat-icon svgIcon="mat_solid:delete"></mat-icon>
+                            </button>
+                            <div class="col-span-12 my-4 border-b"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-x-1">
+
+                        <!-- Spacer -->
+                        <div class="col-span-12 mt-16"></div>
+
+                        <!-- Total -->
+                        <div class="col-span-10 self-center text-xl font-medium tracking-tight text-secondary">
+                            SUB TOTAL
+                        </div>
+                        <div class="col-span-2 text-right text-xl font-medium">{{invoiceInfo.subTotal
+                            |number:'1.0-5'}}</div>
+                    </div>
+                    <div class="grid grid-cols-12 gap-x-1">
+
+                        <!-- Spacer -->
+                        <div class="col-span-12 mt-4"></div>
+
+                        <!-- Total -->
+                        <div class="col-span-10 self-center text-xl font-medium tracking-tight text-secondary">
+                            DISCOUNT
+                        </div>
+                        <div class="col-span-2 text-right text-xl font-medium"> <input class="col-span-2 text-right"
+                                (keyup)="setDiscount($event.target.value)" [autocomplete]="'off'" matInput [value]=""
+                                formControlName="discount" maxlength="50">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-12 gap-x-1">
+
+                        <!-- Spacer -->
+                        <div class="col-span-12 mt-4"></div>
+
+                        <!-- Total -->
+                        <div class="col-span-10 self-center text-xl font-medium tracking-tight text-secondary">
+                            TOTAL
+                        </div>
+                        <div class="col-span-2 text-right text-xl font-medium">{{invoiceInfo.subTotal -
+                            invoiceInfo.discount
+                            |number:'1.0-5'}}</div>
+                    </div>
+                    <div class="mt-16">
+
+                        <div class="mb-3 h-10 w-3">
+                            <ng-container *ngFor="let item of menuArray">
+                                <ng-container *ngIf="item.children.length > 0">
+                                    <button class="w-full"
+                                        style="overflow: hidden;white-space: nowrap;text-overflow: ellipsis;"
+                                        id='btnCatList{{item.id}}'
+                                        [ngClass]="{' text-sm min-w-full text-white':item.id === 0}" mat-stroked-button
+                                        [matMenuTriggerFor]="menu.buildMenu3">
+                                        {{item.item}}
+                                        <mat-icon *ngIf="item.id === 0" svgIcon="mat_outline:menu"></mat-icon>
+                                    </button>
+                                    <app-menu-botton #menu [items]="item.children">
+                                    </app-menu-botton>
+                                </ng-container>
+                                <ng-container *ngIf="item.children.length === 0">
+                                    <button class="w-full"
+                                        style="overflow: hidden;white-space: nowrap;text-overflow: ellipsis;"
+                                        id='btnCatList{{item.id}}' (click)="setSelectedCat(item.id,item.fullName)"
+                                        [ngClass]="{'text-sm min-w-full text-white':item.id === 0}" mat-stroked-button
+                                        color="primary">
+                                        {{item.item}}
+
+                                    </button>
+                                </ng-container>
+                            </ng-container>
+                        </div>
+                        <div class="w-full h-8 flex flex-col text-md">
+                            <span class="text-xl font-medium">Financial Category </span>
+                            <span id="categorySpan"></span>
+                        </div>
+                        <div class="mt-8">
+                            <mat-form-field appearance="legacy" floatLabel="always" class="w-full">
+                                <mat-label>Description</mat-label>
+                                <textarea spellcheck="false" formControlName="description" matInput maxlength="300"
+                                    placeholder="Write description here..."></textarea>
+                            </mat-form-field>
+                        </div>
+                    </div>
+                    <div class="mt-8">
+                        <div class="font-medium">Please pay within 15 days. Thank you for your business.</div>
+                        <div class="flex items-start mt-4">
+                            <img class="flex-0 w-10 mt-2" src="assets/images/logo/logo.svg">
+                            <div class="ml-6 text-sm text-secondary">
+                                In condimentum malesuada efficitur. Mauris volutpat placerat auctor. Ut ac congue
+                                dolor.
+                                Quisque scelerisque lacus sed feugiat fermentum.
+                                Cras aliquet facilisis pellentesque. Nunc hendrerit quam at leo commodo, a suscipit
+                                tellus dapibus. Etiam at felis volutpat est mollis lacinia.
+                                Mauris placerat sem sit amet velit mollis, in porttitor ex finibus. Proin eu nibh id
+                                libero tincidunt lacinia et eget.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+            <div class="w-full print:hidden" style="display: flex; align-items: center; place-content: center">
+                <button class="mr-1" mat-flat-button color="primary"
+                    [disabled]="isLoading || (pageType === 'edit' && invoiceInfo.status !== 1000007) || actionDisable"
+                    (click)="save()" matStepperNext>{{pageType ===
+                    'new'?'Register' : 'Update'}}</button>
+                <button class="ml-1" mat-flat-button color="primary"
+                    [disabled]="isLoading || pageType !=='edit' || invoiceInfo.status !== 1000007" (click)="confirm()"
+                    matStepperNext>Confirm</button>
+            </div>
+            <div class="print:hidden flex items-center flex-wrap content-center w-full py-2">
+                <div class="w-auto h-auto min-h-15 m-auto">
+                    <fuse-alert *ngIf="_result.message" [appearance]="'soft'" [dismissible]=" true" [dismissed]="true"
+                        [name]="'successMessage'" [type]="'success'">
+                        <b>Result: </b> {{_result.message}}.
+                    </fuse-alert>
+                    <fuse-alert *ngIf="_result.message" [appearance]="'soft'" [dismissible]="true" [dismissed]="true"
+                        [name]="'errorMessage'" [type]="'error'">
+                        <b>Result: </b> {{_result.message}}.
+                    </fuse-alert>
+                </div>
+            </div>
+
+        </div>
+    </ng-container>
+</div>

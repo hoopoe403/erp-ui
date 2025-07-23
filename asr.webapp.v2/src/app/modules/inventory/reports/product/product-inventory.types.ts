@@ -1,0 +1,54 @@
+import { Paging } from "app/core/type/paging/paging.type";
+import { BaseModel } from "app/core/type/base/BaseModel";
+
+export class ProductInventory extends BaseModel {
+    reportTypeId: number;
+    reportTypeName: string;
+    productTypeIdList: Array<number>;
+    productId: number;
+    productCode: string;
+    productName: string;
+    fullName: string;
+    warehouseIds: Array<number>;
+    warehouseId: number;
+    warehouseName: string;
+    coverIds: Array<number>;
+    coverId: number;
+    coverName: string;
+    initialStock: number;
+    stock: number;
+    preReserve: number;
+    reserve: number;
+    remained: number;
+    brandIds: Array<number>;
+    brandId: number;
+    brandName: string;
+    serial: string;
+    initialUnitPrice: number;
+    unitPrice: number;
+    totalPrice: number;
+    totalInitialPrice: number;
+    totalRemainedPrice: number;
+    currency: string;
+    status: number;
+    productionLocalDate: string;
+    orderCode: string;
+    remittanceCode: string;
+    transferCode: string;
+    initialUnitPriceFrom: number;
+    initialUnitPriceTo: number;
+    finalUnitPriceFrom: number;
+    finalUnitPriceTo: number;
+    initialStockFrom: number;
+    initialStockTo: number;
+    finalStockFrom: number;
+    finalStockTo: number;
+    productionLocalDateFrom: string;
+    productionLocalDateTo: string;
+    statusIdList: Array<number>;
+    statusDescription: string;
+    orderId: number;
+    orderDetailId: number;
+    page: Paging;
+
+}

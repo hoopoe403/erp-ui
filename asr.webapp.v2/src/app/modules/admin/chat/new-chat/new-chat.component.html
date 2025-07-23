@@ -1,0 +1,23 @@
+<div class="flex flex-col flex-auto h-full overflow-hidden bg-card dark:bg-default">
+
+    <!-- Header -->
+    <div class="flex flex-0 items-center h-18 -mb-px px-6 bg-gray-50 dark:bg-transparent">
+        <button
+            mat-icon-button
+            (click)="drawer.close()">
+            <mat-icon [svgIcon]="'heroicons_outline:arrow-narrow-left'"></mat-icon>
+        </button>
+        <div class="ml-2 text-2xl font-semibold">New Chat</div>
+    </div>
+
+    <div class="flex flex-auto flex-col items-center justify-center p-8">
+        <div class="text-center">
+            <mat-icon 
+                class="icon-size-20 text-gray-400 dark:text-gray-500"
+                [svgIcon]="'heroicons_outline:chat'"></mat-icon>
+            <div class="mt-4 text-xl font-semibold">Start a New Conversation</div>
+            <div class="mt-2 text-secondary">Ask your first question to begin a new chat session</div>
+        </div>
+    </div>
+
+</div>

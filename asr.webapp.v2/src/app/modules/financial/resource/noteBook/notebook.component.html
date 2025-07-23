@@ -1,0 +1,12 @@
+<div class="notebook-container">
+    <div class="notebook">
+        <button (click)="prevPage()" [disabled]="currentPage === 0">Previous</button>
+
+        <div class="page-wrapper" [@pageTurnAnimation]="currentPage">
+            <app-page *ngFor="let page of pages; let i = index" [hidden]="i !== currentPage"
+                [pageNumber]="i"></app-page>
+        </div>
+
+        <button (click)="nextPage()" [disabled]="currentPage === pages.length - 1">Next</button>
+    </div>
+</div>

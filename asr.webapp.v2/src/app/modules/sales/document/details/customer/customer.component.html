@@ -1,0 +1,107 @@
+<div class="w-full max-w-3xl">
+
+    <!-- Form -->
+    <form [formGroup]="customerForm">
+
+        <!-- Section -->
+        <div class="w-full">
+            <div class="text-xl">{{customerInfo.customerTypeName}}</div>
+            <div class="text-xl">{{customerInfo.customerCode}}</div>
+        </div>
+        <div class="grid sm:grid-cols-4 gap-6 w-full mt-8">
+            <!-- Name -->
+            <div class="sm:col-span-4">
+                <mat-form-field class="fuse-mat-no-subscript w-full">
+                    <mat-label>Name</mat-label>
+                    <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:user'" matPrefix></mat-icon>
+                    <input [readonly]="'true'" [formControlName]="'name'" matInput>
+                </mat-form-field>
+            </div>
+            <!-- Company -->
+            <div class="sm:col-span-2">
+                <mat-form-field class="fuse-mat-no-subscript w-full">
+                    <mat-label>Company</mat-label>
+                    <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:office-building'" matPrefix></mat-icon>
+                    <input [readonly]="'true'" [formControlName]="'company'" matInput>
+                </mat-form-field>
+            </div>
+            <!-- Branch -->
+            <div class="sm:col-span-2">
+                <mat-form-field class="fuse-mat-no-subscript w-full">
+                    <mat-label>Branch</mat-label>
+                    <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:briefcase'" matPrefix></mat-icon>
+                    <input [readonly]="'true'" [formControlName]="'branch'" matInput>
+                </mat-form-field>
+            </div>
+            <!-- About -->
+            <div class="sm:col-span-4">
+                <mat-form-field class="fuse-mat-textarea fuse-mat-no-subscript w-full">
+                    <mat-label>Address</mat-label>
+                    <textarea matInput [readonly]="'true'" [formControlName]="'address'" cdkTextareaAutosize
+                        [cdkAutosizeMinRows]="5"></textarea>
+                </mat-form-field>
+            </div>
+        </div>
+        <!-- Section -->
+        <div class="grid sm:grid-cols-4 gap-6 w-full mt-8">
+            <!-- Phone -->
+            <div class="sm:col-span-2">
+                <mat-form-field class="fuse-mat-no-subscript w-full">
+                    <mat-label>Phone</mat-label>
+                    <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:phone'" matPrefix></mat-icon>
+                    <input [readonly]="'true'" [formControlName]="'phone'" matInput>
+                </mat-form-field>
+            </div>
+            <!-- Country -->
+            <div class="sm:col-span-2">
+                <mat-form-field class="fuse-mat-no-subscript w-full">
+                    <mat-label>Country</mat-label>
+                    <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:location-marker'" matPrefix></mat-icon>
+                    <mat-select [formControlName]="'country'">
+                        <mat-option [value]="'iran'">Iran</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+        </div>
+        <div class="grid sm:grid-cols-4 gap-6 w-full mt-8">
+            <!-- Discount -->
+            <div class="sm:col-span-2">
+                <mat-form-field class="fuse-mat-no-subscript w-full">
+                    <mat-label>Discount</mat-label>
+                    <mat-icon class="icon-size-5" [svgIcon]="'feather:percent'" matPrefix></mat-icon>
+                    <input [readonly]="'true'" [formControlName]="'discount'" matInput>
+                </mat-form-field>
+            </div>
+        </div>
+        <!-- Divider -->
+        <div class="my-10 border-t"></div>
+        <!-- Section -->
+        <div class="w-full">
+            <div class="text-xl">Budget Information</div>
+        </div>
+        <div class="grid sm:grid-cols-6 gap-6 w-full mt-8">
+            <div class="sm:col-span-2">
+                <mat-form-field class="fuse-mat-no-subscript w-full">
+                    <mat-label>Balance</mat-label>
+                    <mat-icon class="icon-size-5" [svgIcon]="'mat_outline:payments'" matPrefix></mat-icon>
+                    <input [readonly]="'true'" [formControlName]="'budgetBalance'" matInput>
+                </mat-form-field>
+            </div>
+            <div class="sm:col-span-2">
+                <mat-form-field class="fuse-mat-no-subscript w-full">
+                    <mat-label>Credit</mat-label>
+                    <mat-icon class="icon-size-5" [svgIcon]="'mat_outline:payments'" matPrefix></mat-icon>
+                    <input [readonly]="'true'" [formControlName]="'budgetCredit'" matInput>
+                </mat-form-field>
+            </div>
+            <div class="sm:col-span-2">
+                <mat-form-field class="fuse-mat-no-subscript w-full">
+                    <mat-label>Total</mat-label>
+                    <mat-icon class="icon-size-5" [svgIcon]="'mat_outline:payments'" matPrefix></mat-icon>
+                    <input [readonly]="'true'" [formControlName]="'budgetTotal'" matInput>
+                </mat-form-field>
+            </div>
+        </div>
+    </form>
+
+</div>

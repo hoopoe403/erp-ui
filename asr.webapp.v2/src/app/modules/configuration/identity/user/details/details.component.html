@@ -1,0 +1,642 @@
+<!-- Main -->
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+    <div
+        class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between sm:px-3   bg-card dark:bg-transparent">
+        <!-- Title -->
+
+        <div
+            class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-3 sm:px-10 bg-card dark:bg-transparent">
+            <div class="flex-1 min-w-0">
+                <!-- Breadcrumbs -->
+                <div class="flex flex-wrap items-center font-medium">
+
+                    <div class="flex items-center ml-1 whitespace-nowrap">
+
+                        <a *ngIf="pageType==='new'" [routerLink]="['..']" style="cursor: pointer;"
+                            (click)="isLoading=true" class="whitespace-nowrap text-primary-500">Users</a>
+                        <a *ngIf="pageType==='edit'" [routerLink]="['../..']" style="cursor: pointer;"
+                            class="whitespace-nowrap text-primary-500">Users</a>
+                    </div>
+                    <div class="flex items-center ml-1 whitespace-nowrap">
+                        <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'">
+                        </mat-icon>
+                        {{titleInfo}}
+                    </div>
+                </div>
+                <!-- Title -->
+            </div>
+        </div>
+
+        <!-- Actions -->
+
+    </div>
+
+
+    <ng-container>
+        <div class="flex-auto px-6 py-3 h-100" fuseScrollbar #scrollContainer id="scrollDiv">
+
+            <mat-tab-group #tabGroup fxLayout="column" fxFlex class="h-full">
+                <mat-tab label="Information">
+                    <form [formGroup]="frmUser"
+                        class="flex rounded-b-md rounded-tr-md flex-col px-8 py-4 bg-card shadow">
+                        <div class="h-2">
+                            <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+                        </div>
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full">
+                                <mat-label>Number</mat-label>
+                                <input spellcheck="false" required [autocomplete]="'off'" matInput value=""
+                                    formControlName="number" maxlength="50">
+                                <mat-icon matSuffix class="secondary-text" svgIcon="heroicons_outline:identification">
+                                </mat-icon>
+                            </mat-form-field>
+
+
+
+                        </div>
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full">
+                                <mat-label>Username</mat-label>
+                                <input spellcheck="false" required [autocomplete]="'off'" matInput value=""
+                                    formControlName="username" [(value)]="userInfo.username" maxlength="50">
+                                <mat-icon matSuffix class="secondary-text" svgIcon="heroicons_outline:user">
+                                </mat-icon>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="flex flex-col md:flex-col w-full items-left flex-wrap content-start">
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full">
+                                <mat-label>Password</mat-label>
+                                <input matInput type="password" [formControlName]="'password'" #passwordField>
+                                <button mat-icon-button type="button"
+                                    (click)="passwordField.type === 'password' ? passwordField.type = 'text' : passwordField.type = 'password'"
+                                    matSuffix>
+                                    <mat-icon class="icon-size-5" *ngIf="passwordField.type === 'password'"
+                                        [svgIcon]="'heroicons_solid:eye'"></mat-icon>
+                                    <mat-icon class="icon-size-5" *ngIf="passwordField.type === 'text'"
+                                        [svgIcon]="'heroicons_solid:eye-off'"></mat-icon>
+                                </button>
+
+                            </mat-form-field>
+                            <div class="h-28 flex flex-col md:flex-col w-full mb-4">
+                                <label class="col"
+                                    [ngClass]="frmUser.controls['password'].hasError('required') || frmUser.controls['password'].hasError('minlength')  ? 'text-danger' : 'text-success'">
+                                    <i class="material-icons">{{ frmUser.controls['password'].hasError('required') ||
+                                        frmUser.controls['password'].hasError('minlength') ? 'cancel' :
+                                        'check_circle' }}</i>
+                                    Must be at least 8 characters!
+                                </label>
+                                <label class="col"
+                                    [ngClass]="frmUser.controls['password'].hasError('required') || frmUser.controls['password'].hasError('hasNumber')  ? 'text-danger' : 'text-success'">
+                                    <i class="material-icons">{{ frmUser.controls['password'].hasError('required') ||
+                                        frmUser.controls['password'].hasError('hasNumber') ? 'cancel' :
+                                        'check_circle' }}</i>
+                                    Must contain at least 1 number!
+                                </label>
+                                <label class="col"
+                                    [ngClass]="frmUser.controls['password'].hasError('required') || frmUser.controls['password'].hasError('hasCapitalCase')  ? 'text-danger' : 'text-success'">
+                                    <i class="material-icons">{{ frmUser.controls['password'].hasError('required') ||
+                                        frmUser.controls['password'].hasError('hasCapitalCase') ? 'cancel' :
+                                        'check_circle' }}</i>
+                                    Must contain at least 1 in Capital Case!
+                                </label>
+                                <label class="col"
+                                    [ngClass]="frmUser.controls['password'].hasError('required') || frmUser.controls['password'].hasError('hasSmallCase')  ? 'text-danger' : 'text-success'">
+                                    <i class="material-icons">{{ frmUser.controls['password'].hasError('required') ||
+                                        frmUser.controls['password'].hasError('hasSmallCase') ? 'cancel' :
+                                        'check_circle' }}</i>
+                                    Must contain at least 1 Letter in Small Case!
+                                </label>
+                                <label class="col"
+                                    [ngClass]="frmUser.controls['password'].hasError('required') || frmUser.controls['password'].hasError('hasSpecialCharacters') ? 'text-danger' : 'text-success'">
+                                    <i class="material-icons">{{ frmUser.controls['password'].hasError('required') ||
+                                        frmUser.controls['password'].hasError('hasSpecialCharacters') ? 'cancel' :
+                                        'check_circle' }}</i>
+                                    Must contain at least 1 Special Character!
+                                </label>
+                            </div>
+
+                        </div>
+                        <div class="flex flex-col md:flex-col w-full items-leftflex-wrap content-start">
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full">
+                                <mat-label>Confirm Password</mat-label>
+                                <input id="confirmPassword" matInput type="password"
+                                    [formControlName]="'confirmPassword'" #confirmPasswordField>
+                                <button mat-icon-button type="button"
+                                    (click)="confirmPasswordField.type === 'password' ? confirmPasswordField.type = 'text' : confirmPasswordField.type = 'password'"
+                                    matSuffix>
+                                    <mat-icon class="icon-size-5" *ngIf="confirmPasswordField.type === 'password'"
+                                        [svgIcon]="'heroicons_solid:eye'"></mat-icon>
+                                    <mat-icon class="icon-size-5" *ngIf="confirmPasswordField.type === 'text'"
+                                        [svgIcon]="'heroicons_solid:eye-off'"></mat-icon>
+                                </button>
+                                <mat-error class="text-danger"
+                                    *ngIf="frmUser.controls['confirmPassword'].hasError('required')">
+                                    Confirm Password is Required!
+                                </mat-error>
+                            </mat-form-field>
+                            <div class="flex flex-col md:flex-col w-full mb-4">
+                                <label class="col"
+                                    [ngClass]="frmUser.controls['confirmPassword'].hasError('NoPassswordMatch') ? 'text-danger' : 'text-success'">
+                                    <i class="material-icons">{{
+                                        frmUser.controls['confirmPassword'].hasError('NoPassswordMatch') ? 'cancel' :
+                                        'check_circle' }}</i>
+                                    Passwords match!
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full">
+                                <mat-label>First Name</mat-label>
+                                <input spellcheck="false" required [autocomplete]="'off'" matInput value=""
+                                    formControlName="firstName" maxlength="50">
+                                <mat-icon matSuffix class="secondary-text"
+                                    svgIcon="mat_outline:drive_file_rename_outline">
+                                </mat-icon>
+                            </mat-form-field>
+                        </div>
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full">
+                                <mat-label>Last Name</mat-label>
+                                <input spellcheck="false" required [autocomplete]="'off'" matInput value=""
+                                    formControlName="lastName" maxlength="50">
+                                <mat-icon matSuffix class="secondary-text"
+                                    svgIcon="mat_outline:drive_file_rename_outline">
+                                </mat-icon>
+                            </mat-form-field>
+                        </div>
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full">
+                                <mat-label>Email</mat-label>
+                                <input spellcheck="false" required [autocomplete]="'off'" matInput value=""
+                                    formControlName="email" maxlength="50">
+                                <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:email">
+                                </mat-icon>
+                            </mat-form-field>
+                        </div>
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full">
+                                <mat-label>Status</mat-label>
+                                <mat-select required formControlName="status">
+                                    <mat-option [value]="1000001">
+                                        Active
+                                    </mat-option>
+                                    <mat-option [value]="1000000">
+                                        Inactive
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                        </div>
+
+                    </form>
+                </mat-tab>
+                <mat-tab label="Role" class="h-full">
+                    <div class="h-full flex rounded-b-md rounded-tr-md flex-col  bg-card shadow">
+                        <div class="h-2">
+                            <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+                        </div>
+                        <div class="flex flex-col sm:flex-row items-center sm:items-start p-6 pb-6 sm:pb-8 w-full">
+                            <div
+                                class="h-100 flex flex-col sm:flex-row items-center sm:items-start p-6 pb-6 sm:pb-8 w-full">
+                                <div
+                                    class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
+
+                                    <!-- Header -->
+                                    <div
+                                        class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4   border-b">
+                                        <!-- Loader -->
+
+                                        <!-- Actions -->
+                                        <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+                                            <!-- Search -->
+                                            <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
+                                                <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                                                <input #roleFilter [autocomplete]="'off'" matInput
+                                                    [autocomplete]="'off'" [placeholder]="'Search'">
+                                            </mat-form-field>
+
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-auto overflow-hidden  ">
+
+
+                                        <div
+                                            class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+
+
+                                            <ng-container>
+                                                <div class="grid">
+                                                    <!-- Header -->
+                                                    <div class="role-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
+                                                        matSort matSortDisableClear>
+
+                                                        <div class="lg:block print:block cursor-pointer">
+                                                            <mat-checkbox (change)="$event ? toggleAllRoles() : null"
+                                                                [checked]="userInfo.roleIdList.length === roles.length && !isLoading"
+                                                                [indeterminate]="userInfo.roleIdList.length !== roles.length && !isLoading
+                                                                && this.userInfo.roleIdList.length > 0"
+                                                                [disabled]="isLoading || isRoleLoading"
+                                                                [aria-label]="'select all'">
+                                                            </mat-checkbox>
+                                                        </div>
+                                                        <div class=" lg:block" [mat-sort-header]="'code'">
+                                                            Code
+                                                        </div>
+                                                        <div class=" lg:block" [mat-sort-header]="'name'">
+                                                            Name
+                                                        </div>
+
+                                                    </div>
+                                                    <!-- Rows -->
+
+                                                    <ng-container *ngFor="let item of filteredRoles">
+                                                        <div [ngStyle]="{'background-color': checkRoleIsSelected(item.roleId) ? 'rgb(249 249 249 / 77%)':'#ffffff' }"
+                                                            class="role-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b">
+
+                                                            <!-- SKU -->
+                                                            <div class=" lg:block print:block cursor-pointer">
+                                                                <mat-checkbox
+                                                                    (change)="$event ? toggleRole(item.roleId): null"
+                                                                    [checked]="checkRoleIsSelected(item.roleId)"
+                                                                    [disabled]="isLoading || isRoleLoading"
+                                                                    [aria-label]="'select all'">
+                                                                </mat-checkbox>
+                                                            </div>
+
+                                                            <div class="truncate  lg:block">
+                                                                {{item.roleCode}}
+                                                            </div>
+                                                            <div class="truncate  lg:block">
+                                                                <span class="cursor-pointer w-fit"
+                                                                    (click)="openRolePage('/configuration/identity/role/details/'.concat(item.roleId))">
+                                                                    {{item.roleName}}</span>
+                                                            </div>
+
+                                                        </div>
+                                                    </ng-container>
+                                                </div>
+
+
+
+                                            </ng-container>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+                </mat-tab>
+                <mat-tab label="Menu">
+                    <div class="flex rounded-b-md rounded-tr-md flex-col  bg-card shadow">
+                        <div class="h-2">
+                            <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+                        </div>
+                        <div class="flex flex-col sm:flex-row items-center sm:items-start p-6 pb-6 sm:pb-8 w-full">
+                            <div
+                                class="h-100 flex flex-col sm:flex-row items-center sm:items-start p-6 pb-6 sm:pb-8 w-full">
+                                <div
+                                    class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
+
+                                    <!-- Header -->
+                                    <div
+                                        class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4   border-b">
+                                        <!-- Loader -->
+
+                                        <!-- Actions -->
+                                        <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+                                            <!-- Search -->
+                                            <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
+                                                <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                                                <input #menuFilter [autocomplete]="'off'" matInput
+                                                    [autocomplete]="'off'" [placeholder]="'Search'">
+                                            </mat-form-field>
+
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-auto overflow-hidden  ">
+
+
+                                        <div
+                                            class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+
+
+                                            <ng-container>
+                                                <div class="grid">
+                                                    <!-- Header -->
+                                                    <div
+                                                        class="menu-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5">
+
+                                                        <div class=" lg:block print:block cursor-pointer">
+                                                            <mat-checkbox (change)="$event ? toggleAllMenus() : null"
+                                                                [checked]="checkAllMenusAreSelected() && !isLoading"
+                                                                [indeterminate]="checkAllMenusIndeterminate()"
+                                                                [disabled]="isLoading || isRoleLoading || checkAllMenusIsDisabled()"
+                                                                [aria-label]="'select all'">
+                                                            </mat-checkbox>
+                                                        </div>
+
+                                                        <div class=" lg:block">
+                                                            Code
+                                                        </div>
+                                                        <div class=" lg:block">
+                                                            Name
+                                                        </div>
+                                                        <div class=" lg:block">
+                                                            Link
+                                                        </div>
+                                                        <div class=" lg:block">
+
+                                                        </div>
+                                                        <div class=" lg:block">
+                                                            Column(s)
+                                                        </div>
+
+                                                    </div>
+                                                    <!-- Rows -->
+
+                                                    <ng-container *ngFor="let item of filteredMenus">
+                                                        <div [ngStyle]="{'background-color': item.assignmentType ? 'rgb(249 249 249 / 77%)':'#ffffff' }"
+                                                            class="menu-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b">
+                                                            <!-- SKU -->
+                                                            <div class=" lg:block print:block cursor-pointer">
+                                                                <mat-checkbox
+                                                                    (change)="$event ? toggleMenu(item.id) : null"
+                                                                    [checked]="item.assignmentType"
+                                                                    [disabled]="isLoading || isRoleLoading || item.assignmentType == 'Role'"
+                                                                    [aria-label]="'select all'">
+                                                                </mat-checkbox>
+                                                            </div>
+                                                            <div class="truncate  lg:block">
+                                                                {{item.code}}
+                                                            </div>
+                                                            <div class="truncate  lg:block">
+                                                                {{item.title}}
+                                                            </div>
+                                                            <div class="truncate  lg:block">
+                                                                {{item.link}}
+                                                            </div>
+                                                            <div class="truncate  lg:block">
+                                                                <button [disabled]="item.viewId == 0 || !item.assignmentType"
+                                                                    (click)="openDialog(item.viewId)" mat-icon-button>
+                                                                    <mat-icon>edit</mat-icon>
+                                                                </button>
+                                                            </div>
+                                                            <div [disabled]="item.viewId == 0"
+                                                                class="truncate text-ellipsis lg:block">
+
+                                                                {{item.columns}}
+                                                            </div>
+                                                        </div>
+                                                    </ng-container>
+                                                </div>
+
+
+
+                                            </ng-container>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+                </mat-tab>
+                <mat-tab label="Access">
+                    <div class="flex rounded-b-md rounded-tr-md flex-col px-8 py-4 bg-card shadow">
+                        <div class="h-2">
+                            <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+                        </div>
+                        <div class="flex flex-col sm:flex-row items-center sm:items-start p-6 pb-6 sm:pb-8 w-full">
+                            <div
+                                class="h-100 flex flex-col sm:flex-row items-center sm:items-start p-6 pb-6 sm:pb-8 w-full">
+                                <div
+                                    class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
+
+                                    <!-- Header -->
+                                    <div
+                                        class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4   border-b">
+                                        <!-- Loader -->
+
+                                        <!-- Actions -->
+                                        <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+                                            <!-- Search -->
+                                            <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
+                                                <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                                                <input #accessFilter [autocomplete]="'off'" matInput
+                                                    [autocomplete]="'off'" [placeholder]="'Search'">
+                                            </mat-form-field>
+
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-auto overflow-hidden  ">
+
+
+                                        <div
+                                            class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+
+
+                                            <ng-container>
+                                                <div class="grid">
+                                                    <!-- Header -->
+                                                    <div
+                                                        class="access-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5">
+                                                        <div class=" lg:block print:block cursor-pointer">
+                                                            <mat-checkbox (change)="$event ? toggleAllAccess() : null"
+                                                                [checked]="checkAllAccessIsSelected() && !isLoading"
+                                                                [indeterminate]="checkAllAccessIndeterminate()"
+                                                                [disabled]="isLoading || isRoleLoading ||checkAllAccessIsDisabled()"
+                                                                [aria-label]="'select all'">
+                                                            </mat-checkbox>
+                                                        </div>
+                                                        <div class=" lg:block">
+                                                            Name
+                                                        </div>
+
+
+                                                    </div>
+                                                    <!-- Rows -->
+
+                                                    <ng-container *ngFor="let item of filteredAccess">
+                                                        <div [ngStyle]="{'background-color': item.assignmentType ? 'rgb(249 249 249 / 77%)':'#ffffff' }"
+                                                            class="access-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b">
+
+
+                                                            <!-- SKU -->
+
+                                                            <div class=" lg:block print:block cursor-pointer">
+                                                                <mat-checkbox
+                                                                    (change)="$event ? toggleAccess(item.accessId) : null"
+                                                                    [checked]="item.assignmentType"
+                                                                    [disabled]="isLoading || isRoleLoading || item.assignmentType == 'Role'"
+                                                                    [aria-label]="'select all'">
+                                                                </mat-checkbox>
+                                                            </div>
+
+                                                            <div class="truncate  lg:block">
+                                                                {{item.accessName}}
+                                                            </div>
+
+
+
+
+
+                                                        </div>
+                                                    </ng-container>
+                                                </div>
+
+
+
+                                            </ng-container>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+                </mat-tab>
+                <mat-tab label="Preview">
+                    <div class="flex rounded-b-md rounded-tr-md flex-col px-8 py-4 bg-card shadow">
+                        <div class="h-2">
+                            <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+                        </div>
+                        <div class="flex flex-col  w-full ">
+                            <div class="w-1/4 flex flex-col pb-4">
+                                <mat-label class="font-extrabold">Username</mat-label>
+                                <mat-label>{{frmUser.controls['username'].value}}</mat-label>
+                            </div>
+                            <div class="w-1/4 flex flex-col pb-4">
+                                <mat-label class="font-extrabold">First Name</mat-label>
+                                <mat-label>{{frmUser.controls['firstName'].value}}</mat-label>
+                            </div>
+                            <div class="w-1/4 flex flex-col pb-4">
+                                <mat-label class="font-extrabold">Last Name</mat-label>
+                                <mat-label>{{frmUser.controls['lastName'].value}}</mat-label>
+                            </div>
+                            <div class="w-1/4 flex flex-col pb-4">
+                                <mat-label class="font-extrabold">Email</mat-label>
+                                <mat-label>{{frmUser.controls['email'].value}}</mat-label>
+                            </div>
+                        </div>
+                        <ng-container>
+                            <div class="grid">
+                                <!-- Header -->
+                                <div style="background-color: '#dde3e9';"
+                                    class="text-center font-bold z-10  top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary ">
+                                    Menu Chosen
+                                </div>
+                                <div
+                                    class="menu-preview-grid z-10 top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5">
+
+                                    <div class=" lg:block">
+                                        Name
+                                    </div>
+                                    <div class=" lg:block">
+                                        Link
+                                    </div>
+                                    <div class=" lg:block">
+                                        Source of Assignment
+                                    </div>
+
+                                </div>
+                                <!-- Rows -->
+
+                                <ng-container *ngFor="let item of menus">
+                                    <div *ngIf="item.assignmentType"
+                                        class="menu-preview-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b border-l border-r">
+
+
+                                        <div class="truncate  lg:block">
+                                            {{item.title}}
+                                        </div>
+                                        <div class="truncate  lg:block">
+                                            {{item.link}}
+                                        </div>
+                                        <div class="truncate  lg:block">
+                                            {{item.assignmentType}}<span *ngIf="item.roleName">
+                                                -{{item.roleName}}</span>
+                                        </div>
+                                    </div>
+                                </ng-container>
+                            </div>
+
+
+
+                        </ng-container>
+                        <ng-container>
+                            <div class="grid">
+                                <!-- Header -->
+                                <div style="background-color: '#dde3e9';"
+                                    class="text-center font-bold bg-zinc-200 z-10  top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary">
+                                    Access Chosen
+                                </div>
+                                <div
+                                    class="access-preview-grid z-10  top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5">
+
+                                    <div class=" lg:block">
+                                        Name
+                                    </div>
+                                    <div class=" lg:block">
+                                        Source of Assignment
+                                    </div>
+
+                                </div>
+                                <!-- Rows -->
+
+                                <ng-container *ngFor="let item of access">
+                                    <div *ngIf="item.assignmentType"
+                                        class="access-preview-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b border-l border-r">
+
+                                        <div class="truncate  lg:block">
+                                            {{item.accessName}}
+                                        </div>
+                                        <div class="truncate  lg:block">
+                                            {{item.assignmentType}}<span *ngIf="item.roleName">
+                                                -{{item.roleName}}</span>
+                                        </div>
+                                    </div>
+                                </ng-container>
+                            </div>
+
+
+
+                        </ng-container>
+                        <div class="w-full mt-6" style="display: flex; align-items: center; place-content: center">
+                            <button class="ml-2" mat-flat-button [color]="'primary'" [disabled]="frmUser.invalid"
+                                (click)="save()">
+                                {{pageType ===
+                                'new'?'Register' : 'Update'}}
+                            </button>
+                        </div>
+                        <div class="flex items-center flex-wrap content-center w-full py-2">
+                            <div class="w-auto h-auto min-h-15 m-auto">
+                                <fuse-alert *ngIf="_result.succeed" [appearance]="'soft'" [dismissible]=" true"
+                                    [dismissed]="true" [name]="'successMessage'" [type]="'success'">
+                                    <b>Result: </b> {{_result.message}}.
+                                </fuse-alert>
+                                <fuse-alert *ngIf="!_result.succeed" [appearance]="'soft'" [dismissible]="true"
+                                    [dismissed]="true" [name]="'errorMessage'" [type]="'error'">
+                                    <b>Result: </b> {{_result.message}}.
+                                </fuse-alert>
+                            </div>
+                        </div>
+                    </div>
+                </mat-tab>
+            </mat-tab-group>
+        </div>
+    </ng-container>
+</div>

@@ -1,0 +1,30 @@
+<div 
+    class="flex flex-col"
+    [ngClass]="{'items-end': message.isUser, 'items-start': !message.isUser}">
+    
+    <!-- Message bubble -->
+    <div
+        class="relative max-w-3/4 px-4 py-3 rounded-lg message-bubble"
+        [ngClass]="{
+            'bg-primary text-primary-contrast user-message': message.isUser,
+            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 ai-message': !message.isUser
+        }">
+        
+        <!-- Message content with markdown support -->
+        <div class="message-content">
+            <markdown 
+                [data]="message.content" 
+                [lineHighlight]="true"
+                [lineNumbers]="false">
+            </markdown>
+        </div>
+    </div>
+    
+    <!-- Timestamp -->
+    <div 
+        *ngIf="showTime"
+        class="text-xs text-gray-500 mt-1"
+        [ngClass]="{'text-right mr-2': message.isUser, 'text-left ml-2': !message.isUser}">
+        {{ formatTime(message.timestamp) }}
+    </div>
+</div> 

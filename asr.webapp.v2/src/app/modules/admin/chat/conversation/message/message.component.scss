@@ -1,0 +1,224 @@
+.message-bubble {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    
+    .message-content {
+        line-height: 1.6;
+        
+        // Markdown styling
+        ::ng-deep {
+            p {
+                margin: 0 0 8px 0;
+                
+                &:last-child {
+                    margin-bottom: 0;
+                }
+            }
+            
+            h1, h2, h3, h4, h5, h6 {
+                margin: 12px 0 8px 0;
+                font-weight: 600;
+                
+                &:first-child {
+                    margin-top: 0;
+                }
+            }
+            
+            ul, ol {
+                margin: 8px 0;
+                padding-left: 20px;
+            }
+            
+            li {
+                margin: 4px 0;
+            }
+            
+            blockquote {
+                margin: 8px 0;
+                padding-left: 12px;
+                border-left: 3px solid currentColor;
+                opacity: 0.7;
+            }
+            
+            // Inline code styling
+            code:not(pre code) {
+                background-color: rgba(0, 0, 0, 0.1);
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+                font-size: 0.9em;
+                color: #e83e8c;
+            }
+            
+            // Code block styling - let highlight.js handle most of it
+            pre {
+                background-color: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 8px;
+                margin: 12px 0;
+                overflow: hidden;
+                
+                code {
+                    display: block;
+                    padding: 16px;
+                    background-color: transparent;
+                    font-size: 0.85em;
+                    line-height: 1.5;
+                    overflow-x: auto;
+                    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+                }
+            }
+            
+            // Table styling
+            table {
+                border-collapse: collapse;
+                margin: 12px 0;
+                width: 100%;
+                
+                th, td {
+                    border: 1px solid #e1e4e8;
+                    padding: 8px 12px;
+                    text-align: left;
+                }
+                
+                th {
+                    background-color: #f6f8fa;
+                    font-weight: 600;
+                }
+                
+                tr:nth-child(even) {
+                    background-color: #f9f9f9;
+                }
+            }
+            
+            // Links
+            a {
+                color: #0366d6;
+                text-decoration: none;
+                
+                &:hover {
+                    text-decoration: underline;
+                }
+            }
+            
+            // Images
+            img {
+                max-width: 100%;
+                height: auto;
+                border-radius: 4px;
+                margin: 8px 0;
+            }
+            
+            // Strong and emphasis
+            strong {
+                font-weight: 600;
+            }
+            
+            em {
+                font-style: italic;
+            }
+            
+            // Horizontal rule
+            hr {
+                border: none;
+                border-top: 1px solid #e1e4e8;
+                margin: 16px 0;
+            }
+        }
+    }
+}
+
+// User message specific styling
+.user-message {
+    .message-content ::ng-deep {
+        code:not(pre code) {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #ffc107;
+        }
+        
+        pre {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        table {
+            th, td {
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+            
+            th {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+            
+            tr:nth-child(even) {
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+        }
+        
+        a {
+            color: #87ceeb;
+        }
+        
+        hr {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+    }
+}
+
+// AI message specific styling
+.ai-message {
+    .message-content ::ng-deep {
+        // Dark mode adjustments
+        @media (prefers-color-scheme: dark) {
+            pre {
+                background-color: #2d3748;
+                border-color: #4a5568;
+            }
+            
+            code:not(pre code) {
+                background-color: rgba(255, 255, 255, 0.1);
+                color: #ffd700;
+            }
+            
+            table {
+                th, td {
+                    border-color: #4a5568;
+                }
+                
+                th {
+                    background-color: #2d3748;
+                }
+                
+                tr:nth-child(even) {
+                    background-color: #2d3748;
+                }
+            }
+            
+            hr {
+                border-color: #4a5568;
+            }
+        }
+    }
+}
+
+// Responsive adjustments
+@media (max-width: 640px) {
+    .message-bubble {
+        max-width: 95%;
+        
+        .message-content ::ng-deep {
+            pre code {
+                padding: 12px;
+                font-size: 0.8em;
+            }
+            
+            table {
+                font-size: 0.9em;
+                
+                th, td {
+                    padding: 6px 8px;
+                }
+            }
+        }
+    }
+} 

@@ -1,0 +1,156 @@
+<div class="flex flex-col flex-auto overflow-y-auto lg:overflow-hidden bg-card dark:bg-default">
+
+    <ng-container *ngIf="session || isNewChat; else selectSessionOrStartNew">
+
+        <!-- Header -->
+        <div class="flex flex-0 items-center h-18 px-4 md:px-6 border-b bg-gray-50 dark:bg-transparent">
+
+            <!-- Back button -->
+            <a
+                class="lg:hidden md:-ml-2"
+                mat-icon-button
+                [routerLink]="['./']">
+                <mat-icon [svgIcon]="'heroicons_outline:arrow-narrow-left'"></mat-icon>
+            </a>
+
+            <!-- AI Assistant info -->
+            <div class="flex items-center ml-2 lg:ml-0 mr-2">
+                <div class="relative flex flex-0 items-center justify-center w-10 h-10">
+                    <div class="flex items-center justify-center w-full h-full rounded-full text-lg uppercase bg-primary text-primary-contrast">
+                        <mat-icon [svgIcon]="'heroicons_outline:chat'"></mat-icon>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <div class="text-lg font-medium leading-5 truncate">
+                        {{ session?.session_name || 'New Chat' }}
+                    </div>
+                    <div class="text-sm text-secondary">AI Assistant</div>
+                </div>
+            </div>
+
+            <!-- Menu button (only show for existing sessions) -->
+            <button
+                *ngIf="session"
+                class="ml-auto"
+                mat-icon-button
+                [matMenuTriggerFor]="conversationHeaderMenu">
+                <mat-icon [svgIcon]="'heroicons_outline:dots-vertical'"></mat-icon>
+                <mat-menu #conversationHeaderMenu>
+                    <button mat-menu-item>
+                        <mat-icon [svgIcon]="'heroicons_outline:backspace'"></mat-icon>
+                        Clear messages
+                    </button>
+                    <button mat-menu-item>
+                        <mat-icon [svgIcon]="'heroicons_outline:download'"></mat-icon>
+                        Export conversation
+                    </button>
+                </mat-menu>
+            </button>
+
+        </div>
+
+        <!-- Conversation -->
+        <div class="flex flex-col flex-auto overflow-hidden">
+            <div class="flex-auto overflow-y-auto chat-messages" [class.p-6]="messages.length > 0">
+                <ng-container *ngIf="messages.length > 0; else noMessages">
+                    <ng-container *ngFor="let message of messages; let i = index; let first = first; let last = last; trackBy: trackByFn">
+                        <!-- Start of the day -->
+                        <ng-container *ngIf="first || !isToday(messages[i - 1].timestamp) || !isToday(message.timestamp)">
+                            <div class="flex items-center justify-center my-6 -mx-6">
+                                <div class="flex-auto border-b"></div>
+                                <div class="flex-0 mx-4 text-sm font-medium leading-5 text-secondary">
+                                    {{formatDate(message.timestamp)}}
+                                </div>
+                                <div class="flex-auto border-b"></div>
+                            </div>
+                        </ng-container>
+                        
+                        <!-- Message component -->
+                        <div class="mb-4">
+                            <chat-message 
+                                [message]="message"
+                                [showTime]="last || messages[i + 1]?.isUser !== message.isUser">
+                            </chat-message>
+                        </div>
+                    </ng-container>
+                </ng-container>
+
+                <!-- No messages template -->
+                <ng-template #noMessages>
+                    <div class="flex flex-col items-center justify-center h-full p-8">
+                        <div class="w-16 h-16 rounded-full bg-primary bg-opacity-10 flex items-center justify-center mb-4">
+                            <mat-icon 
+                                class="icon-size-8 text-primary"
+                                [svgIcon]="'heroicons_outline:chat'"></mat-icon>
+                        </div>
+                        <div class="text-xl font-semibold text-center">Welcome to AI Assistant</div>
+                        <div class="text-secondary text-center mt-2">Start a conversation by typing your message below</div>
+                    </div>
+                </ng-template>
+
+                <!-- Typing indicator -->
+                <div 
+                    *ngIf="loading"
+                    class="flex flex-col items-start mt-4 mb-4">
+                    <div class="relative max-w-3/4 px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-700">
+                        <div class="flex items-center space-x-1">
+                            <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
+                            <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                            <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1 ml-2">
+                        AI is typing...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Message field -->
+            <div class="flex items-end p-4 border-t bg-gray-50 dark:bg-transparent">
+                <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript fuse-mat-rounded fuse-mat-bold w-full">
+                    <textarea
+                        class="min-h-5 my-0 resize-none"
+                        style="margin: 11px 0 !important; padding: 0 !important;"
+                        [rows]="1"
+                        matInput
+                        [(ngModel)]="message"
+                        [disabled]="loading"
+                        (keydown)="onMessageInputKeydown($event)"
+                        placeholder="Type your message..."
+                        #messageInput></textarea>
+                </mat-form-field>
+                <div class="flex items-center h-11 my-px ml-4">
+                    <button
+                        mat-icon-button
+                        [disabled]="!message.trim() || loading"
+                        (click)="sendMessage()">
+                        <mat-icon
+                            class="rotate-90"
+                            [svgIcon]="'heroicons_outline:paper-airplane'"></mat-icon>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </ng-container>
+
+    <!-- Select session template (only shows when not new chat and no session) -->
+    <ng-template #selectSessionOrStartNew>
+        <div class="flex flex-col flex-auto items-center justify-center bg-gray-100 dark:bg-transparent">
+            <mat-icon class="icon-size-24" [svgIcon]="'heroicons_outline:chat'"></mat-icon>
+            <div class="mt-4 text-2xl font-semibold tracking-tight text-secondary">Select a conversation or start a new chat</div>
+        </div>
+    </ng-template>
+
+    <!-- Speech bubble tail SVG -->
+    <!-- @formatter:off -->
+    <ng-template #speechBubbleExtension>
+        <svg width="100%" height="100%" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+            <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                <path d="M1.01522827,0.516204834 C-8.83532715,54.3062744 61.7609863,70.5215302 64.8009949,64.3061218 C68.8074951,54.8859711 30.1663208,52.9997559 37.5036011,0.516204834 L1.01522827,0.516204834 Z" fill="currentColor" fill-rule="nonzero"></path>
+            </g>
+        </svg>
+    </ng-template>
+    <!-- @formatter:on -->
+
+</div>

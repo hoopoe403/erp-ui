@@ -1,0 +1,101 @@
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# compiled output
+/dist
+/tmp
+/out-tsc
+
+# dependencies
+/node_modules
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.angular/cache
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# macOS
+__MACOSX/
+._*
+.AppleDouble
+.LSOverride
+
+# Windows
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+ehthumbs.db
+[Dd]esktop.ini
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.staging
+.env.production
+.env.*.local
+
+# Additional logs
+*.log
+logs/
+*.log.*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Build artifacts and cache
+/build
+/dist-server
+*.tsbuildinfo
+.npm
+.eslintcache
+.stylelintcache
+
+# Webpack
+.webpack/
+
+# Additional VS Code
+.vscode/launch.json
+debug.log
+
+# Temporary files
+*.tmp
+*.temp
+/temp
+
+# Editor backup files
+*.swp
+*.swo
+.#*

@@ -1,0 +1,130 @@
+<div class="relative flex flex-col md:w-fit -m-6">
+
+    <!-- Header -->
+    <!--     -->
+    <div class="border border-slate-300 border-solid flex flex-col sm:flex-row items-center sm:items-start py-2 px-4">
+        <ng-container *ngIf="data.dismissible.show">
+            <div class="absolute top-0 right-0 py-2 pr-4">
+                <button (click)="closeDialog()" mat-icon-button [matDialogClose]="undefined">
+                    <mat-icon class="text-secondary" [svgIcon]="'heroicons_outline:x'"></mat-icon>
+                </button>
+            </div>
+        </ng-container>
+        <!-- Icon -->
+        <ng-container>
+            <div class="flex flex-0 items-center justify-center w-10 h-10 sm:mr-4 rounded-full"
+                [ngClass]="{'text-primary-600 bg-primary-100 dark:text-primary-50 dark:bg-primary-600': data.icon.color === 'primary'}">
+                <mat-icon class="text-current" [svgIcon]="data.icon.name"></mat-icon>
+            </div>
+        </ng-container>
+
+
+
+    </div>
+    <div class="absolute inset-x-0 bottom-0" *ngIf="isDataLoading || isLoading">
+        <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+    </div>
+    <!-- Content -->
+    <div class="flex flex-row p-24 pb-0 m-0  p-6 sm:p-10 text-left  print:p-0 " fusePerfectScrollbar
+        style="max-height: 700px;">
+        <!-- <div class="flex flex-col inline-block h-400px border-solid border-2 border-black rounded-lg shadow-lg absolute left-5 top-16"> -->
+        <div class="flex flex-col">
+            <div class="w-100 p-4 rounded-2xl shadow bg-card">
+                <form [formGroup]="chooseForm" class="w-full">
+                    <div class="w-full border-b-2">
+                        <mat-checkbox formControlName="selectAll" class="inline-block mb-2"
+                            (change)="$event ? masterToggle() : null" [indeterminate]="checkAllIndeterminate()"
+                            [checked]='allSelected()' [disabled]="isLoading" [aria-label]="'Select All'">
+
+                        </mat-checkbox>
+                        <p class="inline-block mb-2 font-bold">Change Label Options</p>
+                    </div>
+                    <div class="border-b pt-4 pb-4">
+                        <mat-checkbox formControlName="printLabel0" [disabled]="isLoading"
+                            (change)="$event ? changePrintLabel('printLabel0') : null">
+                            Cartoon label with ASR logo (1st)
+                        </mat-checkbox>
+                    </div>
+                    <div class="border-b pt-4 pb-4">
+                        <mat-checkbox formControlName="printLabel1" [disabled]="isLoading"
+                            (change)="$event ? changePrintLabel('printLabel1') : null">
+                            Cartoon label without ASR logo (1st)
+                        </mat-checkbox>
+                    </div>
+                    <div class="border-b pt-4 pb-4">
+                        <mat-checkbox formControlName="printLabel2" [disabled]="isLoading"
+                            (change)="$event ? changePrintLabel('printLabel2') : null">
+                            Cartoon label with ASR logo (2nd)
+                        </mat-checkbox>
+                    </div>
+                    <div class="border-b pt-4 pb-4">
+                        <mat-checkbox formControlName="printLabel3" [disabled]="isLoading"
+                            (change)="$event ? changePrintLabel('printLabel3') : null">
+                            Cartoon label without ASR logo (2nd)
+                        </mat-checkbox>
+                    </div>
+                    <div class="border-b pt-4 pb-4">
+                        <mat-checkbox formControlName="cartoonLabel" [disabled]="isLoading"
+                            (change)="$event ? changePrintLabel('cartoonLabel') : null">
+                            System label
+                        </mat-checkbox>
+                    </div>
+                    <div class="pt-4 pb-4">
+                        <mat-checkbox formControlName="standardLabel" [disabled]="isLoading"
+                            (change)="$event ? changePrintLabel('standardLabel') : null">
+                            Drive And Standard label
+                        </mat-checkbox>
+                    </div>
+                </form>
+            </div>
+            <div class="flex flex-col items-baseline mt-3">
+                <mat-form-field class="w-52 -mb-5">
+                    <mat-label>Scale Of PDF Export : </mat-label>
+                    <mat-select [(ngModel)]="defaultScale">
+                        <mat-option *ngFor="let item of scales" [value]="item.value"
+                            (onSelectionChange)="setScaleValue($event)">
+                            {{item.viewValue}}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+                <button (click)="Prints()" mat-flat-button
+                    class="bg-primary-600 text-white w-50 mt-6 ml-24">PDF</button>
+                <button mat-flat-button ngxPrint useExistingCss="true" printSectionId="toPrint"
+                    class="bg-primary-600 text-white w-50 mt-6 ml-24">Print</button>
+            </div>
+        </div>
+
+
+
+        <div fuseScrollbar class="ml-52 flex flex-col p-4" style="width: 600px;">
+            <div class="p-4"
+                style="width: 346px; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);">
+                <div id="toPrint" #printSection>
+                    <div *ngFor="let serialInfo of serialInfoUI;let last = last">
+                        <div>
+                            <div>
+                                test test test
+                            </div>
+                        </div>
+
+                        <div *ngIf="!last" style="page-break-before: always;"></div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+
+
+
+
+
+
+
+
+
+    </div>
+
+
+</div>

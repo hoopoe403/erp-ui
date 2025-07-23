@@ -1,0 +1,253 @@
+<div class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
+  <!-- Header -->
+  <div class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4 px-6 md:px-8 border-b">
+    <!-- Loader -->
+    <div class="absolute inset-x-0 bottom-0" *ngIf="isLoading">
+      <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+    </div>
+    <!-- Title -->
+    <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+      <div class="text-4xl font-extrabold tracking-tight">
+        Financial Resources
+      </div>
+      <div class="cursor-pointer ml-3 mt-2">
+        <button mat-icon-button ngxPrint useExistingCss="true" printSectionId="section-to-print">
+          <mat-icon [svgIcon]="'heroicons_outline:printer'"></mat-icon>
+        </button>
+      </div>
+    </div>
+    <!-- Actions -->
+    <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+      <!-- Search -->
+      <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
+        <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
+        <input #filter [autocomplete]="'off'" [formControl]="searchInputControl" matInput [autocomplete]="'off'"
+          [placeholder]="'Search'" />
+        <mat-icon matPostfix (click)="resourcesAdvancedSearch.toggle()" matTooltip="Advanced Search"
+          class="cursor-pointer">
+          settings
+        </mat-icon>
+      </mat-form-field>
+      <!-- Add product button -->
+      <button class="ml-4" mat-flat-button [color]="'primary'" [routerLink]="['../details']">
+        <span class="ml-2 mr-1">NEW</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="flex flex-auto overflow-hidden">
+    <!-- Products list -->
+    <div class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+      <ng-container *ngIf="resources$ | async as resources">
+        <ng-container *ngIf="resources.length > 0; else noResources">
+          <div class="grid" id="section-to-print">
+            <!-- Header -->
+            <div
+              class="resources-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
+              matSort matSortDisableClear>
+              <div [mat-sort-header]="'financialResourceCode'">Code</div>
+              <div [mat-sort-header]="'financialResourceName'">Name</div>
+
+              <div class="hidden lg:block print:block" [mat-sort-header]="'ownerName'">
+                Owner
+              </div>
+              <div class="hidden lg:block print:block" [mat-sort-header]="'beneficiaryName'">
+                Beneficiary
+              </div>
+              <div class="hidden lg:block print:block" [mat-sort-header]="'accountHolder'">
+                Account Holder
+              </div>
+              <div class="hidden lg:block print:block" [mat-sort-header]="'status'">
+                Status
+              </div>
+              <div class="print:hidden">More</div>
+            </div>
+            <!-- Rows -->
+            <ng-container *ngIf="resources$ | async as resources">
+              <ng-container *ngFor="let resource of resources; trackBy: trackByFn">
+                <div class="resources-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b">
+                  <!-- SKU -->
+                  <div class="truncate">
+                    {{ resource.financialResourceCode }}
+                  </div>
+
+                  <!-- Name -->
+                  <div class="lg:flex items-center">
+                    {{ resource.financialResourceName }}
+                  </div>
+
+                  <!-- Stock -->
+                  <div class="hidden lg:flex items-center print:block">
+                    {{ resource.ownerName }}
+                  </div>
+
+                  <div class="hidden lg:flex items-center print:block">
+                    {{ resource.beneficiaryName }}
+                  </div>
+
+                  <div class="hidden lg:flex items-center print:block">
+                    {{ resource.accountHolder }}
+                  </div>
+                  <div class="hidden lg:block print:block">
+                    <p style="width: fit-content" class="p-1 rounded block truncate text-white"
+                      [ngClass]="resource.statusColor">
+                      {{ resource.statusDescription }}
+                    </p>
+                  </div>
+                  <div class="print:hidden">
+                    <div class="flex items-center">
+                      <ng-container>
+                        <button mat-icon-button class="info" [color]="'primary'" (click)="
+                            $event.stopPropagation(); selectedInfoRow = resource
+                          " [matMenuTriggerFor]="infoMenu">
+                          <mat-icon class="icon-size-5">info</mat-icon>
+                        </button>
+                      </ng-container>
+                      <ng-container fxLayout="row">
+                        <button mat-icon-button (click)="
+                            $event.stopPropagation(); selectedInfoRow = resource
+                          " [matMenuTriggerFor]="contextMenu">
+                          <mat-icon color="accent">more_vert</mat-icon>
+                        </button>
+                      </ng-container>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+            </ng-container>
+          </div>
+
+          <mat-paginator
+            class="sm:absolute sm:inset-x-0 sm:bottom-0 border-b sm:border-t sm:border-b-0 z-10 bg-gray-50 dark:bg-transparent"
+            [ngClass]="{ 'pointer-events-none': isLoading }" [length]="pagination.length"
+            [pageIndex]="pagination.pageIndex" (page)="handlePageEvent($event)" [pageSize]="pagination.pageSize"
+            [pageSizeOptions]="[50, 100, 200, 300, 400, 2000]" [showFirstLastButtons]="true">
+          </mat-paginator>
+        </ng-container>
+      </ng-container>
+    </div>
+  </div>
+  <ng-template #noResources>
+    <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">
+      There are no resources!
+    </div>
+  </ng-template>
+</div>
+<mat-menu #infoMenu="matMenu" xPosition="before">
+  <div class="p-2">
+    <h4 class="mb-1 text-gray-900 font-bold text-xl">
+      {{ selectedInfoRow.financialResourceName }}
+    </h4>
+    <div class="flex flex-col mb-1">
+      <span class="text-gray-400 text-sm">Creator User Name</span>
+      <p>{{ selectedInfoRow.registerUserName }}</p>
+    </div>
+    <div class="flex flex-col mb-1">
+      <span class="text-gray-400 text-sm">Creator IP</span>
+      <p class="text-gray-900">{{ selectedInfoRow.clientIP }}</p>
+    </div>
+    <div class="flex flex-col mb-1">
+      <span class="text-gray-400 text-sm">Update Date & time</span>
+      <p class="text-gray-900">
+        {{
+        selectedInfoRow.localChangeDate +
+        " " +
+        selectedInfoRow.localChangeTime
+        }}
+      </p>
+    </div>
+  </div>
+</mat-menu>
+
+<mat-menu #contextMenu="matMenu">
+  <ng-template matMenuContent>
+    <button mat-menu-item [routerLink]="['../details', selectedInfoRow.financialResourceId]">
+      Edit
+    </button>
+  </ng-template>
+</mat-menu>
+
+<fuse-drawer class="w-screen min-w-screen sm:w-80 sm:min-w-80" fixed transparentOverlay [mode]="'over'"
+  [name]="'resourcesAdvancedSearch'" [position]="'left'" #resourcesAdvancedSearch>
+  <div class="flex flex-col w-full" fuseScrollbar>
+    <div class="bg-gray-900 relative h-14 max-h-14 z-10 w-full">
+      <div class="inset-y-0 left-0 flex w-1/2">
+        <mat-icon class="mt-4 ml-1 text-white flex-auto" matPrefix [svgIcon]="'heroicons_outline:search'">
+        </mat-icon>
+
+        <h3 class="ml-2 mt-4 text-white flex-auto">
+          <span>Advanced Search</span>
+        </h3>
+      </div>
+      <div class="inline-block">
+        <mat-icon class="mt-3 mr-2 absolute inset-y-0 right-0 cursor-pointer text-white"
+          (click)="resourcesAdvancedSearch.toggle()">close
+        </mat-icon>
+      </div>
+    </div>
+    <form [formGroup]="frmAdvancedSearch">
+      <div class="pt-8 px-4 pb-4">
+        <div
+          class="border border-solid border-gray-200 rounded-sm flex flex-initial flex-col relative mb-10 pt-4 px-4 pb-3">
+          <h2 class="absolute -top-2.5 left-1.5 m-0 px-2 bg-white">
+            Search Fields
+          </h2>
+          <div>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Status</mat-label>
+              <mat-select [(value)]="resourceInfo.statusIdList" placeholder="Status" formControlName="status" multiple>
+                <mat-option (onSelectionChange)="setStatusValue($event)" *ngFor="let status of statuses"
+                  [value]="status.statusId" [checked]="status.isDefault === 1">
+                  {{ status.statusDescription }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Code%</mat-label>
+              <input [autocomplete]="'off'" matInput value="" formControlName="code" maxlength="50" />
+              <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
+              </mat-icon>
+            </mat-form-field>
+          </div>
+          <div>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Name%</mat-label>
+              <input [autocomplete]="'off'" matInput value="" formControlName="name" maxlength="50" />
+              <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
+              </mat-icon>
+            </mat-form-field>
+          </div>
+          <div>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Owner%</mat-label>
+              <input [autocomplete]="'off'" matInput value="" formControlName="owner" maxlength="50" />
+              <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
+              </mat-icon>
+            </mat-form-field>
+          </div>
+          <div>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Beneficiary%</mat-label>
+              <input [autocomplete]="'off'" matInput value="" formControlName="beneficiary" maxlength="50" />
+              <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
+              </mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="flex flex-row w-full">
+          <div class="py-2 w-1/2 pl-10 items-center align-middle">
+            <button mat-raised-button style="color: darkgreen" (click)="resourcesSearch()">
+              Apply
+            </button>
+          </div>
+          <div class="py-2 w-1/2 items-center align-middle">
+            <button (click)="resetAdvancedSearch()" mat-raised-button style="color: darkred">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</fuse-drawer>

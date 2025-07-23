@@ -1,0 +1,294 @@
+<!-- Main -->
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+  <div
+    class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between sm:px-3   bg-card dark:bg-transparent">
+    <!-- Title -->
+
+    <div
+      class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-3 sm:px-10 bg-card dark:bg-transparent">
+      <div class="flex-1 min-w-0">
+        <!-- Breadcrumbs -->
+        <div class="flex flex-wrap items-center font-medium">
+          <div>
+            <a [routerLink]="['../..']" style="cursor: pointer;" class="whitespace-nowrap text-primary-500">Products</a>
+          </div>
+          <div class="flex items-center ml-1 whitespace-nowrap">
+            <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'">
+            </mat-icon>
+            <a class="">{{titleInfo}}</a>
+          </div>
+        </div>
+        <div class="flex flex-row">
+          <span class="font-bold">Total Subset:</span><span class="pl-px">{{productInfo$.goodsList.length}}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+
+  </div>
+  <div [ngClass]="{'opacity-100': showUpScroll}"
+    class="transition-all duration-200 ease-in-out delay-200 fixed flex items-center justify-center right-0 w-10 h-10 shadow-lg rounded-l-lg z-999 cursor-pointer bg-gray-600 opacity-0 print:hidden"
+    (click)="scrollToTop()" style="top: 228px">
+    <mat-icon class="icon-size-5 text-white animate-bounce" [svgIcon]="'mat_outline:arrow_circle_up'"></mat-icon>
+  </div>
+  <div [ngClass]="{'opacity-100': showDownScroll}"
+    class="transition-all duration-200 ease-in-out delay-200 fixed flex items-center justify-center right-0 w-10 h-10 shadow-lg rounded-l-lg z-999 cursor-pointer bg-gray-600 opacity-0 print:hidden"
+    (click)="scrollToDown()" style="top: 322px">
+    <mat-icon class="icon-size-5 text-white animate-bounce" [svgIcon]="'mat_outline:arrow_circle_down'"></mat-icon>
+  </div>
+  <div class="h-2">
+    <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+  </div>
+  <ng-container>
+    <div class="flex-auto px-6 py-3 h-100" fuseScrollbar #scrollContainer id="scrollDiv" (scroll)="onWindowScroll()">
+
+      <mat-tab-group #tabGroup class="h-full">
+
+        <mat-tab label="Subset" class="h-full">
+          <div class="h-full flex rounded-b-md rounded-tr-md flex-col  bg-card shadow">
+            <div class="h-full flex flex-col sm:flex-row items-center sm:items-start p-6 pb-6 sm:pb-8 w-full">
+              <div class="h-100 flex flex-col sm:flex-row items-center sm:items-start p-6 pb-6 sm:pb-8 w-full">
+                <div
+                  class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
+
+                  <!-- Header -->
+                  <div
+                    class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4   border-b w-full">
+                    <!-- Loader -->
+
+                    <!-- Actions -->
+                    <div class="flex flex-shrink-0 w-full items-center pt-6 sm:pt-0 sm:pl-4">
+                      <!-- Search -->
+                      <mat-form-field class="flex-none fuse-mat-dense fuse-mat-no-subscript min-w-50">
+                        <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                        <input #subsetFilter [autocomplete]="'off'" matInput [autocomplete]="'off'"
+                          [placeholder]="'Search'">
+                      </mat-form-field>
+
+                      <button class="flex-none" mat-icon-button [matMenuTriggerFor]="moreMenu">
+                        <mat-icon color="accent">more_vert</mat-icon>
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                  <div class="flex flex-auto overflow-hidden  ">
+
+
+                    <div class="flex flex-col flex-auto sm:mb-9 overflow-hidden sm:overflow-y-auto">
+
+                      <ng-container>
+                        <div class="grid">
+                          <!-- Header -->
+                          <div
+                            class="product-subsets-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
+                            matSort matSortDisableClear>
+
+                            <div class=" lg:block" [mat-sort-header]="'code'">
+                              Code
+                            </div>
+                            <div class=" lg:block" [mat-sort-header]="'name'">
+                              Name
+                            </div>
+                            <div class="hidden lg:block" [mat-sort-header]="'categoryName'">
+                              Source
+                            </div>
+                            <div class="hidden lg:block">
+                              Conformity
+                            </div>
+                            <div class="hidden lg:block">
+                              Measure
+                            </div>
+                          </div>
+                          <!-- Rows -->
+                          <mat-card [formGroup]="frmProductSubset">
+                            <div
+                              (contextmenu)="open($event, item); $event.preventDefault();this.selectedSubsetRow = item;"
+                              *ngFor="let item of productSubsets$; trackBy: trackByFn">
+                              <div class="product-subsets-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b">
+
+                                <!-- SKU -->
+                                <div class="truncate  lg:block">
+                                  {{item.code}}
+                                </div>
+                                <div class="truncate  lg:block">
+                                  {{item.name}}
+                                  <div>
+                                    <div matTooltip="Category" style="background-color: rgb(245 245 245)!important;"
+                                      class="bg-neutral-400 text-xs rounded-sm py-0.5 px-2 inline-block">
+                                      <div class="rounded-3xl w-2 h-2 mr-2 inline-block bg-green-600"></div>
+                                      <div class="inline-block">{{item.categoryName}}</div>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="hidden lg:block print:block">
+                                  <p style="width: fit-content" class="p-1 rounded block truncate text-white"
+                                    [ngClass]="item.sourceColor">
+                                    {{item.source}}
+                                  </p>
+                                </div>
+                                <div class="flex flex-col w-full">
+                                  <mat-form-field class="w-full text-sm" appearance="legacy">
+                                    <mat-select [(ngModel)]="item.conformityId" required
+                                      formControlName="conformity{{item.key}}">
+                                      <mat-option [value]="1000650">
+                                        none
+                                      </mat-option>
+                                      <mat-option [value]="1000651">
+                                        Frame
+                                      </mat-option>
+                                      <mat-option [value]="1000652">
+                                        Panel
+                                      </mat-option>
+                                    </mat-select>
+                                  </mat-form-field>
+                                </div>
+                                <div class="flex flex-col">
+
+                                  <div class="flex flex-row w-full" *ngIf="item.itemId == 1000691">
+                                    <mat-form-field class="w-2/5 text-sm" appearance="legacy">
+                                      <input type="number" required id="inp{{item.key}}" formControlName="{{item.key}}"
+                                        [(ngModel)]="item.measure" name="item.key" placeholder="Count" matInput value=""
+                                        min="1">
+                                    </mat-form-field>
+                                  </div>
+                                  <div class="flex flex-row w-full" *ngIf="item.itemId == 1000692">
+                                    <mat-form-field appearance="legacy" class="w-2/5 text-sm">
+                                      <input type="number" required id="inp{{item.key}}" [(ngModel)]="item.measure"
+                                        formControlName="mass{{item.key}}" name="item.key" placeholder="Mass" matInput
+                                        value="" min="1">
+                                    </mat-form-field>
+                                    <mat-form-field appearance="legacy" class="w-3/5 text-sm pl-1"
+                                      style="font-size: 12px;">
+                                      <mat-select required placeholder="Unit" [(ngModel)]="item.unitId"
+                                        formControlName="massUnit{{item.key}}">
+                                        <mat-option *ngFor="let UD of massUnitData" [value]="UD.unitId">
+                                          {{UD.unitName}}
+                                        </mat-option>
+                                      </mat-select>
+                                    </mat-form-field>
+                                  </div>
+
+                                  <div class="flex flex-row w-full" *ngIf="item.itemId == 1000693">
+                                    <mat-form-field appearance="legacy" class="w-3/12 text-sm">
+                                      <input type="number" required id="inp{{item.key}}" [(ngModel)]="item.measure"
+                                        formControlName="length{{item.key}}" name="item.key" placeholder="Length"
+                                        matInput value="" min="1">
+                                    </mat-form-field>
+
+                                    <mat-form-field appearance="legacy" class="w-3/12 text-sm pl-1">
+                                      <input type="number" required id="inp{{item.key}}" [(ngModel)]="item.measure"
+                                        formControlName="width{{item.key}}" name="item.key" placeholder="Width" matInput
+                                        value="" min="1">
+                                    </mat-form-field>
+
+                                    <mat-form-field appearance="legacy" class="w-6/12 text-sm pl-1">
+                                      <mat-select required placeholder="Unit" [(ngModel)]="item.unitId"
+                                        formControlName="areaUnit{{item.key}}">
+                                        <mat-option *ngFor="let UD of areaUnitData" [value]="UD.unitId">
+                                          {{UD.unitName}}
+                                        </mat-option>
+                                      </mat-select>
+                                    </mat-form-field>
+                                  </div>
+
+                                  <div class="flex flex-row w-full" *ngIf="item.itemId == 1000694">
+                                    <mat-form-field appearance="legacy" class="w-2/5 text-sm">
+                                      <input type="number" required id="inp{{item.key}}"
+                                        formControlName="length{{item.key}}" [(ngModel)]="item.measure" name="item.key"
+                                        placeholder="Length" matInput value="" min="1">
+                                    </mat-form-field>
+                                    <mat-form-field appearance="legacy" class="w-3/5 text-sm pl-1">
+                                      <mat-select required placeholder="Unit" [(ngModel)]="item.unitId"
+                                        formControlName="lengthUnit{{item.key}}">
+                                        <mat-option *ngFor="let UD of lengthUnitData" [value]="UD.unitId">
+                                          {{UD.unitName}}
+                                        </mat-option>
+                                      </mat-select>
+                                    </mat-form-field>
+                                  </div>
+
+                                </div>
+                              </div>
+                            </div>
+                          </mat-card>
+                        </div>
+
+                      </ng-container>
+                    </div>
+                  </div>
+                  <div class="w-full" style="display: flex; align-items: center; place-content: center">
+                    <button mat-flat-button color="primary" [disabled]="isLoading" (click)="save()"
+                      matStepperNext>Confirm</button>
+                  </div>
+                  <div class="flex items-center flex-wrap content-center w-full py-1">
+                    <div class="w-auto h-auto min-h-15 m-auto">
+                      <fuse-alert *ngIf="_result.message" [appearance]="'soft'" [dismissible]=" true" [dismissed]="true"
+                        [name]="'successMessage'" [type]="'success'">
+                        <b>Result: </b> {{_result.message}}.
+                      </fuse-alert>
+                      <fuse-alert *ngIf="_result.message" [appearance]="'soft'" [dismissible]="true" [dismissed]="true"
+                        [name]="'errorMessage'" [type]="'error'">
+                        <b>Result: </b> {{_result.message}}.
+                      </fuse-alert>
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+
+
+        </mat-tab>
+
+
+      </mat-tab-group>
+    </div>
+  </ng-container>
+
+  <ng-template #noProductSubset>
+    <div class="p-8 sm:p-16 border-t text-xl font-semibold tracking-tight text-center">There are no subset!
+    </div>
+  </ng-template>
+
+</div>
+
+
+
+<mat-menu #contextMenu="matMenu">
+  <ng-template matMenuContent>
+    <button mat-menu-item>Remove
+    </button>
+  </ng-template>
+</mat-menu>
+<mat-menu #moreMenu="matMenu">
+  <ng-template matMenuContent>
+    <button [disabled]="disableImportBotton" mat-menu-item (click)="openImportDialog('1')">
+      <mat-icon svgIcon="mat_outline:file_download"></mat-icon>
+      Import From Product Subset
+    </button>
+    <button mat-menu-item (click)="openImportDialog('2')">
+      <mat-icon svgIcon="mat_outline:file_download"></mat-icon>
+      Import From Goods List
+    </button>
+    <button mat-menu-item (click)="clearList()">
+      <mat-icon svgIcon="mat_outline:clear_all"></mat-icon>
+      Clear All Items
+    </button>
+    <button mat-menu-item (click)="loadCurrentSubset()">
+      <mat-icon svgIcon="mat_outline:restart_alt"></mat-icon>
+      Load Subset
+    </button>
+  </ng-template>
+</mat-menu>
+
+<ng-template #userMenu let-user>
+  <section class="user-menu">
+    <div (click)="removeSubset(selectedSubsetRow.key)" class="cursor-pointer">Remove</div>
+  </section>
+</ng-template>

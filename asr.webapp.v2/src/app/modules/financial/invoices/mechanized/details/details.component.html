@@ -1,0 +1,199 @@
+<!-- Main -->
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+    <div
+        class="print:hidden flex flex-col sm:flex-row items-start sm:items-center sm:justify-between sm:px-3   bg-card dark:bg-transparent">
+        <!-- Title -->
+
+        <div class="flex flex-col w-full sm:items-center sm:justify-between p-3 sm:px-10 bg-card dark:bg-transparent">
+            <div class="flex flex-col min-w-0 w-full">
+                <!-- Breadcrumbs -->
+                <div class="flex flex-row items-center font-medium w-full">
+                    <div>
+                        <a>Financial</a>
+                    </div>
+                    <div class="flex items-center whitespace-nowrap">
+                        <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'">
+                        </mat-icon>
+                        <a [routerLink]="['../../list']" style="cursor: pointer;"
+                            class="whitespace-nowrap text-primary-500">Invoices</a>
+                        <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'">
+                        </mat-icon>
+                        <a>Details</a>
+                    </div>
+                </div>
+                <!-- Title -->
+                <div class="flex flex-row w-full min-h-10">
+                    <div
+                        class="w-1/2 grid justify-items-start text-base md:text-base font-extrabold tracking-tight leading-7 sm:leading-10 truncate">
+                        <h2>
+                            {{titleInfo}}
+                        </h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+
+    </div>
+    <ng-container [formGroup]="frmInvoice">
+        <div class="flex-auto inset-0 min-w-0 overflow-auto text-center  print:overflow-visible">
+
+            <div class="h-2 print:hidden">
+                <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+            </div>
+            <div *ngIf="!isLoading" class="inline-block p-6 sm:p-10 text-left  print:p-0">
+
+                <!-- Invoice -->
+                <div
+                    class="w-240 p-16 rounded-2xl shadow bg-card print:w-auto print:rounded-none print:shadow-none print:bg-transparent">
+
+                    <div class="flex items-start justify-between">
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+                            <div class="text-4xl tracking-tight text-secondary">INVOICE</div>
+                            <div class="text-4xl">#{{invoiceInfo.invoiceNumber}}</div>
+                            <div class="font-medium tracking-tight text-secondary">Date</div>
+                            <div class="font-medium">{{invoiceInfo.localChangeDate}}</div>
+                            <div class="font-medium tracking-tight text-secondary">ISSUER</div>
+                            <div class="font-medium">{{invoiceInfo.ownerName}}</div>
+                            <div class="font-medium tracking-tight text-secondary">WAREHOUSE</div>
+                            <div class="font-medium">{{invoiceInfo.sourceWarehouseName}}</div>
+                            <div class="font-medium tracking-tight text-secondary">TOTAL DUE</div>
+                            <div class="font-medium">{{invoiceInfo.total |number:'1.0-5'}}&nbsp;IRR</div>
+                            <div class="font-medium tracking-tight text-secondary pt-6">REFERENCE NO</div>
+                            <div class="font-medium">
+                                <mat-form-field appearance="legacy" floatLabel="always" class="w-44">
+                                    <input spellcheck="false" [autocomplete]="'off'" matInput value="" required
+                                        formControlName="referenceNo" maxlength="50">
+                                </mat-form-field>
+                            </div>
+                        </div>
+                        <div
+                            class="grid auto-cols-max grid-flow-col gap-x-8 -mr-16 py-6 px-8 rounded-l-2xl bg-accent dark">
+                            <div class="place-self-center w-24">
+                                <img class="w-24" src="assets/images/logo/logo.svg">
+                            </div>
+                            <div class="pl-10 border-l text-md">
+                                <div class="font-medium">Arian System Ro</div>
+                                <div>No 56 East Third Street</div>
+                                <div>Khoramdasht, Tehran, Iran</div>
+                                <div>+98 21 4448 9776</div>
+                                <div>sales@asr-elevator.ir</div>
+                                <div>www.asr-elevator.ir</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-md">
+                        <div class="text-xl font-medium">BILL TO</div>
+                        <div class="text-xl font-medium">{{invoiceInfo.destinationOwnerName}}</div>
+                        <div>{{invoiceInfo.destinationWarehouseName}}</div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-x-1 mt-12">
+                        <!-- Columns -->
+                        <div class="col-span-8 font-medium text-md text-secondary">DESCRIPTION</div>
+                        <div class="font-medium text-md text-right text-secondary">RATE</div>
+                        <div class="font-medium text-md text-right text-secondary">QTY</div>
+                        <div class="col-span-2 font-medium text-md text-right text-secondary">TOTAL</div>
+                        <div class="col-span-12 grid grid-cols-12 gap-x-1"
+                            *ngFor="let item of invoiceInfo.invoiceDetailList">
+                            <!-- Divider -->
+                            <div class="col-span-12 my-4 border-b"></div>
+
+                            <!-- Item -->
+                            <div class="col-span-8">{{item.itemName}}</div>
+                            <!-- <div class="self-center text-right">{{item.unitPrice |number:'1.0-5'}}</div> -->
+                            <input class="text-right"
+                                (keyup)="setPriceInInput($event.target.value,item.invoiceDetailId)"
+                                [autocomplete]="'off'" matInput value="" [formControlName]="item.invoiceDetailId"
+                                maxlength="50">
+                            <div class="self-center text-right">{{item.measure}}</div>
+                            <div class="col-span-2 self-center text-right">{{item.total |number:'1.0-5'}}
+                            </div>
+                        </div>
+
+
+                        <!-- Spacer -->
+                        <div class="col-span-12 mt-16"></div>
+
+                        <!-- Total -->
+                        <div class="col-span-10 self-center text-2xl font-medium tracking-tight text-secondary">
+                            TOTAL
+                        </div>
+                        <div class="col-span-2 text-right text-2xl font-medium">{{invoiceInfo.total
+                            |number:'1.0-5'}}</div>
+                    </div>
+                    <div class="mt-8">
+
+                        <!-- <div class="mb-3 h-10 w-3">
+                            <ng-container *ngFor="let item of menuArray">
+                                <ng-container *ngIf="item.children.length > 0">
+                                    <button class="w-full"
+                                        style="overflow: hidden;white-space: nowrap;text-overflow: ellipsis;"
+                                        id='btnCatList{{item.id}}'
+                                        [ngClass]="{' text-sm min-w-full text-white':item.id === 0}" mat-stroked-button
+                                        [matMenuTriggerFor]="menu.buildMenu3">
+                                        {{item.item}}
+                                        <mat-icon *ngIf="item.id === 0" svgIcon="mat_outline:menu"></mat-icon>
+                                    </button>
+                                    <app-menu-botton #menu [items]="item.children">
+                                    </app-menu-botton>
+                                </ng-container>
+                                <ng-container *ngIf="item.children.length === 0">
+                                    <button class="w-full"
+                                        style="overflow: hidden;white-space: nowrap;text-overflow: ellipsis;"
+                                        id='btnCatList{{item.id}}' (click)="setSelectedCat(item.id,item.fullName)"
+                                        [ngClass]="{'text-sm min-w-full text-white':item.id === 0}" mat-stroked-button
+                                        color="primary">
+                                        {{item.item}}
+
+                                    </button>
+                                </ng-container>
+                            </ng-container>
+                        </div>
+                        <div class="w-full h-8 flex flex-col text-md">
+                            <span class="text-xl font-medium">Financial Category </span>
+                            <span id="categorySpan"></span>
+                        </div> -->
+                    </div>
+                    <div class="mt-16">
+                        <div class="font-medium">Please pay within 15 days. Thank you for your business.</div>
+                        <div class="flex items-start mt-4">
+                            <img class="flex-0 w-10 mt-2" src="assets/images/logo/logo.svg">
+                            <div class="ml-6 text-sm text-secondary">
+                                In condimentum malesuada efficitur. Mauris volutpat placerat auctor. Ut ac congue
+                                dolor.
+                                Quisque scelerisque lacus sed feugiat fermentum.
+                                Cras aliquet facilisis pellentesque. Nunc hendrerit quam at leo commodo, a suscipit
+                                tellus dapibus. Etiam at felis volutpat est mollis lacinia.
+                                Mauris placerat sem sit amet velit mollis, in porttitor ex finibus. Proin eu nibh id
+                                libero tincidunt lacinia et eget.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+            <div *ngIf="!isLoading" class="w-full print:hidden"
+                style="display: flex; align-items: center; place-content: center">
+                <button class="ml-1" mat-flat-button color="primary" [disabled]="isLoading || frmInvoice.invalid" (click)="confirm()"
+                    matStepperNext>Confirm</button>
+            </div>
+            <div class="print:hidden flex items-center flex-wrap content-center w-full py-2">
+                <div class="w-auto h-auto min-h-15 m-auto">
+                    <fuse-alert *ngIf="_result.message" [appearance]="'soft'" [dismissible]=" true" [dismissed]="true"
+                        [name]="'successMessage'" [type]="'success'">
+                        <b>Result: </b> {{_result.message}}.
+                    </fuse-alert>
+                    <fuse-alert *ngIf="_result.message" [appearance]="'soft'" [dismissible]="true" [dismissed]="true"
+                        [name]="'errorMessage'" [type]="'error'">
+                        <b>Result: </b> {{_result.message}}.
+                    </fuse-alert>
+                </div>
+            </div>
+
+        </div>
+    </ng-container>
+</div>

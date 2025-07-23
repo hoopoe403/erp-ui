@@ -1,0 +1,450 @@
+<!-- Main -->
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+    <div
+        class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between sm:px-3   bg-card dark:bg-transparent">
+        <!-- Title -->
+
+        <div
+            class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-3 sm:px-10 bg-card dark:bg-transparent">
+            <div class="flex-1 min-w-0">
+                <!-- Breadcrumbs -->
+                <div class="flex flex-wrap items-center font-medium">
+
+                    <div class="flex items-center ml-1 whitespace-nowrap">
+
+                        <a *ngIf="pageType==='new'" [routerLink]="['..']" style="cursor: pointer;"
+                            class="whitespace-nowrap text-primary-500">Software Task</a>
+                        <a *ngIf="pageType==='edit'" [routerLink]="['../..']" style="cursor: pointer;"
+                            class="whitespace-nowrap text-primary-500">Software Task</a>
+                    </div>
+                    <div class="flex items-center ml-1 whitespace-nowrap">
+                        <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'">
+                        </mat-icon>
+                        {{titleInfo}}
+                    </div>
+                </div>
+                <!-- Title -->
+            </div>
+        </div>
+
+        <!-- Actions -->
+
+    </div>
+
+
+    <ng-container>
+        <div class="flex-auto px-6 py-3 h-100" fuseScrollbar #scrollContainer id="scrollDiv">
+
+            <mat-tab-group #tabGroup fxLayout="column" fxFlex class="h-full">
+                <mat-tab label="Information">
+                    <form [formGroup]="frmDetails"
+                        class="flex rounded-b-md rounded-tr-md flex-col px-8 py-4 bg-card shadow">
+                        <div class="h-2">
+                            <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+                        </div>
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Title</mat-label>
+                                <input pattern="[A-Za-z 0-9]{3,100}" spellcheck="false" required [autocomplete]="'off'"
+                                    matInput value="" formControlName="title" maxlength="100">
+                                <mat-icon matSuffix class="secondary-text"
+                                    svgIcon="mat_outline:drive_file_rename_outline">
+                                </mat-icon>
+                            </mat-form-field>
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Priority</mat-label>
+                                <mat-select placeholder="Priority" formControlName="priority">
+                                    <mat-option *ngFor="let priority of priorities"
+                                        (onSelectionChange)="setPriorityValue($event)" [value]="priority.key">
+                                        {{priority.value}}</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+
+                        </div>
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Cost</mat-label>
+                                <input spellcheck="false" required [autocomplete]="'off'" matInput value=""
+                                    (keyup)="setCost($event.target.value)" formControlName="cost" maxlength="50">
+                                <mat-icon matSuffix class="secondary-text"
+                                    svgIcon="mat_outline:drive_file_rename_outline">
+                                </mat-icon>
+                            </mat-form-field>
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Status</mat-label>
+                                <mat-select placeholder="Status" formControlName="status">
+                                    <mat-option *ngFor="let status of statuses" [value]="status.statusId">
+                                        {{status.statusDescription}}</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                        </div>
+
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center px-3">
+                            <angular-editor class="w-full text-right" formControlName="descriptions"
+                                [config]="editorConfig">
+
+                            </angular-editor>
+                        </div>
+
+                    </form>
+                </mat-tab>
+                <mat-tab label="Subsystem" class="h-full">
+                    <div class="h-full flex rounded-b-md rounded-tr-md flex-col  bg-card shadow">
+                        <div class="h-2">
+                            <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+                        </div>
+                        <div class="flex flex-col sm:flex-row items-center sm:items-start p-6 pb-6 sm:pb-8 w-full">
+                            <div
+                                class="h-100 flex flex-col sm:flex-row items-center sm:items-start p-6 pb-6 sm:pb-8 w-full">
+                                <div
+                                    class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
+
+                                    <!-- Header -->
+                                    <div
+                                        class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4   border-b">
+                                        <!-- Loader -->
+
+                                        <!-- Actions -->
+                                        <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+                                            <!-- Search -->
+                                            <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
+                                                <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                                                <input #subsystemFilter [autocomplete]="'off'" matInput
+                                                    [autocomplete]="'off'" [placeholder]="'Search'">
+                                            </mat-form-field>
+
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-auto overflow-hidden  ">
+                                        <div
+                                            class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+                                            <ng-container>
+                                                <div class="grid">
+                                                    <!-- Header -->
+                                                    <div class="subsystem-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
+                                                        matSort matSortDisableClear>
+
+                                                        <div class="lg:block print:block cursor-pointer">
+                                                            <mat-checkbox
+                                                                (change)="$event ? toggleAllSubsystems($event.checked) : null"
+                                                                [checked]="checkAllSubsystemsAreSelected() && !isLoading"
+                                                                [indeterminate]="checkSubsystemIsIndeterminate() && !isLoading"
+                                                                [disabled]="isLoading" [aria-label]="'select all'">
+                                                            </mat-checkbox>
+                                                        </div>
+                                                        <div class=" lg:block" [mat-sort-header]="'name'">
+                                                            Name
+                                                        </div>
+
+                                                    </div>
+                                                    <!-- Rows -->
+
+                                                    <ng-container *ngFor="let item of filteredSubsystems">
+                                                        <div [ngStyle]="{'background-color': checkSubsystemIsSelected(item.subSystemId) ? 'rgb(249 249 249 / 77%)':'#ffffff' }"
+                                                            class="subsystem-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b">
+
+                                                            <!-- SKU -->
+                                                            <div class=" lg:block print:block cursor-pointer">
+                                                                <mat-checkbox
+                                                                    (change)="$event ? toggleSubsystem(item.subSystemId): null"
+                                                                    [checked]="checkSubsystemIsSelected(item.subSystemId)"
+                                                                    [disabled]="isLoading" [aria-label]="'select all'">
+                                                                </mat-checkbox>
+                                                            </div>
+                                                            <div class=" truncate lg:block">
+                                                                <span class="cursor-pointer w-fit">
+                                                                    {{item.subSystemName}}</span>
+                                                            </div>
+
+                                                        </div>
+                                                    </ng-container>
+                                                </div>
+
+
+
+                                            </ng-container>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+                </mat-tab>
+                <mat-tab label="Menu">
+                    <div class="flex rounded-b-md rounded-tr-md flex-col  bg-card shadow">
+                        <div class="h-2">
+                            <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+                        </div>
+                        <div class="flex flex-col sm:flex-row items-center sm:items-start p-6 pb-6 sm:pb-8 w-full">
+                            <div
+                                class="h-100 flex flex-col sm:flex-row items-center sm:items-start p-6 pb-6 sm:pb-8 w-full">
+                                <div
+                                    class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
+
+                                    <!-- Header -->
+                                    <div
+                                        class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4   border-b">
+                                        <!-- Loader -->
+
+                                        <!-- Actions -->
+                                        <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+                                            <!-- Search -->
+                                            <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
+                                                <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                                                <input #menuFilter [autocomplete]="'off'" matInput
+                                                    [placeholder]="'Search'">
+                                            </mat-form-field>
+
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-auto overflow-hidden  ">
+
+
+                                        <div
+                                            class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+
+
+                                            <ng-container>
+                                                <div class="grid">
+                                                    <!-- Header -->
+                                                    <div
+                                                        class="menu-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5">
+
+                                                        <div class=" lg:block print:block cursor-pointer">
+                                                            <mat-checkbox
+                                                                (change)="$event ? toggleAllMenus($event.checked) : null"
+                                                                [checked]="checkAllMenusAreSelected() && !isLoading"
+                                                                [indeterminate]="checkMenuIsIndeterminate() && !isLoading"
+                                                                [disabled]="isLoading" [aria-label]="'select all'">
+                                                            </mat-checkbox>
+                                                        </div>
+
+                                                        <div class=" lg:block">
+                                                            Code
+                                                        </div>
+                                                        <div class=" lg:block">
+                                                            Name
+                                                        </div>
+                                                        <div class=" lg:block">
+                                                            Subsystem
+                                                        </div>
+                                                        <div class=" lg:block">
+                                                            Link
+                                                        </div>
+
+
+                                                    </div>
+                                                    <!-- Rows -->
+
+                                                    <ng-container *ngFor="let item of filteredMenus">
+                                                        <div [ngStyle]="{'background-color': item.assignmentType ? 'rgb(249 249 249 / 77%)':'#ffffff' }"
+                                                            class="menu-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b">
+                                                            <!-- SKU -->
+                                                            <div class=" lg:block print:block cursor-pointer">
+                                                                <mat-checkbox
+                                                                    (change)="$event ? toggleMenu(item.id) : null"
+                                                                    [checked]="checkMenuIsSelected(item.id)"
+                                                                    [disabled]="isLoading" [aria-label]="'select all'">
+                                                                </mat-checkbox>
+                                                            </div>
+                                                            <div class="truncate  lg:block">
+                                                                {{item.code}}
+                                                            </div>
+                                                            <div class="truncate  lg:block">
+                                                                {{item.title}}
+                                                            </div>
+                                                            <div class="truncate  lg:block">
+                                                                {{item.subSystemName}}
+                                                            </div>
+                                                            <div class="truncate  lg:block">
+                                                                {{item.link}}
+                                                            </div>
+                                                        </div>
+                                                    </ng-container>
+                                                </div>
+
+
+
+                                            </ng-container>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+                </mat-tab>
+                <mat-tab label="Preview">
+                    <div class="flex rounded-b-md rounded-tr-md flex-col px-8 py-4 bg-card shadow">
+                        <div class="h-2">
+                            <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+                        </div>
+                        <div class="flex flex-col  w-full ">
+                            <div class="w-1/4 flex flex-col pb-4">
+                                <mat-label class="font-extrabold">Title</mat-label>
+                                <mat-label>{{frmDetails.controls['title'].value}}</mat-label>
+                            </div>
+                            <div class="w-28 flex flex-col pb-4">
+                                <mat-label class="font-extrabold">Priority</mat-label>
+                                <div class="flex items-center px-4 leading-9 rounded-full"
+                                    [ngClass]="{'text-green-800 bg-green-200 dark:text-green-100 dark:bg-green-500': detailInfo.priority == 0,
+                                                'text-gray-800 bg-gray-200 dark:text-gray-100 dark:bg-gray-500': detailInfo.priority == 1,
+                                                'text-red-800 bg-red-200 dark:text-red-100 dark:bg-red-500': detailInfo.priority == 2}">
+
+                                    <!-- Low -->
+                                    <ng-container *ngIf="detailInfo.priority == 0">
+                                        <mat-icon class="icon-size-5 text-current"
+                                            [svgIcon]="'heroicons_solid:arrow-narrow-down'"></mat-icon>
+                                        <span class="ml-2 mr-1 text-md font-medium">Low</span>
+                                    </ng-container>
+
+                                    <!-- Normal -->
+                                    <ng-container *ngIf="detailInfo.priority == 1">
+                                        <mat-icon class="icon-size-4 text-current"
+                                            [svgIcon]="'heroicons_solid:minus'"></mat-icon>
+                                        <span class="ml-2 mr-1 text-md font-medium">Normal</span>
+                                    </ng-container>
+
+                                    <!-- High -->
+                                    <ng-container *ngIf="detailInfo.priority == 2">
+                                        <mat-icon class="icon-size-4 text-current"
+                                            [svgIcon]="'heroicons_solid:arrow-narrow-up'"></mat-icon>
+                                        <span class="ml-2 mr-1 text-md font-medium">High</span>
+                                    </ng-container>
+                                </div>
+                            </div>
+                            <div class="w-1/4 flex flex-col pb-4">
+                                <mat-label class="font-extrabold">Cost</mat-label>
+                                <mat-label>{{frmDetails.controls['cost'].value}}</mat-label>
+                            </div>
+                            <div class="w-1/4 flex flex-col pb-4">
+                                <mat-label class="font-extrabold">Status</mat-label>
+                                <mat-label>{{frmDetails.controls['status'].value}}</mat-label>
+                            </div>
+                            <div class="w-full flex flex-col pb-4">
+                                <mat-label class="font-extrabold">Descriptions</mat-label>
+                                <mat-label style="min-height: 9rem;" class="border-2 rounded-md text-right"
+                                    [innerHtml]="frmDetails.controls['descriptions'].value">
+                                </mat-label>
+                            </div>
+                        </div>
+                        <ng-container>
+                            <div class="grid">
+                                <!-- Header -->
+                                <div style="background-color: '#dde3e9';"
+                                    class="text-center font-bold bg-zinc-200 z-10  top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary">
+                                    Subsystem Chosen
+                                </div>
+                                <div
+                                    class="subsystem-preview-grid z-10  top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5">
+
+                                    <div class=" lg:block">
+                                        Name
+                                    </div>
+                                    <div class=" lg:block">
+                                        Source of Assignment
+                                    </div>
+
+                                </div>
+                                <!-- Rows -->
+
+                                <ng-container *ngFor="let item of subsystems">
+                                    <div *ngIf="item.assignmentType"
+                                        class="subsystem-preview-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b border-l border-r">
+
+                                        <div class="truncate  lg:block">
+                                            {{item.subSystemName}}
+                                        </div>
+                                    </div>
+                                </ng-container>
+                            </div>
+
+
+
+                        </ng-container>
+                        <ng-container>
+                            <div class="grid">
+                                <!-- Header -->
+                                <div style="background-color: '#dde3e9';"
+                                    class="text-center font-bold z-10  top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary ">
+                                    Menu Chosen
+                                </div>
+                                <div
+                                    class="menu-preview-grid z-10 top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5">
+
+                                    <div class=" lg:block">
+                                        Code
+                                    </div>
+                                    <div class=" lg:block">
+                                        Name
+                                    </div>
+                                    <div class=" lg:block">
+                                        Subsystem
+                                    </div>
+                                    <div class=" lg:block">
+                                        Link
+                                    </div>
+
+                                </div>
+                                <!-- Rows -->
+
+                                <ng-container *ngFor="let item of menus">
+                                    <div *ngIf="item.assignmentType"
+                                        class="menu-preview-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b border-l border-r">
+
+
+                                        <div class="truncate  lg:block">
+                                            {{item.code}}
+                                        </div>
+                                        <div class="truncate  lg:block">
+                                            {{item.title}}
+                                        </div>
+                                        <div class="truncate  lg:block">
+                                            {{item.subSystemName}}
+                                        </div>
+                                        <div class="truncate  lg:block">
+                                            {{item.link}}
+                                        </div>
+                                    </div>
+                                </ng-container>
+                            </div>
+
+
+
+                        </ng-container>
+
+                        <div class="w-full mt-6" style="display: flex; align-items: center; place-content: center">
+                            <button class="ml-2" mat-flat-button [color]="'primary'" [disabled]="frmDetails.invalid"
+                                (click)="save()">
+                                {{pageType ===
+                                'new'?'Register' : 'Update'}}
+                            </button>
+                        </div>
+                        <div class="flex items-center flex-wrap content-center w-full py-2">
+                            <div class="w-auto h-auto min-h-15 m-auto">
+                                <fuse-alert *ngIf="_result.succeed" [appearance]="'soft'" [dismissible]=" true"
+                                    [dismissed]="true" [name]="'successMessage'" [type]="'success'">
+                                    <b>Result: </b> {{_result.message}}.
+                                </fuse-alert>
+                                <fuse-alert *ngIf="!_result.succeed" [appearance]="'soft'" [dismissible]="true"
+                                    [dismissed]="true" [name]="'errorMessage'" [type]="'error'">
+                                    <b>Result: </b> {{_result.message}}.
+                                </fuse-alert>
+                            </div>
+                        </div>
+                    </div>
+                </mat-tab>
+            </mat-tab-group>
+        </div>
+    </ng-container>
+</div>

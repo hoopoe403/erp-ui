@@ -1,0 +1,379 @@
+<div class="flex flex-col flex-auto w-full">
+    <div class="h-2">
+        <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+    </div>
+    <div class="flex flex-wrap w-full max-w-screen-xl mx-auto p-6 md:p-8">
+
+        <!-- Title and action buttons -->
+        <div class="flex items-center justify-between w-full">
+            <div>
+                <div class="text-3xl font-semibold tracking-tight leading-8">Profit dashboard</div>
+                <div class="font-medium tracking-tight text-secondary">Monitor metrics, check reports and review
+                    costs and incomes</div>
+            </div>
+            <div class="flex items-center ml-6">
+                <button class="hidden sm:inline-flex" mat-stroked-button>
+                    <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:cog'"></mat-icon>
+                    <span class="ml-2">Settings</span>
+                </button>
+                <button (click)="loadExcelData()" class="hidden sm:inline-flex ml-3" mat-flat-button
+                    [color]="'primary'">
+                    <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:save'"></mat-icon>
+                    <span class="ml-2">Export</span>
+                </button>
+
+                <!-- Actions menu (visible on xs) -->
+                <div class="sm:hidden">
+                    <button [matMenuTriggerFor]="actionsMenu" mat-icon-button>
+                        <mat-icon [svgIcon]="'heroicons_outline:dots-vertical'"></mat-icon>
+                    </button>
+                    <mat-menu #actionsMenu="matMenu">
+                        <button (click)="loadExcelData()" mat-menu-item>Export</button>
+                        <button mat-menu-item>Settings</button>
+                    </mat-menu>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full mt-8">
+            <!-- Visitors overview -->
+            <div
+                class="sm:col-span-2 lg:col-span-3 dark flex flex-col flex-auto bg-card shadow rounded-2xl overflow-hidden">
+                <div class="flex items-center justify-between mt-10 ml-10 mr-6 sm:mr-10">
+                    <div class="flex flex-col">
+                        <div class="mr-4 text-2xl md:text-3xl font-semibold tracking-tight leading-7">Profit and Loss
+                            Overview
+                        </div>
+                        <div class="font-medium text-secondary">Comparison of profit and loss</div>
+                    </div>
+                    <div class="ml-2">
+                        <mat-button-toggle-group class="hidden sm:inline-flex border-none space-x-1" value="this-year"
+                            #visitorsYearSelector="matButtonToggleGroup">
+                            <mat-button-toggle class="px-1.5 rounded-full overflow-hidden border-none font-medium"
+                                value="last-year">Last Year
+                            </mat-button-toggle>
+                            <mat-button-toggle class="px-1.5 rounded-full overflow-hidden border-none font-medium"
+                                value="this-year">This Year
+                            </mat-button-toggle>
+                        </mat-button-toggle-group>
+                        <div class="sm:hidden">
+                            <button mat-icon-button [matMenuTriggerFor]="visitorsMenu">
+                                <mat-icon [svgIcon]="'heroicons_outline:dots-vertical'"></mat-icon>
+                            </button>
+                            <mat-menu #visitorsMenu="matMenu">
+                                <button mat-menu-item>This Year</button>
+                                <button mat-menu-item>Last Year</button>
+                            </mat-menu>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col flex-auto" style="height:35rem;">
+                    <apx-chart class="flex-auto w-full h-full" [chart]="chartVisitors.chart"
+                        [colors]="chartVisitors.colors" [dataLabels]="chartVisitors.dataLabels"
+                        [fill]="chartVisitors.fill" [grid]="chartVisitors.grid" [series]="chartVisitors.series[0]"
+                        [stroke]="chartVisitors.stroke" [tooltip]="chartVisitors.tooltip" [xaxis]="chartVisitors.xaxis"
+                        [yaxis]="chartVisitors.yaxis"></apx-chart>
+                </div>
+            </div>
+            <!-- Conversions -->
+
+            <!-- Impressions -->
+
+            <!-- Visits -->
+
+        </div>
+
+        <div class="grid grid-cols-1  gap-8 w-full mt-8">
+            <form [formGroup]="frmProfit">
+                <div class="h-2">
+                    <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+                </div>
+                <div class="flex flex-col flex-auto p-6 bg-card rounded-2xl shadow">
+                    <div class="flex items-center">
+                        <div class="flex flex-col">
+                            <div class="mr-4 text-lg font-medium tracking-tight leading-6 truncate">Costs and Icomes
+                                Details
+                            </div>
+                            <div class="flex flex-row flex-wrap">
+                                <div class="text-secondary font-medium mr-2">
+                                    <mat-form-field appearance="outline" class="w-full">
+                                        <mat-label>Year</mat-label>
+                                        <mat-select [disabled]="isLoading" placeholder="Year" formControlName="year">
+                                            <mat-option (onSelectionChange)="setFinancialYear($event)"
+                                                *ngFor="let year of financialYears" [value]="year.partitionValue">
+                                                {{ year.partitionValue }}</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                </div>
+                                <div class="text-secondary font-medium">
+                                    <mat-form-field appearance="outline" class="w-full">
+                                        <mat-label>Cycle</mat-label>
+                                        <mat-select [disabled]="isLoading" placeholder="Cycle" formControlName="cycle">
+                                            <mat-option (onSelectionChange)="setCycle($event)"
+                                                *ngFor="let cycle of profitLossList" [value]="cycle.profitLossId">
+                                                {{ cycle.chartXAxis }}</mat-option>
+                                        </mat-select>
+                                    </mat-form-field>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ml-auto -mt-2 -mr-2">
+                            <button mat-icon-button [matMenuTriggerFor]="budgetMenu" [disabled]="isLoading">
+                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_solid:dots-vertical'"></mat-icon>
+                            </button>
+                            <mat-menu #budgetMenu="matMenu">
+                                <button (click)="setProfitLossDetailType('accumulative')"
+                                    mat-menu-item>Accumulative</button>
+                                <button (click)="setProfitLossDetailType('detail')" mat-menu-item>Detail</button>
+                                <mat-divider class="my-2"></mat-divider>
+                                <button (click)="toggleShowInitialAndFinal()" mat-menu-item>
+                                    <span *ngIf="!config.showDetailInitialAndFinal">Show</span>
+                                    <span *ngIf="config.showDetailInitialAndFinal">Hide</span>
+                                    <span>&nbsp;Initial and Final</span>
+                                </button>
+                            </mat-menu>
+                        </div>
+                    </div>
+                    <div class="mt-8">
+
+                        <div class="-my-4 divide-y">
+                            <div class="grid grid-cols-4 py-3">
+                                <div class="flex items-center">
+                                    <div class="ml-3 truncate"></div>
+                                </div>
+                                <div class="font-medium text-right text-blue-500">Gross</div>
+                                <div class="font-medium text-right text-blue-500">Net</div>
+                                <div class="font-medium text-right text-blue-500">Difference</div>
+                            </div>
+
+                            <div class="grid grid-cols-4 py-3">
+                                <div class="flex items-center">
+                                    <div class="flex-0 w-2 h-2 rounded-full bg-green-600"></div>
+                                    <div class="ml-3 truncate">Incomes</div>
+                                </div>
+                                <div class="font-medium text-right">{{profitLossInfo.grossIncomes |number:'1.0-5'}} IRR
+                                </div>
+                                <div class="font-medium text-right">{{profitLossInfo.netIncomes |number:'1.0-5'}} IRR
+                                </div>
+                                <div matTooltip="Gross Profit-Total Investment"
+                                    [ngClass]="profitLossInfo.grossProfit-totalInvestment>0 ? 'text-green-600' : 'text-red-500'"
+                                    class="font-medium text-right">{{profitLossInfo.grossProfit - totalInvestment
+                                    |number:'1.0-0'}} IRR
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-4 py-3">
+                                <div class="flex items-center">
+                                    <div class="flex-0 w-2 h-2 rounded-full bg-red-500"></div>
+                                    <div class="ml-3 truncate">Costs</div>
+                                </div>
+                                <div class="font-medium text-right">{{profitLossInfo.grossCosts |number:'1.0-5'}} IRR
+                                </div>
+                                <div class="font-medium text-right">{{profitLossInfo.netCosts |number:'1.0-5'}} IRR
+                                </div>
+                                <div matTooltip="Net Profit-Total Investment"
+                                    [ngClass]="profitLossInfo.netProfit-totalInvestment>0 ? 'text-green-600' : 'text-red-500'"
+                                    class="font-medium text-right">{{profitLossInfo.netProfit - totalInvestment
+                                    |number:'1.0-0'}} IRR
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-4 py-3">
+                                <div class="flex items-center">
+                                    <div [ngClass]="config.isProfit ? 'bg-green-600' : 'bg-red-500'"
+                                        class="flex-0 w-2 h-2 rounded-full"></div>
+                                    <div class="ml-3 truncate"><span *ngIf="config.isProfit">Profit</span><span
+                                            *ngIf="!config.isProfit">Loss</span></div>
+                                </div>
+                                <div class="font-medium text-right">{{profitLossInfo.grossProfit |number:'1.0-5'}} IRR
+                                    ({{(profitLossInfo.grossProfit * 100) /
+                                    totalSales |number:'1.2-2'}}%)
+                                </div>
+                                <div class="font-medium text-right">{{profitLossInfo.netProfit |number:'1.0-5'}} IRR
+                                    ({{(profitLossInfo.netProfit * 100) /
+                                    totalSales |number:'1.2-2'}}%)
+                                </div>
+                                <div [ngClass]="profitLossInfo.grossProfit-profitLossInfo.netProfit>0 ? 'text-green-600' : 'text-red-500'"
+                                    class="font-medium text-right">{{profitLossInfo.grossProfit -
+                                    profitLossInfo.netProfit |number:'1.0-0'}} IRR
+                                </div>
+                            </div>
+
+
+                        </div>
+                    </div>
+
+
+                    <div class="mt-6">
+                        <div class="mt-2 font-medium text-2xl">Total Incomes: {{profitLossInfo.grossIncomes
+                            |number:'1.0-5'}} IRR
+                        </div>
+                    </div>
+                    <div class="my-8 space-y-8">
+                        <div *ngFor="let item of profitLossDetailsList">
+                            <div *ngIf="item.profitLossItemTypeId==1001481">
+
+                                <div
+                                    class="relative flex flex-col flex-auto p-6 pr-3 pb-3 bg-card rounded-2xl shadow overflow-hidden">
+                                    <div class="flex flex-col mb-6">
+                                        <div class="flex items-center">
+                                            <div
+                                                class="flex items-center justify-center w-14 h-14 rounded bg-indigo-100 text-indigo-800 dark:bg-indigo-600 dark:text-indigo-50">
+                                                <mat-icon class="text-current" [svgIcon]="'heroicons_outline:cash'">
+                                                </mat-icon>
+                                            </div>
+                                            <div class="flex-auto ml-4 leading-none">
+                                                <div *ngIf="config.profitLossDetailType == 'accumulative'"
+                                                    class="text-sm font-medium text-secondary">
+                                                    {{item.profitLossCategoryName}}
+                                                </div>
+                                                <div *ngIf="config.profitLossDetailType == 'detail'"
+                                                    class="text-sm font-medium text-secondary">
+                                                    {{item.profitLossItemDesc}}
+                                                </div>
+                                                <div class="mt-2 font-medium text-2xl">{{item.remained |
+                                                    number:'1.0-5'}} IRR
+                                                </div>
+                                                <mat-progress-bar class="mt-3 rounded-full" [mode]="'determinate'"
+                                                    [value]="(item.remained  * 100) / profitLossInfo.grossIncomes">
+                                                </mat-progress-bar>
+                                            </div>
+                                            <div class="flex items-end justify-end min-w-18 mt-auto ml-6">
+                                                <div class="text-lg leading-none">{{(item.remained * 100) /
+                                                    profitLossInfo.grossIncomes
+                                                    |
+                                                    number:'1.2-2'}}%
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="config.showDetailInitialAndFinal">
+                                        <div class="absolute bottom-0 right-0 w-24 h-24 -m-6">
+                                            <mat-icon class="icon-size-24 opacity-25 text-green-500 dark:text-green-400"
+                                                [svgIcon]="'heroicons_outline:check-circle'"></mat-icon>
+                                        </div>
+
+                                        <div class="flex flex-row flex-wrap mt-4 -mx-6">
+                                            <div class="flex flex-col mx-6 my-3">
+                                                <div class="text-sm font-medium leading-none text-secondary">Initial
+                                                </div>
+                                                <div class="mt-2 font-medium text-xl leading-none">
+                                                    {{item.initialAmount | number:'1.0-5'}} IRR</div>
+                                            </div>
+                                            <div class="flex flex-col mx-6 my-3">
+                                                <div class="text-sm font-medium leading-none text-secondary">Final
+                                                </div>
+                                                <div class="mt-2 font-medium text-xl leading-none">
+                                                    {{item.finalAmount | number:'1.0-5'}} IRR</div>
+                                            </div>
+                                            <div class="flex flex-col mx-6 my-3">
+                                                <div class="text-sm font-medium leading-none text-secondary">
+                                                    Remained
+                                                </div>
+                                                <div class="mt-2 font-medium text-xl leading-none">
+                                                    {{item.remained | number:'1.0-5'}} IRR</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <div class="mt-2 font-medium text-2xl">Total Costs: {{profitLossInfo.grossCosts |
+                            number:'1.0-5'}} IRR
+                        </div>
+                    </div>
+                    <div class="my-8 space-y-8">
+                        <div *ngFor="let item of profitLossDetailsList">
+                            <div *ngIf="item.profitLossItemTypeId==1001482">
+                                <div
+                                    class="relative flex flex-col flex-auto p-6 pr-3 pb-3 bg-card rounded-2xl shadow overflow-hidden">
+                                    <div class="flex flex-col mb-6">
+                                        <div class="flex items-center">
+                                            <div
+                                                class="flex items-center justify-center w-14 h-14 rounded bg-red-100 text-red-800 dark:bg-red-600 dark:text-red-50">
+                                                <mat-icon class="text-current"
+                                                    [svgIcon]="'heroicons_outline:credit-card'">
+                                                </mat-icon>
+                                            </div>
+                                            <div class="flex-auto ml-4 leading-none">
+                                                <div *ngIf="config.profitLossDetailType == 'accumulative'"
+                                                    class="text-sm font-medium text-secondary">
+                                                    {{item.profitLossCategoryName}}<span
+                                                        *ngIf="item.profitLossCategoryId == 1001493"> ({{(item.remained
+                                                        *
+                                                        100) /
+                                                        -totalSales |
+                                                        number:'1.2-2'}}% of total sales)</span>
+                                                </div>
+                                                <div *ngIf="config.profitLossDetailType == 'detail'"
+                                                    class="text-sm font-medium text-secondary">
+                                                    {{item.profitLossItemDesc}}<span
+                                                        *ngIf="item.profitLossCategoryId == 1001493">({{(item.remained *
+                                                        100) /
+                                                        -totalSales |
+                                                        number:'1.2-2'}}% of total sales)</span>
+                                                </div>
+                                                <div class="mt-2 font-medium text-2xl">{{item.remained |
+                                                    number:'1.0-5'}} IRR
+                                                </div>
+                                                <mat-progress-bar class="mt-3 rounded-full" [mode]="'determinate'"
+                                                    [color]="'warn'"
+                                                    [value]="(item.remained  * 100) / profitLossInfo.grossCosts">
+                                                </mat-progress-bar>
+                                            </div>
+                                            <div class="flex items-end justify-end min-w-18 mt-auto ml-6">
+                                                <div class="text-lg leading-none">{{(item.remained * 100) /
+                                                    profitLossInfo.grossCosts |
+                                                    number:'1.2-2'}}%
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div *ngIf="config.showDetailInitialAndFinal">
+                                        <div class="absolute bottom-0 right-0 w-24 h-24 -m-6">
+                                            <mat-icon class="icon-size-24 opacity-25 text-red-500 dark:text-red-400"
+                                                [svgIcon]="'heroicons_outline:exclamation-circle'"></mat-icon>
+                                        </div>
+
+                                        <div class="flex flex-row flex-wrap mt-4 -mx-6">
+                                            <div class="flex flex-col mx-6 my-3">
+                                                <div class="text-sm font-medium leading-none text-secondary">Initial
+                                                </div>
+                                                <div class="mt-2 font-medium text-xl leading-none">
+                                                    {{item.initialAmount | number:'1.0-5'}} IRR</div>
+                                            </div>
+                                            <div class="flex flex-col mx-6 my-3">
+                                                <div class="text-sm font-medium leading-none text-secondary">Final
+                                                </div>
+                                                <div class="mt-2 font-medium text-xl leading-none">
+                                                    {{item.finalAmount | number:'1.0-5'}} IRR</div>
+                                            </div>
+                                            <div class="flex flex-col mx-6 my-3">
+                                                <div class="text-sm font-medium leading-none text-secondary">
+                                                    Remained
+                                                </div>
+                                                <div class="mt-2 font-medium text-xl leading-none">
+                                                    {{item.remained | number:'1.0-5'}} IRR</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <!-- Visitors vs. Page Views -->
+
+
+        <!-- Section title -->
+
+
+
+    </div>
+
+</div>

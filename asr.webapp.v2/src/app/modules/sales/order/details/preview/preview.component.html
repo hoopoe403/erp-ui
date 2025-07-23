@@ -1,0 +1,251 @@
+<div class="w-full">
+
+    <!-- Form -->
+    <form [formGroup]="frmPreviewList">
+
+        <ng-container>
+            <div class="flex-auto inset-0 min-w-0 overflow-auto text-center  print:overflow-visible">
+
+
+                <div class="text-left  print:p-0">
+
+                    <!-- Invoice -->
+                    <div *ngIf="!service.isLoading &&  orderInfo.productList.length>0"
+                        class="px-16 py-10 rounded-2xl shadow bg-card print:w-auto print:rounded-none print:shadow-none print:bg-transparent">
+
+                        <div class="flex flex-col">
+                            <div class="text-right">
+                                <button mat-icon-button [matMenuTriggerFor]="sortMenu">
+                                    <mat-icon>more_vert</mat-icon>
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-12 gap-x-1 mt-7 mb-2">
+                                <div class="col-span-5 font-medium text-md text-secondary">ITEM</div>
+                                <div class="col-span-2 font-medium text-md text-right text-secondary">RATE</div>
+                                <div class="col-span-1 font-medium text-md text-right text-secondary">QTY</div>
+                                <div class="col-span-3 font-medium text-md text-right text-secondary">TOTAL</div>
+                                <div class="col-span-1">
+                                </div>
+                            </div>
+                            <div>
+                                <div
+                                    class="flex flex-col border-b mt-5" *ngFor="let item of orderInfo.productList">
+                                    <div class="flex flex-row">
+                                        <div class="grid grid-cols-12 gap-x-1">
+                                            <div class="col-span-5 flex flex-col">
+                                                <div class="pb-4">{{item.productName}}<br><span
+                                                        style="font-size: 12px;">
+                                                        {{item.brandName}}</span>
+                                                </div>
+
+                                            </div>
+                                            <div class="col-span-2 text-right text-sm">
+                                                <div class="pb-4">{{item.unitPrice | number:'1.0-5'}}
+                                                </div>
+                                            </div>
+                                            <div class="col-span-1">
+                                                <div class="w-full text-sm text-right pl-8">
+                                                    <input
+                                                        style="direction: rtl;border-bottom: solid;border-bottom-width: 1px;border-block-color: #e3e4e6;"
+                                                        type="number" [(ngModel)]="item.quantity"
+                                                        (ngModelChange)="onSubTotalChange()"
+                                                        formControlName="pq{{item.controlId}}" matInput min="0">
+                                                </div>
+                                            </div>
+                                            <div class="col-span-3">
+                                                <div class="w-full text-sm text-right">
+                                                    {{item.quantity * item.unitPrice | number:'1.0-5'}}
+                                                </div>
+                                            </div>
+                                            <div  class="col-span-1 text-right">
+                                                <button mat-icon-button (click)="selectedInfoRow = item"
+                                                [matMenuTriggerFor]="contextMenu">
+                                                    <mat-icon color="accent">more_vert</mat-icon>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="item.frameConformity == 1" class="flex flex-row">
+                                        <div class="grid grid-cols-12 gap-x-1">
+                                            <div class="col-span-5">
+                                                <mat-form-field appearance="legacy" class="w-3/4 text-sm">
+                                                    <mat-select placeholder="Frame Cover" required
+                                                        formControlName="fc{{item.controlId}}">
+                                                        <mat-option *ngFor="let fc of service.frameCovers"
+                                                            [value]="fc.coverId" [disabled]="fc.coverId === disabledFrameCoverId" >
+                                                            {{fc.coverName}}
+                                                        </mat-option>
+                                                    </mat-select>
+                                                </mat-form-field>
+                                            </div>
+                                            <div class="col-span-2 text-right">
+                                                <mat-form-field appearance="legacy" class="w-3/4 text-sm text-right">
+                                                    <input [(ngModel)]="item.productCoverPrice"
+                                                        (ngModelChange)="onSubTotalChange()"
+                                                        formControlName="fcp{{item.controlId}}"
+                                                        placeholder="Frame Cover Price" matInput min="0">
+                                                </mat-form-field>
+                                            </div>
+                                            <div class="col-span-1">
+                                                <div class="w-full text-sm text-right pt-4">
+                                                    {{item.quantity}}
+                                                </div>
+                                            </div>
+                                            <div class="col-span-3">
+                                                <div class="w-full text-sm text-right pt-4">
+                                                    {{item.quantity * item.productCoverPrice | number:'1.0-5'}}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="item.panelConformity == 1" class="flex flex-row">
+                                        <div class="grid grid-cols-12 gap-x-1">
+                                            <div class="col-span-5">
+                                                <mat-form-field appearance="legacy" class="w-3/4 text-sm">
+                                                    <mat-select placeholder="Panel Cover" required
+                                                        formControlName="pc{{item.controlId}}">
+                                                        <mat-option *ngFor="let pc of service.panelCovers"
+                                                            [value]="pc.coverId" [disabled]="pc.coverId === disabledPanelCoverId">
+                                                            {{pc.coverName}}
+                                                        </mat-option>
+                                                    </mat-select>
+                                                </mat-form-field>
+                                            </div>
+                                            <div class="col-span-2 text-right">
+                                                <mat-form-field appearance="legacy" class="w-3/4 text-sm text-right">
+                                                    <input [(ngModel)]="item.panelCoverPrice"
+                                                        (ngModelChange)="onSubTotalChange()"
+                                                        formControlName="pcp{{item.controlId}}"
+                                                        placeholder="Panel Cover Price" matInput min="0">
+                                                </mat-form-field>
+                                            </div>
+                                            <div class="col-span-1">
+                                                <div class="w-full text-sm text-right pt-4">
+                                                    {{item.quantity}}
+                                                </div>
+                                            </div>
+                                            <div class="col-span-3">
+                                                <div class="w-full text-sm text-right pt-4">
+                                                    {{item.quantity * item.panelCoverPrice | number:'1.0-5'}}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="showTotalPerItem" class="col-span-12 grid grid-cols-12 flex flex-row">
+                                        <div class="col-span-6">
+                                        </div>
+                                        <div class="col-span-2">
+                                        </div>
+                                        <div class="col-span-1">
+                                        </div>
+                                        <div class="col-span-2 border-t ml-20 text-sm text-right">
+                                            {{item.quantity * item.unitPrice + item.quantity * item.productCoverPrice +
+                                            item.quantity * item.panelCoverPrice | number:'1.0-5'}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-12 gap-x-1">
+
+                            <!-- Spacer -->
+                            <div class="col-span-12 mt-16"></div>
+
+                            <!-- Total -->
+                            <div class="col-span-9 self-center text-xl font-medium tracking-tight text-secondary">
+                                SUB TOTAL
+                            </div>
+                            <div class="col-span-2 text-right text-xl font-medium">{{orderInfo.subTotal
+                                |number:'1.0-5'}}</div>
+                        </div>
+                        <div class="grid grid-cols-12 gap-x-1">
+
+                            <!-- Spacer -->
+                            <div class="col-span-12 mt-4"></div>
+
+                            <!-- Total -->
+                            <div class="col-span-9 self-center text-xl font-medium tracking-tight text-secondary">
+                                DISCOUNT
+                            </div>
+                            <div class="col-span-2 text-right text-xl font-medium">{{orderInfo.customerDiscount
+                                |number:'1.0-5'}}</div>
+                        </div>
+                        <div class="grid grid-cols-12 gap-x-1">
+
+                            <!-- Spacer -->
+                            <div class="col-span-12 mt-4"></div>
+
+                            <!-- Total -->
+                            <div class="col-span-9 self-center text-xl font-medium tracking-tight text-secondary">
+                                EXTRA DISCOUNT
+                            </div>
+                            <div class="col-span-2 text-right text-xl font-medium"> {{orderInfo.extraDiscount
+                                |number:'1.0-5'}}
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-12 gap-x-1">
+
+                            <!-- Spacer -->
+                            <div class="col-span-12 mt-4"></div>
+
+                            <!-- Total -->
+                            <div class="col-span-9 self-center text-xl font-medium tracking-tight text-secondary">
+                                TOTAL
+                            </div>
+                            <div class="col-span-2 text-right text-xl font-medium">{{orderInfo.subTotal -
+                                orderInfo.customerDiscount - orderInfo.extraDiscount
+                                |number:'1.0-5'}}</div>
+                        </div>
+                    </div>
+
+                </div>
+
+
+            </div>
+        </ng-container>
+
+
+
+    </form>
+
+</div>
+<mat-menu #contextMenu="matMenu">
+    <ng-template matMenuContent>
+        <button (click)="addSameRecord(selectedInfoRow)" mat-menu-item >
+            <mat-icon svgIcon="mat_outline:add_circle"></mat-icon>
+            ADD
+        </button>
+        <button (click)="removeSameRecord(selectedInfoRow)" mat-menu-item>
+            <mat-icon svgIcon="mat_solid:delete"></mat-icon>
+            Delete
+        </button>
+    </ng-template>
+</mat-menu>
+<mat-menu #sortMenu="matMenu">
+    <button mat-menu-item [disabled]="service.isLoading" [matMenuTriggerFor]="subMenu">
+        Sort
+    </button>
+    <button mat-menu-item [disabled]="service.isLoading" (click)="showTotalPerItem = !showTotalPerItem">
+        <span *ngIf="!showTotalPerItem">Show</span><span *ngIf="showTotalPerItem">Hide</span>&nbsp;total per item
+    </button>
+</mat-menu>
+<mat-menu #subMenu="matMenu">
+    <ng-template matMenuContent>
+        <button mat-menu-item [disabled]="service.isLoading" (click)="sortProductList('brandName')">
+            Brand
+        </button>
+        <button mat-menu-item [disabled]="service.isLoading" (click)="sortProductList('productName')">
+            Product
+        </button>
+        <button mat-menu-item [disabled]="service.isLoading" (click)="sortProductList('unitPrice')">
+            Rate
+        </button>
+        <button mat-menu-item [disabled]="service.isLoading" (click)="sortProductList('quantity')">
+            QTY
+        </button>
+        <button mat-menu-item [disabled]="service.isLoading" (click)="sortProductList('total')">
+            Total
+        </button>
+    </ng-template>
+</mat-menu>

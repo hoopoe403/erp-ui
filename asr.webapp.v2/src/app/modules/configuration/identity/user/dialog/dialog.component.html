@@ -1,0 +1,209 @@
+<div class="relative flex flex-col md:w-fit -m-6 h-screen" style="width: 1300px">
+
+    <!-- Header -->
+    <!--     -->
+    <div class="border border-slate-300 border-solid flex flex-col sm:flex-row items-center sm:items-start py-2 px-4">
+        <ng-container *ngIf="data.dismissible.show">
+            <div class="absolute top-0 right-0 py-2 pr-4">
+                <button [disabled]="data.dismissible.disabled" (click)="closeDialog()" mat-icon-button
+                    [matDialogClose]="undefined">
+                    <mat-icon class="text-secondary" [svgIcon]="'heroicons_outline:x'"></mat-icon>
+                </button>
+            </div>
+        </ng-container>
+        <!-- Icon -->
+        <ng-container *ngIf="data.icon.show">
+            <div class="flex flex-0 items-center justify-center w-10 h-10 sm:mr-4 rounded-full" [ngClass]="{'text-primary-600 bg-primary-100 dark:text-primary-50 dark:bg-primary-600': data.icon.color === 'primary',
+                            'text-accent-600 bg-accent-100 dark:text-accent-50 dark:bg-accent-600': data.icon.color === 'accent',
+                            'text-warn-600 bg-warn-100 dark:text-warn-50 dark:bg-warn-600': data.icon.color === 'warn',
+                            'text-gray-600 bg-gray-100 dark:text-gray-50 dark:bg-gray-600': data.icon.color === 'basic',
+                            'text-blue-600 bg-blue-100 dark:text-blue-50 dark:bg-blue-600': data.icon.color === 'info',
+                            'text-green-500 bg-green-100 dark:text-green-50 dark:bg-green-500': data.icon.color === 'success',
+                            'text-amber-500 bg-amber-100 dark:text-amber-50 dark:bg-amber-500': data.icon.color === 'warning',
+                            'text-red-600 bg-red-100 dark:text-red-50 dark:bg-red-600': data.icon.color === 'error'
+                            }">
+                <mat-icon class="text-current" [svgIcon]="data.icon.name"></mat-icon>
+            </div>
+        </ng-container>
+
+        <ng-container *ngIf="data.title || data.message">
+            <div
+                class="flex flex-col items-center justify-center sm:items-start mt-4 pt-2 sm:mt-0 sm:pr-8 space-y-1 text-center sm:text-left">
+
+                <!-- Title -->
+                <ng-container *ngIf="data.title">
+                    <div class="text-xl leading-6 font-medium" [innerHTML]="data.title"></div>
+                </ng-container>
+
+                <!-- Message -->
+
+            </div>
+        </ng-container>
+
+    </div>
+
+    <!-- Content -->
+    <div class="flex flex-col sm:flex-row items-center sm:items-start p-6 pb-6 sm:pb-8 w-full">
+
+        <div class="flex flex-col sm:flex-row items-center sm:items-start p-6 pb-6 sm:pb-8 w-full">
+
+            <div
+                class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
+
+                <!-- Header -->
+                <div
+                    class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4 px-6 md:px-8 border-b">
+                    <!-- Loader -->
+
+                    <!-- Actions -->
+                    <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+                        <!-- Search -->
+                        <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
+                            <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                            <input #filter [autocomplete]="'off'" [formControl]="searchInputControl" matInput
+                                [autocomplete]="'off'" [placeholder]="'Search'">
+                        </mat-form-field>
+
+                    </div>
+                    <div class="absolute inset-x-0 bottom-0" *ngIf="isDataLoading">
+                        <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+                    </div>
+                </div>
+
+                <div class="flex flex-auto overflow-hidden">
+
+                    <!-- Products list -->
+                    <div class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+
+
+                        <ng-container *ngIf="columns$.length > 0; else noColumns">
+                            <div class="grid" id="section-to-print">
+                                <!-- Header -->
+                                <div class="columns-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
+                                    matSort matSortDisableClear>
+
+                                    <div class=" lg:block print:block cursor-pointer">
+                                        <mat-checkbox (change)="$event ? toggleAllColumns() : null"
+                                            [checked]="checkAllColumnsAreSelected() && !isDataLoading"
+                                            [indeterminate]="checkAllColumnsIndeterminate()"
+                                            [aria-label]="'select all'">
+                                        </mat-checkbox>
+                                    </div>
+                                    <div class="hidden lg:block" [mat-sort-header]="'name'">
+                                        Column
+                                    </div>
+                                    <div class="hidden lg:block" [mat-sort-header]="'excel'">
+                                        Excel
+                                    </div>
+                                    <div class="hidden lg:block" [mat-sort-header]="'pdf'">
+                                        PDF
+                                    </div>
+                                    <div class="hidden lg:block" [mat-sort-header]="'excelHeader'">
+                                        Excel Header
+                                    </div>
+                                    <div class="hidden lg:block" [mat-sort-header]="'pdfHeader'">
+                                        PDF Header
+                                    </div>
+
+                                </div>
+                                <!-- Rows -->
+
+                                <ng-container *ngFor="let item of columns$; trackBy: trackByFn">
+                                    <div [ngStyle]="{'background-color': item.checked || item.changeable==0 ? 'rgb(249 249 249 / 77%)':'#ffffff' }"
+                                        class="columns-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b">
+
+                                        <!-- SKU -->
+                                        <div class=" lg:block print:block cursor-pointer">
+                                            <mat-checkbox (change)="$event ? toggleColumn(item.columnId) : null"
+                                                [disabled]="item.changeable==0"
+                                                [checked]="item.checked || item.changeable==0"
+                                                [aria-label]="'select all'">
+                                            </mat-checkbox>
+                                        </div>
+                                        <div class="truncate hidden lg:block">
+                                            {{item.applicationName}}
+                                        </div>
+                                        <div class="hidden lg:block">
+                                            <ng-container *ngIf="item.excel==1">
+                                                <mat-icon class="text-green-400 icon-size-5"
+                                                    [svgIcon]="'heroicons_solid:check'"></mat-icon>
+                                            </ng-container>
+                                            <ng-container *ngIf="item.excel==0">
+                                                <mat-icon class="text-gray-400 icon-size-5"
+                                                    [svgIcon]="'heroicons_solid:x'"></mat-icon>
+                                            </ng-container>
+                                        </div>
+                                        <div class="hidden lg:block">
+                                            <ng-container *ngIf="item.pdf==1">
+                                                <mat-icon class="text-green-400 icon-size-5"
+                                                    [svgIcon]="'heroicons_solid:check'"></mat-icon>
+                                            </ng-container>
+                                            <ng-container *ngIf="item.pdf==0">
+                                                <mat-icon class="text-gray-400 icon-size-5"
+                                                    [svgIcon]="'heroicons_solid:x'"></mat-icon>
+                                            </ng-container>
+                                        </div>
+                                        <div class="truncate hidden lg:block">
+                                            {{item.excelHeader? item.excelHeader:'-'}}
+                                        </div>
+                                        <div class="truncate hidden lg:block">
+                                            {{item.pdfHeader? item.pdfHeader :'-'}}
+                                        </div>
+
+                                    </div>
+                                </ng-container>
+                            </div>
+
+
+
+                        </ng-container>
+                    </div>
+                </div>
+                <ng-template #noColumns>
+                    <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">There are no
+                        columns!
+                    </div>
+                </ng-template>
+                <div *ngIf="data.actions.confirm.show || data.actions.cancel.show"
+                    class="flex items-center justify-center sm:justify-end px-6 py-4 space-x-3 bg-gray-50 dark:bg-black dark:bg-opacity-10">
+                    <div class="print:hidden flex items-center flex-wrap content-center w-full py-2">
+                        <div class="w-auto h-auto min-h-12 m-auto">
+                            <fuse-alert *ngIf="_result.message" [appearance]="'soft'" [dismissible]=" true"
+                                [dismissed]="true" [name]="'successMessage'" [type]="'success'">
+                                <b>Result: </b> {{_result.message}}.
+                            </fuse-alert>
+                            <fuse-alert *ngIf="_result.message" [appearance]="'soft'" [dismissible]="true"
+                                [dismissed]="true" [name]="'errorMessage'" [type]="'error'">
+                                <b>Result: </b> {{_result.message}}.
+                            </fuse-alert>
+                        </div>
+                    </div>
+                    <!-- Cancel -->
+                    <ng-container *ngIf="data.actions.cancel.show">
+                        <button (click)="closeDialog()" mat-stroked-button [matDialogClose]="'cancelled'"
+                            [disabled]="data.actions.cancel.disabled || isDataLoading">
+                            {{data.actions.cancel.label}}
+                        </button>
+                    </ng-container>
+
+                    <!-- Cash -->
+                    <ng-container *ngIf="data.actions.confirm.show">
+                        <button (click)="confirm()" mat-flat-button [color]="data.actions.confirm.color"
+                            [disabled]="data.actions.confirm.disabled || isDataLoading">
+                            {{data.actions.confirm.label}}
+                        </button>
+                    </ng-container>
+
+                </div>
+            </div>
+
+
+        </div>
+        <!-- Actions -->
+
+
+    </div>
+
+
+
+</div>

@@ -1,0 +1,90 @@
+<div class="relative flex flex-col md:w-fit -m-6">
+
+
+     <!-- Header -->
+     <div class="border border-slate-300 border-solid flex flex-col sm:flex-row items-center sm:items-start py-3 px-6">
+        <ng-container>
+            <div class="absolute top-0 right-0 py-2 pr-4">
+                <button (click)="matDialogRef.close()" mat-icon-button>
+                    <mat-icon class="text-secondary" [svgIcon]="'heroicons_outline:x'"></mat-icon>
+                </button>
+            </div>
+        </ng-container>
+        <ng-container>
+            <div
+                class="flex flex-col items-center justify-center sm:items-start mt-4 pt-2 sm:mt-0 sm:pr-8 space-y-1 text-center sm:text-left">
+                   <span class="text-xl leading-6 font-medium">{{pageType === 'new'?"Add Product":"Edit Product"}}</span>
+            </div>
+        </ng-container>
+
+    </div>
+    <div class="absolute inset-x-0 bottom-0" *ngIf="isLoading">
+        <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+    </div>
+
+
+    <form [formGroup]="productForm">
+        <div *ngIf="!isLoading"
+            class="flex flex-col  items-center sm:items-start p-8 pb-6 sm:pb-8 w-full">
+
+                    <div class="flex flex-col sm:flex-row h-full space-x-4">
+                        <mat-form-field class=" w-96"  appearance="outline" fxFlex hideRequiredMarker>
+                            <mat-label>Name</mat-label>
+                            <mat-icon matSuffix class="secondary-text">text_format</mat-icon>
+                            <input name="name" formControlName="name" matInput required>
+                        </mat-form-field>
+                        <mat-form-field class=" w-96" appearance="outline" fxFlex>
+                            <mat-label>Code</mat-label>
+                            <mat-icon matSuffix class="secondary-text">local_offer</mat-icon>
+                            <input name="code" formControlName="code" matInput>
+                        </mat-form-field>
+                    </div>
+
+
+                    <div  class="flexflex-col sm:flex-row space-x-4">
+                        <mat-form-field class=" w-96" appearance="outline" fxFlex>
+                            <mat-label>Depot Count</mat-label>
+                            <mat-icon matSuffix class="secondary-text">layers</mat-icon>
+                            <input name="depotCount" formControlName="depotCount" matInput>
+                        </mat-form-field>
+                        <mat-form-field class=" w-96" appearance="outline" fxFlex>
+                            <mat-label>Approximate Delivery(Day)</mat-label>
+                            <mat-icon matSuffix class="secondary-text">layers</mat-icon>
+                            <input name="approximateDelivery" formControlName="approximateDelivery" matInput>
+                        </mat-form-field>
+                    </div>
+                    <mat-form-field class=" w-96" appearance="outline">
+                       <mat-label>Status</mat-label>
+                       <mat-select name="active" required  formControlName="active">
+                                <mat-option [value]="1">Active</mat-option>
+                                <mat-option [value]="2">InActive</mat-option>
+                       </mat-select>
+                    </mat-form-field> 
+        </div>
+    </form>
+    <div class="w-full mb-6" style="display: flex; align-items: center; place-content: center; cursor: pointer;">
+        <button class="ml-2" mat-flat-button [color]="'primary'" (click)="save()">
+            {{pageType === 'new'?'Register' : 'Update'}}
+        </button>
+    </div>
+    <div class="flex items-center flex-wrap content-center w-full">
+                                    <div class="w-auto h-auto min-h-15 m-auto">
+                                        <fuse-alert *ngIf="_result.message" [appearance]="'soft'" [dismissible]=" true"
+                                            [dismissed]="true" [name]="'successMessage'" [type]="'success'">
+                                            <b>Result: </b> {{_result.message}}.
+                                        </fuse-alert>
+                                        <fuse-alert *ngIf="_result.message" [appearance]="'soft'" [dismissible]="true"
+                                            [dismissed]="true" [name]="'errorMessage'" [type]="'error'">
+                                            <b>Result: </b> {{_result.message}}.
+                                        </fuse-alert>
+                                    </div>
+                                </div>
+
+
+
+
+
+
+            
+
+</div>

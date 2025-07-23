@@ -1,0 +1,239 @@
+<div class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
+
+    <!-- Header -->
+    <div
+        class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4 px-6 md:px-8 border-b">
+        <!-- Loader -->
+        <div class="absolute inset-x-0 bottom-0" *ngIf="isLoading">
+            <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+        </div>
+        <!-- Title -->
+        <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+            <div class="text-4xl font-extrabold tracking-tight">Customer Types</div>
+            <div class="cursor-pointer ml-3 mt-2">
+                <button mat-icon-button ngxPrint useExistingCss="true" printSectionId="section-to-print">
+                    <mat-icon [svgIcon]="'heroicons_outline:printer'"></mat-icon>
+                </button>
+            </div>
+        </div>
+        <!-- Actions -->
+        <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+            <!-- Search -->
+            <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
+                <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                <input #filter [autocomplete]="'off'" [formControl]="searchInputControl" matInput [autocomplete]="'off'"
+                    [placeholder]="'Search'">
+                <mat-icon matPostfix (click)="customerTypesAdvancedSearch.toggle()" matTooltip="Advanced Search"
+                    class="cursor-pointer">
+                    settings
+                </mat-icon>
+            </mat-form-field>
+
+            <!-- Add product button -->
+            <button [matMenuTriggerFor]="downloadMenu" class="ml-4" mat-flat-button [color]="'primary'">
+                <mat-icon svgIcon="heroicons_outline:menu"></mat-icon>
+            </button>
+        </div>
+    </div>
+
+    <div class="flex flex-auto overflow-hidden">
+
+        <!-- Products list -->
+        <div class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+            <ng-container *ngIf="(customerTypes$ | async) as customerTypes">
+                <ng-container *ngIf="customerTypes.length > 0; else noCustomerTypes">
+                    <div class="grid" id="section-to-print">
+                        <!-- Header -->
+                        <div class="customerTypes-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
+                            matSort matSortDisableClear>
+                            <div [mat-sort-header]="'customerTypeCode'">
+                                Code
+                            </div>
+
+                            <div [mat-sort-header]="'customerTypeName'">
+                                Name
+                            </div>
+                            
+                            <div 
+                                [mat-sort-header]="'discountPercent'">
+                                Discount
+                            </div>
+                            <div class="hidden lg:block print:block" [mat-sort-header]="'status'">
+                                Status
+                            </div>
+                            <div class="print:hidden">More</div>
+                        </div>
+                        <!-- Rows -->
+                        <ng-container *ngIf="(customerTypes$ | async) as customerTypes">
+                            <ng-container *ngFor="let customerType of customerTypes; trackBy: trackByFn">
+                                <div class="customerTypes-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b">
+
+
+                                    <div class="truncate">
+                                        {{customerType.customerTypeCode}}
+                                    </div>
+                                    <!-- SKU -->
+                                    <div class=" truncate">
+                                        {{customerType.customerTypeName}}
+                                    </div>
+
+
+                                    <div class="print:block">
+                                       {{customerType.discountPercent}}%
+                                    </div>
+
+
+                                    <div class="hidden lg:block print:block">
+                                        <div style="width: fit-content;" class="block truncate text-white">
+                                            <p *ngIf="customerType.status === 1" class="bg-green-600 p-2 rounded-md text-truncate">Active</p>
+                                            <p *ngIf="customerType.status === 0" class="bg-red-600 p-2 rounded-md text-truncate">Deactivated</p>
+                                        </div>
+                                    </div>
+                                    <div class="print:hidden">
+                                        <div class="flex items-center">
+                                            <ng-container>
+                                                <button mat-icon-button class="info" [color]="'primary'"
+                                                    (click)="$event.stopPropagation(); selectedInfoRow = customerType"
+                                                    [matMenuTriggerFor]="infoMenu">
+                                                    <mat-icon class="icon-size-5">info</mat-icon>
+                                                </button>
+                                            </ng-container>
+                                            <ng-container fxLayout="row">
+                                                <button mat-icon-button
+                                                    (click)="$event.stopPropagation(); selectedInfoRow = customerType"
+                                                    [matMenuTriggerFor]="contextMenu">
+                                                    <mat-icon color="accent">more_vert</mat-icon>
+                                                </button>
+                                            </ng-container>
+
+                                        </div>
+                                    </div>
+
+
+                                </div>
+                            </ng-container>
+                        </ng-container>
+                    </div>
+
+                </ng-container>
+            </ng-container>
+        </div>
+    </div>
+    <ng-template #noCustomerTypes>
+        <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">There are no customerType!
+        </div>
+    </ng-template>
+
+</div>
+<mat-menu #infoMenu="matMenu" xPosition="before">
+    <div class="p-2">
+        <div class="flex flex-col mb-1">
+            <span class="text-gray-400 text-sm">Creator User Name</span>
+            <p>{{selectedInfoRow.registerUserName}}</p>
+        </div>
+        <div class="flex flex-col mb-1">
+            <span class="text-gray-400 text-sm">Creator IP</span>
+            <p class="text-gray-900">{{selectedInfoRow.clientIP}}</p>
+        </div>
+        <div class="flex flex-col mb-1">
+            <span class="text-gray-400 text-sm">Update Date & time</span>
+            <p class="text-gray-900">{{selectedInfoRow.localChangeDate + ' ' + selectedInfoRow.localChangeTime}}</p>
+        </div>
+    </div>
+
+</mat-menu>
+
+<mat-menu #contextMenu="matMenu">
+    <ng-template matMenuContent>
+        <button mat-menu-item [routerLink]="['./details',selectedInfoRow.customerTypeId]">Edit
+        </button>
+        <button mat-menu-item>{{selectedInfoRow.status==1?'Deactivate':'Activate'}}
+        </button>
+        <button mat-menu-item>Remove
+        </button>
+    </ng-template>
+</mat-menu>
+<mat-menu #downloadMenu="matMenu">
+    <ng-template matMenuContent>
+        <button mat-menu-item [routerLink]="['./details']">
+            <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+             ADD
+        </button>
+        <button mat-menu-item>
+            <mat-icon svgIcon="mat_outline:file_download"></mat-icon>
+            PDF
+        </button>
+        <button mat-menu-item>
+            <mat-icon svgIcon="mat_outline:file_download"></mat-icon>
+            EXCEL
+        </button>
+    </ng-template>
+</mat-menu>
+
+
+<fuse-drawer class="w-screen min-w-screen sm:w-80 sm:min-w-80" fixed transparentOverlay [mode]="'over'"
+  [name]="'customerTypesAdvancedSearch'" [position]="'left'" #customerTypesAdvancedSearch>
+  <div class="flex flex-col w-full" fuseScrollbar>
+    <div class="bg-gray-900 relative h-14 max-h-14 z-10 w-full">
+      <div class="inset-y-0 left-0 flex w-1/2">
+        <mat-icon class="mt-4 ml-1 text-white flex-auto" matPrefix [svgIcon]="'heroicons_outline:search'">
+        </mat-icon>
+
+        <h3 class="ml-2 mt-4 text-white flex-auto">
+          <span>Advanced Search</span>
+        </h3>
+      </div>
+      <div class="inline-block">
+        <mat-icon class="mt-3 mr-2 absolute inset-y-0 right-0 cursor-pointer text-white"
+          (click)="customerTypesAdvancedSearch.toggle()">close
+        </mat-icon>
+      </div>
+    </div>
+    <form [formGroup]="frmAdvancedSearch">
+      <div class="pt-8 px-4 pb-4">
+        <div
+          class="border border-solid border-gray-200 rounded-sm flex flex-initial flex-col relative mb-10 pt-4 px-4 pb-3">
+          <h2 class="absolute -top-2.5 left-1.5 m-0 px-2 bg-white">
+            Search Fields
+          </h2>
+          <div>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Status</mat-label>
+              <mat-select  placeholder="Status" formControlName="status" multiple>
+                <mat-option  [value]="1">Active</mat-option>
+                <mat-option  [value]="0">Deactive</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div>
+            <mat-form-field class="w-full" appearance="outline" fxFlex>
+              <mat-label>Code</mat-label>
+              <input matInput value="" formControlName="code" maxlength="20">
+              <mat-icon matSuffix class="secondary-text">assignment</mat-icon>
+            </mat-form-field>
+          </div>
+          <div>
+            <mat-form-field class="w-full" appearance="outline" fxFlex>
+              <mat-label>Name</mat-label>
+              <input matInput value="" formControlName="name" maxlength="20">
+              <mat-icon matSuffix class="secondary-text">assignment</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="flex flex-row w-full">
+          <div class="py-2 w-1/2 pl-10 items-center align-middle">
+            <button mat-raised-button style="color: darkgreen" (click)="customerTypeSearch()">
+              Apply
+            </button>
+          </div>
+          <div class="py-2 w-1/2 items-center align-middle">
+            <button (click)="resetAdvancedSearch()" mat-raised-button style="color: darkred">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </form>
+  </div>
+</fuse-drawer>

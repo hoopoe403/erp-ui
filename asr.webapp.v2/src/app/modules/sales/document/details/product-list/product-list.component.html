@@ -1,0 +1,111 @@
+<div class="w-full">
+
+    <!-- Form -->
+    <form [formGroup]="frmProductList">
+
+        <!-- Section -->
+        <div class="w-full mb-2">
+            <div class="text-secondary">Setting Extra Discount and Determining Delivery Days</div>
+        </div>
+
+
+        <ng-container>
+            <div class="flex-auto inset-0 min-w-0 overflow-auto text-center  print:overflow-visible">
+
+
+                <div class="text-left  print:p-0">
+
+                    <!-- Invoice -->
+                    <div
+                        class="px-16 py-10 rounded-2xl shadow bg-card print:w-auto print:rounded-none print:shadow-none print:bg-transparent">
+
+                        <div class="flex flex-col">
+                            <div class="grid grid-cols-12 gap-x-1 mt-10 mb-2">
+                                <div class="col-span-5 font-medium text-md text-secondary">ITEM</div>
+                                <div class="col-span-2 font-medium text-md text-secondary">COVER</div>
+                                <div class="col-span-2 font-medium text-md text-right text-secondary">RATE</div>
+                                <div class="col-span-1 font-medium text-md text-right text-secondary">QTY</div>
+                                <div class="col-span-2 font-medium text-md text-right text-secondary">TOTAL</div>
+                                <div class="print:hidden col-span-1 font-medium text-md text-right text-secondary">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-12 gap-x-1" *ngFor="let item of orderInfo.productList">
+                                <div class="col-span-5">{{item.productName}}<span style="font-size: 12px;">
+                                        ({{item.brandName}})</span>
+                                </div>
+                                <div class="col-span-2">{{item.productCoverName}}
+                                </div>
+                                <div class="col-span-2 self-center text-right">{{item.unitPrice |number:'1.0-5'}}
+                                </div>
+                                <div class="col-span-1 self-center text-right">{{item.quantity |number:'1.0-5'}}
+                                </div>
+                                <div class="col-span-2 self-center text-right">{{item.total |number:'1.0-5'}}
+                                </div>
+                                <div class="col-span-12 my-4 border-b"></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-12 gap-x-1">
+
+                            <!-- Spacer -->
+                            <div class="col-span-12 mt-16"></div>
+
+                            <!-- Total -->
+                            <div class="col-span-10 self-center text-xl font-medium tracking-tight text-secondary">
+                                SUB TOTAL
+                            </div>
+                            <div class="col-span-2 text-right text-xl font-medium">{{orderInfo.subTotal
+                                |number:'1.0-5'}}</div>
+                        </div>
+                        <div class="grid grid-cols-12 gap-x-1">
+
+                            <!-- Spacer -->
+                            <div class="col-span-12 mt-4"></div>
+
+                            <!-- Total -->
+                            <div class="col-span-10 self-center text-xl font-medium tracking-tight text-secondary">
+                                DISCOUNT
+                            </div>
+                            <div class="col-span-2 text-right text-xl font-medium">{{orderInfo.customerDiscount
+                                |number:'1.0-5'}}</div>
+                        </div>
+                        <div class="grid grid-cols-12 gap-x-1">
+
+                            <!-- Spacer -->
+                            <div class="col-span-12 mt-4"></div>
+
+                            <!-- Total -->
+                            <div class="col-span-10 self-center text-xl font-medium tracking-tight text-secondary">
+                                EXTRA DISCOUNT
+                            </div>
+                            <div class="col-span-2 text-right text-xl font-medium"> <input class="col-span-2 text-right"
+                                    (keyup)="setDiscount($event.target.value)" [autocomplete]="'off'" matInput
+                                    [value]="" formControlName="extraDiscount" maxlength="50">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-12 gap-x-1">
+
+                            <!-- Spacer -->
+                            <div class="col-span-12 mt-4"></div>
+
+                            <!-- Total -->
+                            <div class="col-span-10 self-center text-xl font-medium tracking-tight text-secondary">
+                                TOTAL
+                            </div>
+                            <div class="col-span-2 text-right text-xl font-medium">{{orderInfo.subTotal -
+                                orderInfo.customerDiscount - orderInfo.extraDiscount
+                                |number:'1.0-5'}}</div>
+                        </div>
+                    </div>
+
+                </div>
+
+
+            </div>
+        </ng-container>
+
+
+
+    </form>
+
+</div>

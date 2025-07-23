@@ -1,0 +1,18 @@
+<mat-menu #buildMenu="matMenu" [overlapTrigger]="false">
+<ng-container *ngFor="let item of items">
+    <ng-container *ngIf="item.children.length > 0">
+      <button id='btnCat{{item.id}}' (click)="setSelectedCat(item.item,item.id)"
+        [ngClass]="{'cat-bottom':item.id === 0}" mat-menu-item color="primary" [matMenuTriggerFor]="menu.buildMenu">
+        {{item.item}}
+      </button>
+      <factory-order-menu-item #menu [items]="item.children"></factory-order-menu-item>
+    </ng-container>
+    <ng-container *ngIf="item.children.length === 0">
+      <button id='btnCat{{item.id}}' (click)="setSelectedCat(item.item,item.id)"
+        [ngClass]="{'cat-bottom':item.id === 0}" mat-menu-item>
+        {{item.item}}
+      </button>
+    </ng-container>
+  </ng-container> 
+  
+</mat-menu> 

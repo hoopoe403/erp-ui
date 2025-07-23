@@ -1,0 +1,582 @@
+<!-- Main -->
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+    <div
+        class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between sm:px-3   bg-card dark:bg-transparent">
+        <!-- Title -->
+
+        <div
+            class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-3 sm:px-10 bg-card dark:bg-transparent">
+            <div class="flex-1 min-w-0">
+                <!-- Breadcrumbs -->
+                <div class="flex flex-wrap items-center font-medium">
+                    <div>
+                        <a>Transactions</a>
+                    </div>
+                    <div class="flex items-center ml-1 whitespace-nowrap">
+                        <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'">
+                        </mat-icon>
+                        <a *ngIf="pageType==='new'" [routerLink]="['../list']" style="cursor: pointer;"
+                            class="whitespace-nowrap text-primary-500">Revenues</a>
+                        <a *ngIf="pageType==='edit'" [routerLink]="['../../list']" style="cursor: pointer;"
+                            class="whitespace-nowrap text-primary-500">Revenues</a>
+                    </div>
+                </div>
+                <!-- Title -->
+                <div class="min-h-10">
+                    <h2 class="text-base md:text-base font-extrabold tracking-tight leading-7 sm:leading-10 truncate">
+                        {{titleInfo}}
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+
+    </div>
+
+
+    <ng-container>
+        <div class="flex-auto px-6 py-3" fuseScrollbar #scrollContainer id="scrollDiv">
+
+            <mat-tab-group #tabGroup fxLayout="column" fxFlex>
+                <mat-tab label="Information">
+                    <form [formGroup]="frmRevenue"
+                        class="flex rounded-b-md rounded-tr-md flex-col px-8 py-4 bg-card shadow">
+                        <div class="h-2">
+                            <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+                        </div>
+                        <div class="flex flex-row gt-xs:flex-col w-full items-center flex-wrap content-center">
+
+                            <div class="w-1/2 px-3">
+                                <mat-form-field appearance="outline"
+                                    [ngClass]="{'w-full':selectedPaymentType != '1001063'}" class=" w-9/12">
+                                    <mat-label>Payment Type</mat-label>
+                                    <mat-select required formControlName="paymentType">
+                                        <mat-option (onSelectionChange)="setPaymentType($event)"
+                                            *ngFor="let item of paymentTypes" [value]="item.key">
+                                            {{item.value}}
+                                        </mat-option>
+
+                                    </mat-select>
+                                </mat-form-field>
+                                <mat-form-field *ngIf="selectedPaymentType =='1001063'" appearance="outline"
+                                    class="w-3/12">
+                                    <mat-label>Cheque Type</mat-label>
+                                    <mat-select required formControlName="chequeType">
+                                        <mat-option *ngFor="let item of chequeTypes" [value]="item.chequeTypeId">
+                                            {{item.chequeTypeName}}
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+
+                            </div>
+                            <div class="w-1/2 px-3">
+                                <mat-form-field appearance="outline" class="w-full">
+                                    <mat-label>Description</mat-label>
+                                    <textarea matInput cdkTextareaAutosize cdkAutosizeMinRows="1" cdkAutosizeMaxRows="5"
+                                        class="h-4" spellcheck="false" formControlName="description" matInput
+                                        maxlength="100"></textarea>
+                                </mat-form-field>
+
+                            </div>
+                        </div>
+                        <div class="flex md:flex-row flex-col w-full">
+                            <div class="md:w-1/2 w-full px-3 flex flex-row">
+                                <div style="width: 5%;" class="pt-5">
+                                    <mat-checkbox matTooltip="{{hasPayerPlaceholder}}" (change)="changeHasPayer($event)"
+                                        matPrefix formControlName="hasPayer">
+                                    </mat-checkbox>
+                                </div>
+                                <mat-form-field appearance="outline" style="width: 95%;">
+
+                                    <mat-label>Payer</mat-label>
+                                    <input spellcheck="false" required type=" text" placeholder="Pick a Payer"
+                                        aria-label="Number" matInput [formControl]="payerControl"
+                                        [matAutocomplete]="auto">
+                                    <mat-autocomplete required autoActiveFirstOption #auto="matAutocomplete">
+                                        <mat-option (onSelectionChange)="setPayer($event)"
+                                            *ngFor="let option of payerFilteredOptions | async"
+                                            [value]="option.ownerName">
+                                            {{option.ownerName}}
+                                        </mat-option>
+                                    </mat-autocomplete>
+                                    <mat-error *ngIf="payerControl.hasError('forbiddenNames')">
+                                        You should enter value from suggested one only.
+                                        <strong>'{{payerControl.errors.forbiddenNames.value}}'</strong> is not allowed.
+                                    </mat-error>
+                                    <mat-error *ngIf="payerControl.hasError('required')">
+                                        Payer is required
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+                            <div class="md:w-1/2 w-full px-3 flex flex-row">
+
+                                <mat-form-field appearance="outline" class="w-full">
+                                    <mat-label>Payer Financial Resource</mat-label>
+                                    <input spellcheck="false" type=" text" placeholder="Pick a Financial Resource"
+                                        aria-label="Number" matInput [formControl]="payerFinancialResourceControl"
+                                        [matAutocomplete]="autoPayFinRsc" required>
+                                    <mat-autocomplete required autoActiveFirstOption #autoPayFinRsc="matAutocomplete">
+                                        <mat-option *ngFor="let option of payerFinancialResourceFilteredOptions | async"
+                                            [value]="option.drpName">
+                                            {{option.drpName}}
+                                        </mat-option>
+                                    </mat-autocomplete>
+                                    <mat-error *ngIf="payerFinancialResourceControl.hasError('forbiddenNames')">
+                                        You should enter value from suggested one only.
+                                        <strong>'{{payerFinancialResourceControl.errors.forbiddenNames.value}}'</strong>
+                                        is not
+                                        allowed.
+                                    </mat-error>
+
+                                </mat-form-field>
+                            </div>
+
+                        </div>
+                        <div class="flex md:flex-row flex-col w-full">
+                            <mat-form-field class="md:w-1/2 w-full px-3" appearance="outline">
+                                <mat-label>Recipient</mat-label>
+                                <input required spellcheck="false" type=" text" placeholder="Pick a Recipient"
+                                    aria-label="Number" matInput [formControl]="recipientControl"
+                                    [matAutocomplete]="autoRec">
+                                <mat-autocomplete required autoActiveFirstOption #autoRec="matAutocomplete">
+                                    <mat-option (onSelectionChange)="setRecipient($event)"
+                                        *ngFor="let option of recipientFilteredOptions | async"
+                                        [value]="option.ownerName">
+                                        {{option.ownerName}}
+                                    </mat-option>
+                                </mat-autocomplete>
+                                <mat-error *ngIf="recipientControl.hasError('forbiddenNames')">
+                                    You should enter value from suggested one only.
+                                    <strong>'{{recipientControl.errors.forbiddenNames.value}}'</strong> is not
+                                    allowed.
+                                </mat-error>
+
+                            </mat-form-field>
+
+                            <div class="md:w-1/2 w-full px-3 flex flex-row">
+
+                                <mat-form-field appearance="outline" class="w-full">
+                                    <mat-label>Recipient Financial Resource</mat-label>
+                                    <input spellcheck="false" type=" text" placeholder="Pick a Financial Resource"
+                                        aria-label="Number" matInput [formControl]="recipientFinancialResourceControl"
+                                        [matAutocomplete]="autoRecFinRsc" required>
+                                    <mat-autocomplete required autoActiveFirstOption #autoRecFinRsc="matAutocomplete">
+                                        <mat-option
+                                            *ngFor="let option of recipientFinancialResourceFilteredOptions | async"
+                                            [value]="option.drpName">
+                                            {{option.drpName}}
+                                        </mat-option>
+                                    </mat-autocomplete>
+                                    <mat-error *ngIf="recipientFinancialResourceControl.hasError('forbiddenNames')">
+                                        You should enter value from suggested one only.
+                                        <strong>'{{recipientFinancialResourceControl.errors.forbiddenNames.value}}'</strong>
+                                        is not
+                                        allowed.
+                                    </mat-error>
+
+                                </mat-form-field>
+                            </div>
+
+                        </div>
+                        <div class="flex flex-row gt-xs:flex-col px-3 w-full items-center flex-wrap content-center">
+                            <div *ngIf="selectedPaymentType === '1001063'"
+                                class="shadow-2xl border-solid border-2 w-full px-10 py-4">
+                                <div class="grid grid-cols-3 h-14">
+                                    <div class="text-sm flex flex-row justify-start font-bold">
+                                        <img class="inline-block w-14 h-14 items-center content-center"
+                                            src="../../../../../../assets/images/financial/cheque-qr-code.png" />
+                                        <mat-form-field appearance="legacy" class="w-44 h-10 px-3"
+                                            style="font-family: 'Yekan';">
+                                            <input autocomplete="off" required formControlName="chequeNumber" matInput>
+                                        </mat-form-field>
+                                    </div>
+                                    <div class="text-base flex flex-row justify-center items-start">
+                                        <mat-form-field appearance="legacy" class="w-20 h-20 px-3">
+                                            <mat-select (value)="1001082" required formControlName="bank">
+                                                <mat-select-trigger>
+                                                    <img *ngIf="selectedBankUrl != ''"
+                                                        class="inline-block w-8 items-center content-center"
+                                                        src="../../../../../../assets/images/financial/banks/{{selectedBankUrl}}" />
+                                                </mat-select-trigger>
+                                                <mat-option (onSelectionChange)="setBank($event)"
+                                                    *ngFor="let item of banks" [value]="item.bankId">
+                                                    <img class="inline-block w-8 items-center content-center"
+                                                        src="../../../../../../assets/images/financial/banks/{{item.url}}">
+                                                </mat-option>
+                                            </mat-select>
+                                        </mat-form-field>
+                                    </div>
+                                    <div class="text-base flex flex-col justify-start items-end">
+                                        <div class="flex flex-row justify-end items-start pt-5">
+
+                                            <div style=" font-family: 'Yekan'"
+                                                class=" cursor-pointer grid grid-cols-8 h-6 w-36 font-bold">
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="year1"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="year2"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="year3"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="year4"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="month1"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="month2"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="day1"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="day2"></span>
+                                                </div>
+                                            </div>
+                                            <ngx-jdatepicker format="jYYYYjMMjD" (onChange)="onDateChange($event)"
+                                                class="absolute" formControlName="jdatepicker" dir="rtl"
+                                                [(ngModel)]="dateObject" mode="day" theme="dp-material">
+                                            </ngx-jdatepicker>
+                                            <div class="pt-1.5 pl-2 flex flex-row justify-end items-start"
+                                                style="font-family: 'IranNastaliq'">
+                                                <span>
+                                                    تاریخ
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <div style="direction: rtl;" class="flex flex-row justify-start items-start pt-4">
+                                    <div class="pl-1.5" style="font-family: 'IranNastaliq';">
+                                        <span>
+                                            تاریخ به تمام حروف:
+                                        </span>
+                                    </div>
+                                    <div class="font-bold" style="font-family: 'Yekan';">
+                                        <span>
+                                            {{day | numberToPersian}}
+                                            {{month | persianMonthName}}
+                                            {{year | numberToPersian}}
+                                        </span>
+
+                                    </div>
+                                </div>
+                                <div class="text-2xl h-16 flex flex-row pt-8" style="direction:rtl;">
+                                    <span class="pl-4 pt-3" style="font-family: 'IranNastaliq';">
+                                        به موجب این چک مبلغ (به حروف)
+                                    </span>
+                                    <span style="font-family: 'Yekan';width: 74%;"
+                                        class="ml-4 text-xl border-solid border-b border-gray-300">
+                                        {{price | numberToPersian}}
+                                    </span>
+                                    <span class="pt-3" style="font-family: 'IranNastaliq';">
+                                        ریال
+                                    </span>
+                                </div>
+                                <div class="h-32 text-2xl flex flex-row justify-start items-center"
+                                    style="font-family: 'IranNastaliq';direction:rtl;">
+                                    <span class="pl-4">
+                                        در وجه
+                                    </span>
+                                    <span style="font-family: 'Yekan';width: 43%;"
+                                        class="ml-6 border-solid border-b border-gray-300">
+                                    </span>
+                                    <div class="flex flex-col text-base items-center">
+                                        <span
+                                            class="border-solid border-b border-gray-300 w-full flex flex-col items-center">
+                                            به شماره ملی
+                                        </span>
+                                        <span
+                                            class="border-solid border-b border-gray-300 w-full flex flex-col items-center">
+                                            به شناسه ملی
+                                        </span>
+                                        <span class="w-full flex flex-col items-center">
+                                            به شماره اختصاصی اتباع خارجی
+                                        </span>
+                                    </div>
+                                    <span style="font-family: 'Yekan';width: 25%;"
+                                        class="ml-4 mr-6 border-solid border-b border-gray-300">
+                                    </span>
+                                    <span>
+                                        یا به حواله کرد بپردازید.
+                                    </span>
+                                </div>
+                                <div class="h-20 text-2xl flex flex-col justify-start items-end"
+                                    style="font-family: 'IranNastaliq';direction:rtl;">
+                                    <span>
+                                        (مبلغ به عدد) ریال
+                                    </span>
+                                    <div style="direction: ltr; font-family: 'Yekan';">
+                                        <input class="text-xl border-solid border-b border-gray-300"
+                                            formControlName="amount" (keyup)="processPrice($event.target.value)">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1" style="font-family: 'IranNastaliq';">
+                                    <img class="inline-block w-32 h-14 items-center content-center"
+                                        src="../../../../../../assets/images/financial/chakavak.png" />
+                                </div>
+                            </div>
+                            <div *ngIf="selectedPaymentType === '1001061'"
+                                class="shadow-2xl border-solid border-2 w-full px-10 py-2">
+                                <div class="grid grid-cols-3 pl-14">
+                                    <div class="text-sm flex flex-row justify-start font-bold">
+
+                                    </div>
+                                    <div class="text-base flex flex-row justify-center items-start">
+                                        <mat-form-field appearance="legacy" class="w-20 h-20 px-3">
+                                            <mat-select (value)="1001082" required formControlName="bank">
+                                                <mat-select-trigger>
+                                                    <img *ngIf="selectedBankUrl != ''"
+                                                        class="inline-block w-8 items-center content-center"
+                                                        src="../../../../../../assets/images/financial/banks/{{selectedBankUrl}}" />
+                                                </mat-select-trigger>
+                                                <mat-option (onSelectionChange)="setBank($event)"
+                                                    *ngFor="let item of banks" [value]="item.bankId">
+                                                    <img class="inline-block w-8 items-center content-center"
+                                                        src="../../../../../../assets/images/financial/banks/{{item.url}}">
+                                                </mat-option>
+                                            </mat-select>
+                                        </mat-form-field>
+                                    </div>
+                                    <div class="text-base flex flex-col justify-start items-end">
+                                        <div class="flex flex-row justify-end items-start pt-5">
+
+                                            <div style=" font-family: 'Yekan'"
+                                                class=" cursor-pointer grid grid-cols-8 h-6 w-36 font-bold">
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="year1"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="year2"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="year3"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="year4"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="month1"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="month2"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="day1"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="day2"></span>
+                                                </div>
+                                            </div>
+                                            <ngx-jdatepicker format="jYYYYjMMjD" (onChange)="onDateChange($event)"
+                                                class="absolute" formControlName="jdatepicker" dir="rtl"
+                                                [(ngModel)]="dateObject" mode="day" theme="dp-material">
+                                            </ngx-jdatepicker>
+                                            <div class="pt-1.5 pl-2 flex flex-row justify-end items-start"
+                                                style="font-family: 'Yekan'">
+                                                <span>
+                                                    تاریخ
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="h-20  text-xl flex flex-row justify-start items-end"
+                                    style="font-family: 'Yekan';direction:rtl;">
+                                    <span>
+                                        مبلغ: (به عدد)
+                                    </span>
+                                    <div style="direction: ltr; font-family: 'Yekan';">
+                                        <input class="text-xl border-solid border-b border-gray-300"
+                                            formControlName="amount" (keyup)="processPrice($event.target.value)">
+                                    </div>
+                                    <span class="mx-3">
+                                        ریال (به حروف)
+                                    </span>
+                                    <span style="font-family: 'Yekan';width: 54%;"
+                                        class="ml-4 text-xl border-solid border-b border-gray-300">
+                                        {{price | numberToPersian}}
+                                    </span>
+                                    <span class="pt-3" style="font-family: 'Yekan';">
+                                        ریال
+                                    </span>
+                                </div>
+                                <div class="h-20 mb-20 text-xl flex flex-row justify-start items-end"
+                                    style="font-family: 'Yekan';direction:rtl;">
+                                    <span>
+                                        شناسه قبض
+                                    </span>
+                                    <div style="direction: ltr; font-family: 'Yekan';">
+                                        <input class="text-xl border-solid border-b border-gray-300"
+                                            formControlName="billId">
+                                    </div>
+                                    <span class="mr-12">
+                                        شناسه پرداخت
+                                    </span>
+                                    <div style="direction: ltr; font-family: 'Yekan';">
+                                        <input class="text-xl border-solid border-b border-gray-300"
+                                            formControlName="paymentId">
+                                    </div>
+                                    <span class="mr-12">
+                                        شماره پیگیری
+                                    </span>
+                                    <div style="direction: ltr; font-family: 'Yekan';">
+                                        <input class="text-xl border-solid border-b border-gray-300"
+                                            formControlName="trackingId">
+                                    </div>
+                                </div>
+                            </div>
+                            <div *ngIf="selectedPaymentType === '1001062'"
+                                class="shadow-2xl border-solid border-2 w-full px-10 py-2">
+                                <div class="grid grid-cols-3">
+                                    <div class="text-sm flex flex-row justify-start font-bold">
+
+                                    </div>
+                                    <div class="text-base flex flex-row justify-center items-start">
+                                        <mat-form-field appearance="legacy" class="w-20 h-20 px-3">
+                                            <mat-select (value)="1001082" required formControlName="bank">
+                                                <mat-select-trigger>
+                                                    <img *ngIf="selectedBankUrl != ''"
+                                                        class="inline-block w-8 items-center content-center"
+                                                        src="../../../../../../assets/images/financial/banks/{{selectedBankUrl}}" />
+                                                </mat-select-trigger>
+                                                <mat-option (onSelectionChange)="setBank($event)"
+                                                    *ngFor="let item of banks" [value]="item.bankId">
+                                                    <img class="inline-block w-8 items-center content-center"
+                                                        src="../../../../../../assets/images/financial/banks/{{item.url}}">
+                                                </mat-option>
+                                            </mat-select>
+                                        </mat-form-field>
+                                    </div>
+                                    <div class="text-base flex flex-col justify-start items-end">
+                                        <div class="flex flex-row justify-end items-start pt-5">
+
+                                            <div style=" font-family: 'Yekan'"
+                                                class=" cursor-pointer grid grid-cols-8 h-6 w-36 font-bold">
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="year1"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="year2"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="year3"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="year4"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="month1"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="month2"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="day1"></span>
+                                                </div>
+                                                <div
+                                                    class="cursor-pointer border-solid border-2 border-gray-400 flex flex-row justify-center items-center">
+                                                    <span id="day2"></span>
+                                                </div>
+                                            </div>
+                                            <ngx-jdatepicker format="jYYYYjMMjD" (onChange)="onDateChange($event)"
+                                                class="absolute" formControlName="jdatepicker" dir="rtl"
+                                                [(ngModel)]="dateObject" mode="day" theme="dp-material">
+                                            </ngx-jdatepicker>
+                                            <div class="pt-1.5 pl-2 flex flex-row justify-end items-start"
+                                                style="font-family: 'Yekan'">
+                                                <span>
+                                                    تاریخ
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="h-20 mb-20  text-xl flex flex-row justify-start items-end"
+                                    style="font-family: 'Yekan';direction:rtl;">
+                                    <span>
+                                        مبلغ: (به عدد)
+                                    </span>
+                                    <div class="ml-2" style="direction: ltr; font-family: 'Yekan';">
+                                        <input class="text-xl border-solid border-b border-gray-300"
+                                            formControlName="amount" (keyup)="processPrice($event.target.value)">
+                                    </div>
+                                    <div style="width: 5%;">
+                                        <mat-select style="font-family: 'Yekan';direction:rtl;" class=" text-xl"
+                                            required formControlName="currency">
+                                            <mat-option style="font-family: 'Yekan';direction:rtl;" class=" text-xl"
+                                                (onSelectionChange)="setCurrency($event)"
+                                                *ngFor="let item of currencyList" [value]="item.key">
+                                                {{item.value}}
+                                            </mat-option>
+                                        </mat-select>
+                                    </div>
+                                    <span class="mx-3">
+                                        (به حروف)
+                                    </span>
+                                    <span style="font-family: 'Yekan';width: 52%;"
+                                        class="ml-4 text-xl border-solid border-b border-gray-300">
+                                        {{price | numberToPersian}}
+                                    </span>
+                                    <span class="pt-3" style="font-family: 'Yekan';">
+                                        {{selectedCurrency}}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div *ngIf="selectedPaymentType !== '0'" class="w-full mt-12"
+                            style="display: flex; align-items: center; place-content: center">
+                            <button class="mr-1" mat-flat-button color="primary"
+                                [disabled]="disabledActionBtn || isLoading || (pageType === 'edit' && revenueInfo.status !== 1000007)"
+                                (click)="save()" matStepperNext>{{pageType ===
+                                'new'?'Register' : 'Update'}}</button>
+                            <button class="ml-1" mat-flat-button color="primary"
+                                [disabled]="disabledActionBtn || isLoading || pageType !=='edit' || revenueInfo.status !== 1000007"
+                                (click)="confirm()" matStepperNext>Confirm</button>
+                        </div>
+                        <div class="flex items-center flex-wrap content-center w-full py-2">
+                            <div class="w-auto h-auto min-h-15 m-auto">
+                                <fuse-alert *ngIf="_result.message" [appearance]="'soft'" [dismissible]=" true"
+                                    [dismissed]="true" [name]="'successMessage'" [type]="'success'">
+                                    <b>Result: </b> {{_result.message}}.
+                                </fuse-alert>
+                                <fuse-alert *ngIf="_result.message" [appearance]="'soft'" [dismissible]="true"
+                                    [dismissed]="true" [name]="'errorMessage'" [type]="'error'">
+                                    <b>Result: </b> {{_result.message}}.
+                                </fuse-alert>
+                            </div>
+                        </div>
+                    </form>
+                </mat-tab>
+            </mat-tab-group>
+        </div>
+    </ng-container>
+</div>

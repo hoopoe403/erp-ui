@@ -1,0 +1,227 @@
+<div class="w-full">
+
+    <!-- Form -->
+
+
+    <!-- <div *ngIf="productViewMode == '1'" class="h-full flex rounded-b-md rounded-tr-md flex-col  bg-card shadow">
+        <div class="h-full flex flex-col sm:flex-row items-center sm:items-start p-6 pb-6 sm:pb-8 w-full">
+            <div class="h-100 flex flex-col sm:flex-row items-center sm:items-start p-6 pb-6 sm:pb-8 w-full">
+                <div
+                    class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
+
+                    <div
+                        class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4   border-b">
+
+                        <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+                            <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
+                                <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                                <input (input)="productListFilterChanged($event.target.value)" [autocomplete]="'off'"
+                                    matInput [autocomplete]="'off'" [placeholder]="'Search'">
+                                <mat-icon matPostfix (click)="productAdvancedSearch.toggle()"
+                                    matTooltip="Advanced Search" class="cursor-pointer">
+                                    settings
+                                </mat-icon>
+                            </mat-form-field>
+
+                        </div>
+                    </div>
+
+                    <div class="flex flex-auto overflow-hidden  ">
+
+
+                        <div class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+
+                            <ng-container>
+                                <div class="grid">
+                                    <div class="goods-product-list-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
+                                        #productSort="matSort" matSort matSortDisableClear>
+
+                                        <div class="lg:block print:block cursor-pointer">
+                                            <mat-checkbox [indeterminate]="selectedGoods.selected.length > 0"
+                                                [disabled]="isLoading" [aria-label]="'select all'">
+                                            </mat-checkbox>
+                                        </div>
+                                        <div class=" lg:block" [mat-sort-header]="'code'">
+                                            Code
+                                        </div>
+                                        <div class=" lg:block" [mat-sort-header]="'name'">
+                                            Name
+                                        </div>
+                                        <div class="hidden lg:block" [mat-sort-header]="'brand'">
+                                            Brand
+                                        </div>
+                                    </div>
+
+                                    <ng-container *ngFor="let item of products$; trackBy: trackByFn">
+                                        <div [ngStyle]="{'background-color': isGoodsSelected(item) ? 'rgb(249 249 249 / 77%)':'#ffffff' }"
+                                            class="goods-product-list-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b">
+
+                                            <div class=" lg:block print:block cursor-pointer">
+                                                <mat-checkbox
+                                                    (change)="$event ? changeGoodsCheckBox(item.goodsId): null"
+                                                    [checked]="isGoodsSelected(item)" [disabled]="isLoading"
+                                                    [aria-label]="'select all'">
+                                                </mat-checkbox>
+                                            </div>
+
+                                            <div class="truncate  lg:block">
+                                                {{item.fullCode}}
+                                            </div>
+                                            <div class="truncate  lg:block">
+                                                <span class="cursor-pointer w-fit">
+                                                    {{item.fullName}}</span>
+                                            </div>
+                                            <div class="hidden lg:block items-center truncate">
+                                                {{item.brandName}}
+                                            </div>
+                                        </div>
+                                    </ng-container>
+                                </div>
+
+                                <mat-paginator #productPaginator
+                                    class="sm:absolute sm:inset-x-0 sm:bottom-0 border-b sm:border-t sm:border-b-0 z-10 bg-gray-50 dark:bg-transparent"
+                                    [ngClass]="{'pointer-events-none': isLoading}" [length]="productPagination.length"
+                                    [pageIndex]="productPagination.pageNumber" [pageSize]="productPagination.pageSize"
+                                    [pageSizeOptions]="[50, 100]" [showFirstLastButtons]="true">
+                                </mat-paginator>
+                            </ng-container>
+                        </div>
+                    </div>
+
+                </div>
+
+
+            </div>
+        </div>
+    </div> -->
+
+    <div *ngIf="productViewMode == '2'"
+        class="flex rounded-b-md rounded-tr-md flex-col py-4 bg-card shadow  overflow-hidden">
+        <div class="mx-4 overflow-hidden">
+            <div class="flex justify-between  mt-6 sm:mt-0 pb-4">
+                <mat-form-field class="order-first fuse-mat-dense fuse-mat-no-subscript min-w-50">
+                    <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                    <input (input)="productTreeFilterChanged($event.target.value)" matInput [autocomplete]="'off'"
+                        [placeholder]="'Search'">
+
+                    <mat-slide-toggle (change)="toggleOrderType($event.checked)" matPostfix matTooltip="Order Type"
+                        color="primary" [disabled]="this.service.getIsActionDisabled() || this.service.isLoading"
+                        [checked]="orderInfo.orderTypeId == 1000532">
+
+                    </mat-slide-toggle>
+
+                </mat-form-field>
+                <div class="order-last flex items-center">
+                    <span class="font-bold"
+                        [ngStyle]="{'color':orderInfo.orderTypeId == 1000532 ? '#4f46e5' : '#94a3b8'}">{{orderInfo.orderTypeId
+                        ==
+                        1000531 ? "Generic":"Specific"}}</span>
+                </div>
+            </div>
+            <div class="border border-solid border-gray-200 rounded-sm min-h-96 overflow-auto"
+                style="height:calc(70vh - 50px)">
+                <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
+                    <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
+                        <div class="border-dotted border-l flex flex-row items-center">
+                            <button [disabled]="!hasNodeChild(node)" mat-icon-button matTreeNodeToggle
+                                [attr.aria-label]="'Toggle ' + node.item">
+                                <mat-icon>
+                                    {{treeControl.isExpanded(node) ? 'expand_more' :
+                                    'chevron_right'}}
+                                </mat-icon>
+                            </button>
+                            <mat-checkbox [checked]="descendantsAllSelected(node)"
+                                [indeterminate]="descendantsPartiallySelected(node)"
+                                (change)="todoItemSelectionToggle(node)"
+                                [disabled]="this.service.getIsActionDisabled() || this.service.isLoading">
+                                {{node.item}}</mat-checkbox>
+
+                        </div>
+                    </mat-tree-node>
+
+                </mat-tree>
+            </div>
+        </div>
+
+
+
+    </div>
+
+
+
+
+
+</div>
+
+<fuse-drawer class="w-screen min-w-screen sm:w-80 sm:min-w-80" fixed transparentOverlay [name]="'productAdvancedSearch'"
+    [position]="'left'" #productAdvancedSearch [mode]="'over'">
+    <div class="flex flex-col w-full" fuseScrollbar>
+        <div class="bg-gray-900 relative h-14 max-h-14 z-10 w-full">
+            <div class="inset-y-0 left-0 flex w-1/2">
+                <mat-icon class="mt-4 ml-1 text-white flex-auto" matPrefix [svgIcon]="'heroicons_outline:search'">
+                </mat-icon>
+
+                <h3 class="ml-2 mt-4 text-white flex-auto "><span>Advanced
+                        Search</span></h3>
+            </div>
+            <div class="inline-block">
+                <mat-icon class="mt-3 mr-2 absolute inset-y-0 right-0 cursor-pointer text-white"
+                    (click)="productAdvancedSearch.toggle()">close
+                </mat-icon>
+            </div>
+        </div>
+
+        <form [formGroup]="frmProductsAdvancedSearch">
+            <div class="pt-8 px-4 pb-4">
+                <div
+                    class="border border-solid border-gray-200 rounded-sm flex flex-initial flex-col relative mb-10 pt-4 px-4 pb-3">
+                    <h2 class="absolute -top-2.5 left-1.5 m-0 px-2 bg-white">Search Fields</h2>
+
+                    <div class="pt-3">
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>View Mode</mat-label>
+                            <mat-select placeholder="Select one" formControlName="viewMode">
+                                <mat-option [value]="1" (onSelectionChange)="setProductViewMode($event)">
+                                    List View</mat-option>
+                                <mat-option [value]="2" (onSelectionChange)="setProductViewMode($event)">Tree
+                                    View</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" floatLabel="always" class="w-full">
+                            <mat-label>Brands</mat-label>
+                            <mat-select placeholder="Select one" formControlName="brands" multiple>
+                                <mat-option *ngFor="let brand of brands" [value]="brand.key">
+                                    {{brand.value}}</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Type</mat-label>
+                            <mat-select placeholder="Select one" formControlName="type">
+                                <mat-option [value]="1000531">
+                                    Generic</mat-option>
+                                <mat-option [value]="1000532">Specific</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+
+                </div>
+                <div class="flex flex-row w-full">
+                    <div class="py-2 w-1/2 pl-10 items-center align-middle">
+                        <button mat-raised-button style="color: darkgreen" (click)="productSearch()">Apply
+                        </button>
+                    </div>
+                    <div class="py-2 w-1/2 items-center align-middle">
+                        <button (click)="resetProductAdSearch()" mat-raised-button style="color: darkred">Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+    </div>
+</fuse-drawer>

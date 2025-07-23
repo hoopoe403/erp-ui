@@ -1,0 +1,197 @@
+<!-- Main -->
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+    <div
+        class="print:hidden flex flex-col sm:flex-row items-start sm:items-center sm:justify-between sm:px-3   bg-card dark:bg-transparent">
+        <!-- Title -->
+
+        <div class="flex flex-col w-full sm:items-center sm:justify-between p-3 sm:px-10 bg-card dark:bg-transparent">
+            <div class="flex flex-col min-w-0 w-full">
+                <!-- Breadcrumbs -->
+                <div class="flex flex-row items-center font-medium w-full">
+                    <div>
+                        <a>Sales</a>
+                    </div>
+                    <div class="flex items-center whitespace-nowrap">
+                        <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'">
+                        </mat-icon>
+                        <a [routerLink]="['../../list']" style="cursor: pointer;"
+                            class="whitespace-nowrap text-primary-500">Shipped Confirmations</a>
+                        <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'">
+                        </mat-icon>
+                        <a>Details</a>
+                    </div>
+                </div>
+                <!-- Title -->
+                <div class="flex flex-row w-full min-h-10">
+                    <div
+                        class="w-1/2 grid justify-items-start text-base md:text-base font-extrabold tracking-tight leading-7 sm:leading-10 truncate">
+                        <h2>
+                            {{titleInfo}}
+                        </h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+
+    </div>
+    <ng-container>
+        <div class="flex-auto inset-0 min-w-0 overflow-auto text-center  print:overflow-visible">
+            <div class="h-2 print:hidden">
+                <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+            </div>
+            <div *ngIf="!isLoading" class="inline-block p-6 sm:p-10 text-left  print:p-0">
+
+                <!-- Invoice -->
+                <div
+                    class="w-240 p-16 rounded-2xl shadow bg-card print:w-auto print:rounded-none print:shadow-none print:bg-transparent">
+
+                    <div class="flex items-start justify-between">
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+                            <div class="text-4xl tracking-tight text-secondary">INVOICE</div>
+                            <div class="text-4xl">#{{orderInfo.orderCode}}</div>
+                            <div class="font-medium tracking-tight text-secondary">REMITTANCE</div>
+                            <div class="font-medium">#{{orderInfo.remittanceCode}}</div>
+                            <div class="font-medium tracking-tight text-secondary">SHIPPED DATE</div>
+                            <div class="font-medium">{{orderInfo.localChangeDate}}</div>
+                            <div class="font-medium tracking-tight text-secondary">TOTAL DUE</div>
+                            <div class="font-medium">{{orderInfo.total |number:'1.0-5'}}&nbsp;IRR</div>
+                        </div>
+                        <div
+                            class="grid auto-cols-max grid-flow-col gap-x-8 -mr-16 py-6 px-8 rounded-l-2xl bg-accent dark">
+                            <div class="place-self-center w-24">
+                                <img class="w-24" src="assets/images/logo/logo.svg">
+                            </div>
+                            <div class="pl-10 border-l text-md">
+                                <div class="font-medium">Arian System Ro</div>
+                                <div>No 56 East Third Street</div>
+                                <div>Khoramdasht, Tehran, Iran</div>
+                                <div>+98 21 4448 9776</div>
+                                <div>sales@asr-elevator.ir</div>
+                                <div>www.asr-elevator.ir</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-md">
+                        <div class="text-xl font-medium">{{customerInfo.customerName}}&nbsp;
+                            {{customerInfo.customerFamily}}</div>
+                        <div>{{customerInfo.address}}</div> organizationName
+                        <div>{{customerInfo.organizationName}}</div>
+                        <div>{{customerInfo.phone}}</div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-x-1 mt-12">
+                        <!-- Columns -->
+                        <div class="col-span-8 font-medium text-md text-secondary">PRODUCT</div>
+                        <div class="font-medium text-md text-right text-secondary">RATE</div>
+                        <div class="font-medium text-md text-right text-secondary">QTY</div>
+                        <div class="col-span-2 font-medium text-md text-right text-secondary">TOTAL</div>
+                        <div class="col-span-12 grid grid-cols-12 gap-x-1" *ngFor="let item of orderInfo.productList">
+                            <!-- Divider -->
+                            <div class="col-span-12 my-4 border-b"></div>
+
+                            <!-- Item -->
+                            <div class="col-span-8">{{item.brandName}}-{{item.productName}}-{{item.productCode}}</div>
+                            <div class="self-center text-right">{{item.unitPrice |number:'1.0-5'}}</div>
+                            <div class="self-center text-right">{{item.quantity}}</div>
+                            <div class="col-span-2 self-center text-right">{{item.total |number:'1.0-5'}}
+                            </div>
+                        </div>
+
+
+                        <!-- Spacer -->
+                        <div class="col-span-12 mt-16"></div>
+
+                        <!-- Subtotal -->
+                        <div class="col-span-10 self-center font-medium tracking-tight text-secondary">SUBTOTAL</div>
+                        <div class="col-span-2 text-right text-lg">{{orderInfo.subTotal |number:'1.0-5'}}</div>
+
+                        <!-- Divider -->
+                        <div class="col-span-12 my-3 border-b"></div>
+
+                        <!-- Tax -->
+                        <div class="col-span-10 self-center font-medium tracking-tight text-secondary">TAX</div>
+                        <div class="col-span-2 text-right text-lg">{{orderInfo.tax === 0? 0 : orderInfo.tax
+                            |number:'1.0-5'}}</div>
+
+                        <!-- Divider -->
+                        <div class="col-span-12 my-3 border-b"></div>
+
+                        <!-- Discount -->
+                        <div class="col-span-10 self-center font-medium tracking-tight text-secondary">CUSTOMER DISCOUNT
+                        </div>
+                        <div class="col-span-2 text-right text-lg">
+                            {{orderInfo.customerDiscount===0?0:corderInfo.customerDiscount |number:'1.0-5'}}</div>
+                        <!-- Divider -->
+                        <div class="col-span-12 my-3 border-b"></div>
+
+                        <!-- Discount -->
+                        <div class="col-span-10 self-center font-medium tracking-tight text-secondary">EXTRA DISCOUNT
+                        </div>
+                        <div class="col-span-2 text-right text-lg">
+                            {{orderInfo.extraDiscount === 0 ?0:
+                            orderInfo.extraDiscount |number:'1.0-5'}}<span *ngIf="orderInfo.extraDiscount> 0">
+                                ({{(orderInfo.extraDiscount/orderInfo.subTotal)
+                                |
+                                percent}})</span></div>
+                        <div class="col-span-12 my-3 border-b"></div>
+
+                        <!-- Discount -->
+                        <div class="col-span-10 self-center font-medium tracking-tight text-secondary">TOTAL DISCOUNT
+                        </div>
+                        <div class="col-span-2 text-right text-lg">{{(orderInfo.extraDiscount +
+                            orderInfo.customerDiscount)===0?0: (orderInfo.extraDiscount +
+                            orderInfo.customerDiscount)|number:'1.0-5'}}<span *ngIf="orderInfo.extraDiscount> 0">
+                                ({{((orderInfo.extraDiscount + orderInfo.customerDiscount)/orderInfo.subTotal)
+                                |
+                                percent}})</span></div>
+                        <!-- Divider -->
+                        <div class="col-span-12 my-3 border-b"></div>
+
+                        <!-- Total -->
+                        <div class="col-span-10 self-center text-2xl font-medium tracking-tight text-secondary">TOTAL
+                        </div>
+                        <div class="col-span-2 text-right text-2xl font-medium">{{orderInfo.total
+                            |number:'1.0-5'}}</div>
+                    </div>
+
+                    <div class="mt-16">
+                        <div class="font-medium">Please pay within 15 days. Thank you for your business.</div>
+                        <div class="flex items-start mt-4">
+                            <img class="flex-0 w-10 mt-2" src="assets/images/logo/logo.svg">
+                            <div class="ml-6 text-sm text-secondary">
+                                In condimentum malesuada efficitur. Mauris volutpat placerat auctor. Ut ac congue dolor.
+                                Quisque scelerisque lacus sed feugiat fermentum.
+                                Cras aliquet facilisis pellentesque. Nunc hendrerit quam at leo commodo, a suscipit
+                                tellus dapibus. Etiam at felis volutpat est mollis lacinia.
+                                Mauris placerat sem sit amet velit mollis, in porttitor ex finibus. Proin eu nibh id
+                                libero tincidunt lacinia et eget.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+            <div *ngIf="!isLoading" class="w-full print:hidden"
+                style="display: flex; align-items: center; place-content: center">
+                <button class="ml-1" mat-flat-button color="primary" [disabled]="isLoading" (click)="confirm()"
+                    matStepperNext>Confirm</button>
+            </div>
+            <div class="print:hidden flex items-center flex-wrap content-center w-full py-2">
+                <div class="w-auto h-auto min-h-15 m-auto">
+                    <fuse-alert *ngIf="_result.message" [appearance]="'soft'" [dismissible]=" true" [dismissed]="true"
+                        [name]="'successMessage'" [type]="'success'">
+                        <b>Result: </b> {{_result.message}}.
+                    </fuse-alert>
+                    <fuse-alert *ngIf="_result.message" [appearance]="'soft'" [dismissible]="true" [dismissed]="true"
+                        [name]="'errorMessage'" [type]="'error'">
+                        <b>Result: </b> {{_result.message}}.
+                    </fuse-alert>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+</div>

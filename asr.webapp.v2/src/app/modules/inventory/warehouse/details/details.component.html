@@ -1,0 +1,231 @@
+<!-- Main -->
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+    <div
+        class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between sm:px-3   bg-card dark:bg-transparent">
+        <!-- Title -->
+
+        <div
+            class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-3 sm:px-10 bg-card dark:bg-transparent">
+            <div class="flex-1 min-w-0">
+                <!-- Breadcrumbs -->
+                <div class="flex flex-wrap items-center font-medium">
+
+                    <div class="flex items-center ml-1 whitespace-nowrap">
+                        <a *ngIf="pageType==='new'" [routerLink]="['../../warehouse']" style="cursor: pointer;"
+                            class="whitespace-nowrap text-primary-500">Warehouses</a>
+                        <a *ngIf="pageType==='edit'" [routerLink]="['../../']" style="cursor: pointer;"
+                            class="whitespace-nowrap text-primary-500">Warehouses</a>
+                    </div>
+                    <div class="flex items-center ml-1 whitespace-nowrap">
+                        <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'">
+                        </mat-icon>
+                        {{titleInfo}}
+                    </div>
+                </div>
+                <!-- Title -->
+            </div>
+        </div>
+
+        <!-- Actions -->
+
+    </div>
+
+
+    <ng-container>
+        <div class="flex-auto px-6 py-3" fuseScrollbar #scrollContainer id="scrollDiv">
+
+            <mat-tab-group #tabGroup fxLayout="column" fxFlex>
+                <mat-tab label="Warehouse Info">
+                    <form [formGroup]="warehouseForm"
+                        class="flex rounded-b-md rounded-tr-md flex-col px-8 py-4 bg-card shadow">
+                        <div class="h-2">
+                            <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+                        </div>
+
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+                            <mat-form-field class="md:w-1/2 w-full px-3" floatLabel="always" appearance="outline">
+                                <mat-label>Owner</mat-label>
+                                <mat-select [disabled]="pageType==='edit'" placeholder="Owner"
+                                    formControlName="selOwner">
+                                    <mat-optgroup *ngFor="let group of owners" [label]="group.title">
+                                        <mat-option (onSelectionChange)="getProOrgValue($event)"
+                                            *ngFor="let member of group.members" [value]="member.key">
+                                            {{member.value}}
+                                        </mat-option>
+                                    </mat-optgroup>
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+                            <mat-form-field appearance="outline" floatLabel="always" class="md:w-1/2 w-full px-3">
+                                <mat-label>Branch</mat-label>
+                                <mat-select [disabled]="disableBranchAndDepartment || pageType==='edit'"
+                                    placeholder="Branch" #orgSel formControlName="selBranch">
+                                    <mat-option *ngFor="let branch of branches" [value]="branch.key"
+                                        (onSelectionChange)="changeBranch($event)">
+                                        {{branch.value}}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                            <div class="pb-1.34375 pr-15px pt-5px w-1/2">
+                                <ng-container *ngFor="let item of DepArray">
+                                    <ng-container *ngIf="item.children.length > 0">
+                                        <button id='btnDep{{item.id}}' (click)="setSelectedDep(item.id)"
+                                            class="w-full bg-gray-600 min-w-full h-56px text-15px"
+                                            [ngClass]="{'cat-bottom':item.id === 0}" mat-button
+                                            [matMenuTriggerFor]="menu.buildMenu">
+                                            {{item.item}}
+                                        </button>
+                                        <app-menu-item #menu [items]="item.children"></app-menu-item>
+                                    </ng-container>
+                                    <ng-container *ngIf="item.children.lenght === 0">
+                                        <button id='btnCat{{item.id}}'
+                                            class="w-full bg-gray-600 min-w-full h-56px text-15px" mat-button
+                                            color="primary" (click)="setSelectedDep(item.id)"
+                                            [ngClass]="{'cat-bottom' :item.id === 0}">
+                                            {{item.item}}
+                                        </button>
+                                    </ng-container>
+                                </ng-container>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+
+                            <mat-form-field appearance="outline" floatLabel="always" class="md:w-1/2 w-full px-3">
+                                <mat-label>Warehouse Type</mat-label>
+                                <mat-select required placeholder="Warehouse Type" formControlName="selWarehouseType">
+                                    <mat-option *ngFor="let item of warehouseTypes" [value]="item.key">
+                                        {{item.value}}
+                                    </mat-option>
+                                </mat-select>
+                                <mat-error> Warehouse Type is required ! </mat-error>
+                            </mat-form-field>
+                            <mat-form-field appearance="outline" floatLabel="always" class="md:w-1/2 w-full px-3">
+                                <mat-label>Status</mat-label>
+                                <mat-select placeholder="Status" formControlName="status">
+                                    <mat-option *ngFor="let status of statuses" [value]="status.statusId">
+                                        {{ status.statusDescription }}</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Code</mat-label>
+                                <input spellcheck="false" required matInput value="" formControlName="code"
+                                    maxlength="50">
+                                <mat-icon matSuffix class="secondary-text"
+                                    svgIcon="mat_outline:drive_file_rename_outline">
+                                </mat-icon>
+                                <mat-error>Code is required</mat-error>
+                            </mat-form-field>
+
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Name</mat-label>
+                                <input spellcheck="false" required matInput value="" formControlName="name"
+                                    maxlength="50">
+                                <mat-icon matSuffix class="secondary-text"
+                                    svgIcon="mat_outline:drive_file_rename_outline">
+                                </mat-icon>
+                                <mat-error>Name is required!</mat-error>
+                            </mat-form-field>
+
+                        </div>
+
+
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Length</mat-label>
+                                <input spellcheck="false" required matInput value="" formControlName="length"
+                                    maxlength="20">
+                                <mat-icon matSuffix class="secondary-text"
+                                    svgIcon="mat_outline:drive_file_rename_outline">
+                                </mat-icon>
+                                <mat-error>Length is required!</mat-error>
+                            </mat-form-field>
+
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Width</mat-label>
+                                <input spellcheck="false" required matInput value="" formControlName="width"
+                                    maxlength="20">
+                                <mat-icon matSuffix class="secondary-text"
+                                    svgIcon="mat_outline:drive_file_rename_outline">
+                                </mat-icon>
+                                <mat-error>Width is required!</mat-error>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Height</mat-label>
+                                <input spellcheck="false" required matInput value="" formControlName="height"
+                                    maxlength="20">
+                                <mat-icon matSuffix class="secondary-text"
+                                    svgIcon="mat_outline:drive_file_rename_outline">
+                                </mat-icon>
+                                <mat-error>Height is required!</mat-error>
+                            </mat-form-field>
+
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Dimension Unit</mat-label>
+                                <mat-select required formControlName="dimensionUnit">
+                                    <mat-option *ngFor="let UD of dimUnitData" [value]="UD.unitId">
+                                        {{UD.unitName}}
+                                    </mat-option>
+                                </mat-select>
+                                <mat-error>Dimension Unit is required!</mat-error>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Weight Capacity</mat-label>
+                                <input spellcheck="false" required matInput value="" formControlName="weight"
+                                    maxlength="20">
+                                <mat-icon matSuffix class="secondary-text"
+                                    svgIcon="mat_outline:drive_file_rename_outline">
+                                </mat-icon>
+                                <mat-error>Weight is required!</mat-error>
+                            </mat-form-field>
+
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Weight Unit</mat-label>
+                                <mat-select required formControlName="weightUnit">
+                                    <mat-option *ngFor="let UD of massUnitData" [value]="UD.unitId">
+                                        {{UD.unitName}}
+                                    </mat-option>
+                                </mat-select>
+                                <mat-error>Weight Unit is required!</mat-error>
+                            </mat-form-field>
+                        </div>
+
+
+                        <div class="w-full mt-6" style="display: flex; align-items: center; place-content: center">
+                            <button class="mr-1" mat-flat-button color="primary" [disabled]="isLoading" (click)="save()"
+                                matStepperNext>{{pageType === 'new'?'Register' : 'Update'}}</button>
+                        </div>
+                        <div class="flex items-center flex-wrap content-center w-full py-2">
+                            <div class="w-auto h-auto min-h-15 m-auto">
+                                <fuse-alert *ngIf="_result.succeed" [appearance]="'soft'" [dismissible]=" true"
+                                    [dismissed]="true" [name]="'successMessage'" [type]="'success'">
+                                    <b>Result: </b> {{_result.message}}
+                                </fuse-alert>
+                                <fuse-alert *ngIf="!_result.succeed" [appearance]="'soft'" [dismissible]="true"
+                                    [dismissed]="true" [name]="'errorMessage'" [type]="'error'">
+                                    <b>Result: </b> {{_result.message}}
+                                </fuse-alert>
+                            </div>
+                        </div>
+                    </form>
+                </mat-tab>
+            </mat-tab-group>
+        </div>
+    </ng-container>
+</div>

@@ -1,0 +1,32 @@
+import { Paging } from "app/core/type/paging/paging.type";
+import { BaseModel } from "app/core/type/base/BaseModel";
+export class InventoryDeficit extends BaseModel {
+    warehouseInvDeficitId: number;
+    merchandiseId: number;
+    merchandiseName: string;
+    merchandiseCode: string;
+    technicalNumber: string;
+    merchandiseTypeId: number;
+    merchandiseTypeName: string;
+    coverId: number;
+    coverName: string;
+    measure: number;
+    measurementMetricId: number;
+    measurementMetricName: string;
+    requestId: number;
+    requestCode: string;
+    status: number;
+    statusDescription: string;
+    unitId: number;
+    wastingRate: number;
+    unitName: string;
+    sourceDeficitId: number;
+    sourceDeficitName: string;
+    sourceDeficitCode: string;
+    sourceDeficitTypeId: number;
+    sourceDeficitTypeName: string;
+    reportTypeId: number;
+    customerNameFamily: string;
+    coverIdList: Array<number>;
+    page: Paging;
+}

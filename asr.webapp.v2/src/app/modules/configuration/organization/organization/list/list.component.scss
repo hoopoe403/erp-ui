@@ -1,0 +1,28 @@
+.info-menu {
+    padding: 0 9px;
+
+    h4 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        color: gray;
+        font-weight: bold;
+        font-size: 15px;
+    }
+
+    div {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 7px;
+    }
+
+    span {
+        color: darkgray;
+        font-size: 9px;
+    }
+
+    p {
+        color: gray;
+        font-size: 13px;
+        margin: 0 15px;
+    }
+}

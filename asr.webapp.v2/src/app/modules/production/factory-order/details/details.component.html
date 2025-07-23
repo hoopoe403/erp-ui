@@ -1,0 +1,461 @@
+<!-- Main -->
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+    <div
+        class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between sm:px-3   bg-card dark:bg-transparent">
+        <!-- Title -->
+
+        <div
+            class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-3 sm:px-10 bg-card dark:bg-transparent">
+            <div class="flex-1 min-w-0">
+                <!-- Breadcrumbs -->
+                <div class="flex flex-wrap items-center font-medium">
+
+                    <div class="flex items-center ml-1 whitespace-nowrap">
+
+                        <a *ngIf="pageType==='new'" [routerLink]="['..']" style="cursor: pointer;"
+                            (click)="isLoading=true" class="whitespace-nowrap text-primary-500">Factory Orders</a>
+                        <a *ngIf="pageType==='edit'" [routerLink]="['../..']" style="cursor: pointer;"
+                            class="whitespace-nowrap text-primary-500">Factory Orders</a>
+                    </div>
+                    <div class="flex items-center ml-1 whitespace-nowrap">
+                        <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'">
+                        </mat-icon>
+                        {{titleInfo}}
+                    </div>
+                </div>
+                <!-- Title -->
+            </div>
+        </div>
+
+        <!-- Actions -->
+
+    </div>
+
+    <div class="h-2">
+        <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+    </div>
+    <ng-container>
+        <div class="flex-auto px-6 py-3 h-100" fuseScrollbar #scrollContainer id="scrollDiv">
+
+            <mat-tab-group #tabGroup fxLayout="column" fxFlex class="h-full">
+                <mat-tab label="Information">
+                    <form [formGroup]="frmFactoryOrder"
+                        class="flex rounded-b-md rounded-tr-md flex-col px-8 py-4 bg-card shadow">
+
+
+                        <div class="flex flex-row md:flex-row w-1/2 items-center flex-wrap content-center">
+                            <mat-form-field appearance="legacy" class="w-1/2 pr-5">
+                                <mat-label>Order Number</mat-label>
+                                <input spellcheck="false" required [autocomplete]="'off'" matInput value=""
+                                    formControlName="orderNumber" maxlength="50">
+                            </mat-form-field>
+                            <mat-form-field appearance="legacy" class="w-1/2 pl-5">
+                                <mat-label>Contractor Order Number</mat-label>
+                                <input spellcheck="false" required [autocomplete]="'off'" matInput value=""
+                                    formControlName="contractorOrderNumber" maxlength="50">
+                            </mat-form-field>
+                        </div>
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full">
+                                <mat-label>Purchaser</mat-label>
+                                <mat-select required formControlName="purchaser">
+                                    <mat-option *ngFor="let purchaser of purchasers"
+                                        (onSelectionChange)="setPurchaser($event)" [value]="purchaser.key">
+                                        {{purchaser.value}}</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                        </div>
+                        <div
+                            class="flex flex-col md:flex-row w-full items-center flex-wrap content-center md:w-1/2 w-full">
+
+                            <mat-form-field appearance="outline" class="md:w-1/3 w-full">
+                                <mat-label>Supplier Type</mat-label>
+                                <mat-select required [(ngModel)]="factoryOrderInfo.supplierTypeId"
+                                    formControlName="supplierType">
+                                    <mat-option *ngFor="let st of supplierTypes"
+                                        (onSelectionChange)="setSupplierType($event)" [value]="st.key">
+                                        {{st.value}}</mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                            <mat-form-field appearance="outline" class="md:w-2/3 w-full">
+                                <mat-label>Supplier</mat-label>
+                                <input spellcheck="false" required type=" text" aria-label="Number" matInput
+                                    [formControl]="supplierControl" [matAutocomplete]="autoRec">
+                                <mat-autocomplete required autoActiveFirstOption #autoRec="matAutocomplete">
+                                    <mat-option (onSelectionChange)="setSupplier($event)"
+                                        *ngFor="let option of supplierFilteredOptions | async"
+                                        [value]="option.ownerName">
+                                        {{option.ownerName}}
+                                    </mat-option>
+                                </mat-autocomplete>
+                                <mat-error *ngIf="supplierControl.hasError('forbiddenNames')">
+                                    <strong>'{{creditorControl.errors.forbiddenNames.value}}'</strong> is not
+                                    allowed.
+                                </mat-error>
+                                <mat-error *ngIf="supplierControl.hasError('required')">
+                                    Creditor is required
+                                </mat-error>
+
+                            </mat-form-field>
+                        </div>
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full">
+                                <mat-label>Estimated Delivery Date</mat-label>
+                                <input required formControlName="estimatedDeliveryDate" matInput
+                                    [matDatepicker]="picker">
+                                <mat-datepicker-toggle matSuffix [for]="picker">
+                                </mat-datepicker-toggle>
+                                <mat-datepicker #picker></mat-datepicker>
+                                <mat-error>Estimated Delivery Date is required!</mat-error>
+                            </mat-form-field>
+                        </div>
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full">
+                                <mat-label>Reference Number</mat-label>
+                                <input spellcheck="false" [autocomplete]="'off'" matInput value=""
+                                    formControlName="referenceNumber" maxlength="50">
+                                <mat-icon matSuffix class="secondary-text"
+                                    svgIcon="mat_outline:drive_file_rename_outline">
+                                </mat-icon>
+                            </mat-form-field>
+                        </div>
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+                            <mat-form-field appearance="legacy" floatLabel="always" class="md:w-1/2 w-full">
+                                <mat-label>Description</mat-label>
+                                <textarea spellcheck="false" formControlName="description" matInput maxlength="300"
+                                    placeholder="Write description here..."></textarea>
+                            </mat-form-field>
+
+                        </div>
+
+
+                    </form>
+                </mat-tab>
+                <mat-tab label="Goods" class="h-full">
+                    <div class="h-full flex rounded-b-md rounded-tr-md flex-col  bg-card shadow">
+                        <div class="flex flex-col sm:flex-row items-center sm:items-start p-6 pb-6 sm:pb-8 w-full">
+                            <div
+                                class="h-100 flex flex-col sm:flex-row items-center sm:items-start p-6 pb-6 sm:pb-8 w-full">
+                                <div
+                                    class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
+
+                                    <!-- Header -->
+                                    <div
+                                        class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4   border-b">
+                                        <!-- Loader -->
+
+                                        <!-- Actions -->
+                                        <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+                                            <!-- Search -->
+                                            <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
+                                                <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                                                <input #goodsFilter [autocomplete]="'off'" matInput
+                                                    [autocomplete]="'off'" [placeholder]="'Search'">
+                                                <mat-icon matPostfix (click)="goodsAdvancedSearch.toggle()"
+                                                    matTooltip="Advanced Search" class="cursor-pointer">
+                                                    settings
+                                                </mat-icon>
+                                            </mat-form-field>
+
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-auto overflow-hidden  ">
+
+
+                                        <div
+                                            class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+
+
+                                            <ng-container>
+                                                <div class="grid">
+                                                    <!-- Header -->
+                                                    <div class="goods-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
+                                                        matSort matSortDisableClear>
+
+                                                        <div class="lg:block print:block cursor-pointer">
+                                                        </div>
+                                                        <div class=" lg:block" [mat-sort-header]="'code'">
+                                                            Code
+                                                        </div>
+                                                        <div class=" lg:block" [mat-sort-header]="'name'">
+                                                            Name
+                                                        </div>
+
+                                                    </div>
+                                                    <!-- Rows -->
+
+                                                    <ng-container *ngFor="let item of filteredGoods">
+                                                        <div [ngStyle]="{'background-color': checkGoodsIsSelected(item.goodsId) ? 'rgb(249 249 249 / 77%)':'#ffffff' }"
+                                                            class="goods-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b">
+
+                                                            <!-- SKU -->
+                                                            <div class=" lg:block print:block cursor-pointer">
+                                                                <mat-checkbox
+                                                                    (change)="$event ? toggleGoods(item.goodsId): null"
+                                                                    [checked]="checkGoodsIsSelected(item.goodsId)"
+                                                                    [disabled]="isLoading || checkGoodsIsDisabled(item.goodsId)"
+                                                                    [aria-label]="'select all'">
+                                                                </mat-checkbox>
+                                                            </div>
+
+                                                            <div class="truncate  lg:block">
+                                                                {{item.goodsCode}}
+                                                            </div>
+                                                            <div class="truncate  lg:block">
+                                                                <span class="cursor-pointer w-fit">
+                                                                    {{item.goodsName}}</span>
+                                                            </div>
+
+                                                        </div>
+                                                    </ng-container>
+                                                </div>
+
+                                                <mat-paginator
+                                                    class="sm:absolute sm:inset-x-0 sm:bottom-0 border-b sm:border-t sm:border-b-0 z-10 bg-gray-50 dark:bg-transparent"
+                                                    [ngClass]="{'pointer-events-none': isLoading}"
+                                                    [length]="pagination.length" [pageIndex]="pagination.pageNumber"
+                                                    [pageSize]="pagination.pageSize"
+                                                    [pageSizeOptions]="[50, 100,200,300,400,600]"
+                                                    [showFirstLastButtons]="true">
+                                                </mat-paginator>
+
+                                            </ng-container>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+                </mat-tab>
+
+                <mat-tab label="Preview">
+                    <div class="flex rounded-b-md rounded-tr-md flex-col px-8 py-4 bg-card shadow">
+                        <div class="flex flex-col  w-full ">
+                            <div class="w-1/2 flex flex-col pb-4" *ngIf="pageType == 'edit'">
+                                <mat-label class="font-extrabold">Order Number</mat-label>
+                                <mat-label>{{frmFactoryOrder.controls['orderNumber'].value}}</mat-label>
+                            </div>
+                            <div class="w-1/2 flex flex-col pb-4" *ngIf="pageType == 'edit'">
+                                <mat-label class="font-extrabold">Contractor Order Number</mat-label>
+                                <mat-label>{{frmFactoryOrder.controls['contractorOrderNumber'].value}}</mat-label>
+                            </div>
+                            <div class="w-1/2 flex flex-col pb-4">
+                                <mat-label class="font-extrabold">Purchaser</mat-label>
+                                <mat-label>{{factoryOrderInfo.purchaserName}}</mat-label>
+                            </div>
+                            <div class="w-1/2 flex flex-col pb-4">
+                                <mat-label class="font-extrabold">Supplier</mat-label>
+                                <mat-label>{{factoryOrderInfo.supplierName}}</mat-label>
+                            </div>
+                            <div class="w-1/2 flex flex-col pb-4">
+                                <mat-label class="font-extrabold">Estimated Delivery Date</mat-label>
+                                <mat-label>{{frmFactoryOrder.controls['estimatedDeliveryDate'].value}}</mat-label>
+                            </div>
+                            <div class="w-1/2 flex flex-col pb-4"
+                                *ngIf="frmFactoryOrder.controls['referenceNumber'].value != null && frmFactoryOrder.controls['referenceNumber'].value != ''">
+                                <mat-label class="font-extrabold">Reference Number
+                                </mat-label>
+                                <mat-label>{{frmFactoryOrder.controls['referenceNumber'].value}}</mat-label>
+                            </div>
+                            <div class="w-1/2 flex flex-col pb-4"
+                                *ngIf="frmFactoryOrder.controls['description'].value != '' && frmFactoryOrder.controls['description'].value != null">
+                                <mat-label class="font-extrabold">Description
+                                </mat-label>
+                                <mat-label>{{frmFactoryOrder.controls['description'].value}}</mat-label>
+                            </div>
+                        </div>
+                        <form [formGroup]="frmSelectedGoods">
+                            <ng-container>
+                                <div class="grid">
+                                    <!-- Header -->
+                                    <div style="background-color: '#dde3e9';"
+                                        class="text-center font-bold bg-zinc-200 z-10  top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary">
+                                        Goods Chosen
+                                    </div>
+                                    <div
+                                        class="goods-preview-grid z-10  top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5">
+
+                                        <div class=" lg:block">
+                                            Code
+                                        </div>
+                                        <div class=" lg:block">
+                                            Name
+                                        </div>
+                                        <div class=" lg:block">
+                                            Measure
+                                        </div>
+                                        <div class=" lg:block">
+                                            Service
+                                        </div>
+                                        <div class=" lg:block">
+                                            Unit Price
+                                        </div>
+                                    </div>
+                                    <!-- Rows -->
+
+                                    <ng-container *ngFor="let item of factoryOrderInfo.goodsList">
+                                        <div
+                                            class="goods-preview-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b border-l border-r">
+
+                                            <div class="truncate  lg:block">
+                                                {{item.goodsCategoryCode}}
+                                            </div>
+                                            <div class="truncate  lg:block">
+                                                {{item.goodsName}}
+                                            </div>
+                                            <div class="truncate lg:block flex md:flex-row flex-col">
+                                                <mat-form-field appearance="legacy" class="w-1/2 text-sm">
+                                                    <input type="number" formControlName="inp{{item.goodsId}}"
+                                                        placeholder="{{ getMeasurementMetricName(item.measurementMetricId)}}"
+                                                        matInput min="1">
+                                                </mat-form-field>
+                                                <mat-form-field appearance="legacy" class="w-1/2 text-sm"
+                                                    *ngIf="item.measurementMetricId!=1000691">
+                                                    <mat-select formControlName="unit{{item.goodsId}}"
+                                                        placeholder="Unit">
+                                                        <ng-container *ngIf="item.measurementMetricId==1000692">
+                                                            <mat-option *ngFor="let mu of massUnitData"
+                                                                [value]="mu.unitId">
+                                                                {{mu.unitName}}
+                                                            </mat-option>
+                                                        </ng-container>
+                                                        <ng-container *ngIf="item.measurementMetricId==1000693">
+                                                            <mat-option *ngFor="let au of areaUnitData"
+                                                                [value]="au.unitId">
+                                                                {{au.unitName}}
+                                                            </mat-option>
+                                                        </ng-container>
+                                                        <ng-container *ngIf="item.measurementMetricId==1000694">
+                                                            <mat-option *ngFor="let lu of lengthUnitData"
+                                                                [value]="lu.unitId">
+                                                                {{lu.unitName}}
+                                                            </mat-option>
+                                                        </ng-container>
+                                                    </mat-select>
+                                                </mat-form-field>
+                                            </div>
+                                            <div class="truncate  lg:block">
+                                                <mat-form-field appearance="legacy" class="w-full text-sm">
+                                                    <mat-select required formControlName="service{{item.goodsId}}">
+                                                        <mat-option
+                                                            *ngFor="let service of filterGoodsServices(item.goodsId)"
+                                                            [value]="service.serviceId">
+                                                            {{service.serviceName}}
+                                                        </mat-option>
+                                                    </mat-select>
+                                                </mat-form-field>
+                                            </div>
+                                            <div class="truncate  lg:block">
+                                                <mat-form-field appearance="legacy" class="w-full text-sm">
+                                                    <input type="number" formControlName="price{{item.goodsId}}"
+                                                        placeholder="Unit Price" matInput min="1">
+                                                </mat-form-field>
+                                            </div>
+                                        </div>
+                                    </ng-container>
+                                </div>
+                            </ng-container>
+                        </form>
+                        <div class="w-full mt-6" style="display: flex; align-items: center; place-content: center">
+                            <button class="ml-2" mat-flat-button [color]="'primary'" (click)="save()">
+                                {{pageType ===
+                                'new'?'Register' : 'Update'}}
+                            </button>
+                        </div>
+                        <div class="flex items-center flex-wrap content-center w-full py-2">
+                            <div class="w-auto h-auto min-h-15 m-auto">
+                                <fuse-alert *ngIf="_result.succeed" [appearance]="'soft'" [dismissible]=" true"
+                                    [dismissed]="true" [name]="'successMessage'" [type]="'success'">
+                                    <b>Result: </b> {{_result.message}}.
+                                </fuse-alert>
+                                <fuse-alert *ngIf="!_result.succeed" [appearance]="'soft'" [dismissible]="true"
+                                    [dismissed]="true" [name]="'errorMessage'" [type]="'error'">
+                                    <b>Result: </b> {{_result.message}}.
+                                </fuse-alert>
+                            </div>
+                        </div>
+                    </div>
+                </mat-tab>
+            </mat-tab-group>
+        </div>
+    </ng-container>
+</div>
+
+<fuse-drawer class="w-screen min-w-screen sm:w-80 sm:min-w-80" fixed transparentOverlay [mode]="'over'"
+    [name]="'goodsAdvancedSearch'" [position]="'left'" #goodsAdvancedSearch>
+    <div class="flex flex-col w-full" fuseScrollbar>
+        <div class="bg-gray-900 relative h-14 max-h-14 z-10 w-full">
+            <div class="inset-y-0 left-0 flex w-1/2">
+                <mat-icon class="mt-4 ml-1 text-white flex-auto" matPrefix [svgIcon]="'heroicons_outline:search'">
+                </mat-icon>
+
+                <h3 class="ml-2 mt-4 text-white flex-auto "><span>Advanced Search</span></h3>
+            </div>
+            <div class="inline-block">
+                <mat-icon class="mt-3 mr-2 absolute inset-y-0 right-0 cursor-pointer text-white"
+                    (click)="goodsAdvancedSearch.toggle()">close
+                </mat-icon>
+            </div>
+        </div>
+        <form [formGroup]="frmAdvancedSearch">
+            <div class="pt-8 px-4 pb-4">
+                <div
+                    class="border border-solid border-gray-200 rounded-sm flex flex-initial flex-col relative mb-10 pt-4 px-4 pb-3">
+                    <h2 class="absolute -top-2.5 left-1.5 m-0 px-2 bg-white">Search Fields</h2>
+
+                    <div>
+                        <mat-form-field class="w-full" appearance="outline" fxFlex>
+                            <mat-label>Code(%)</mat-label>
+                            <input matInput value="" formControlName="code" maxlength="40">
+                            <mat-icon matSuffix class="secondary-text">assignment</mat-icon>
+                        </mat-form-field>
+                    </div>
+
+                    <div>
+                        <mat-form-field class="w-full" appearance="outline" fxFlex>
+                            <mat-label>Name(%)</mat-label>
+                            <input matInput value="" formControlName="name" maxlength="500">
+                            <mat-icon matSuffix class="secondary-text">assignment</mat-icon>
+                        </mat-form-field>
+                    </div>
+                    <!-- <div fxLayout="row" fxLayoutAlign="start center" class="mb-5">
+                        <ng-container *ngFor="let item of goodsCatArray">
+                            <ng-container *ngIf="item.children.length > 0">
+                                <button id='btnCat{{item.id}}' (click)="setSelectedCat(item.id)"
+                                    [class.w-full]="item.id == 0" [class.bg-gray-300]="item.id == 0" mat-button
+                                    [matMenuTriggerFor]="menu.buildMenu">
+                                    {{item.item}}
+                                </button>
+                                <factory-order-menu-item #menu [items]="item.children"></factory-order-menu-item>
+                            </ng-container>
+                            <ng-container *ngIf="item.children.length === 0">
+                                <button id='btnCat{{item.id}}' (click)="setSelectedCat(item.id)"
+                                    [class.w-full]="item.id == 0" [class.bg-gray-300]="item.id == 0" mat-button
+                                    color="'primary'">
+                                    {{item.item}}
+                                </button>
+                            </ng-container>
+                        </ng-container>
+                    </div>
+ -->
+                </div>
+
+                <div class="flex flex-row w-full">
+                    <div class="py-2 w-1/2 pl-10 items-center align-middle">
+                        <button mat-raised-button style="color: darkgreen" (click)="goodsSearch()">Apply
+                        </button>
+                    </div>
+                    <div class="py-2 w-1/2 items-center align-middle">
+                        <button (click)="resetAdvancedSearch()" mat-raised-button style="color: darkred">Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</fuse-drawer>

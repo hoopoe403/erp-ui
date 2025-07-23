@@ -1,0 +1,186 @@
+<!-- Main -->
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+    <div
+        class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between sm:px-3   bg-card dark:bg-transparent">
+        <!-- Title -->
+
+        <div
+            class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-3 sm:px-10 bg-card dark:bg-transparent">
+            <div class="flex-1 min-w-0">
+                <!-- Breadcrumbs -->
+                <div class="flex flex-wrap items-center font-medium">
+
+                    <div class="flex items-center ml-1 whitespace-nowrap">
+
+                        <a *ngIf="pageType==='new'" [routerLink]="['../list']" style="cursor: pointer;"
+                            class="whitespace-nowrap text-primary-500">Financial Resources</a>
+                        <a *ngIf="pageType==='edit'" [routerLink]="['../../list']" style="cursor: pointer;"
+                            class="whitespace-nowrap text-primary-500">Financial Resources</a>
+                    </div>
+                    <div class="flex items-center ml-1 whitespace-nowrap">
+                        <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'">
+                        </mat-icon>
+                        {{titleInfo}}
+                    </div>
+                </div>
+                <!-- Title -->
+            </div>
+        </div>
+
+        <!-- Actions -->
+
+    </div>
+
+
+    <ng-container>
+        <div class="flex-auto px-6 py-3" fuseScrollbar #scrollContainer id="scrollDiv">
+
+            <mat-tab-group #tabGroup fxLayout="column" fxFlex>
+                <mat-tab label="Information">
+                    <form [formGroup]="frmResource"
+                        class="flex rounded-b-md rounded-tr-md flex-col px-8 py-4 bg-card shadow">
+                        <div class="h-2">
+                            <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+                        </div>
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Code</mat-label>
+                                <input spellcheck="false" required [autocomplete]="'off'" matInput value=""
+                                    formControlName="code" maxlength="50">
+                                <mat-icon matSuffix class="secondary-text"
+                                    svgIcon="mat_outline:drive_file_rename_outline">
+                                </mat-icon>
+                            </mat-form-field>
+
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Name</mat-label>
+                                <input spellcheck="false" required [autocomplete]="'off'" matInput value=""
+                                    formControlName="name" maxlength="50">
+                                <mat-icon matSuffix class="secondary-text"
+                                    svgIcon="mat_outline:drive_file_rename_outline">
+                                </mat-icon>
+                            </mat-form-field>
+
+                        </div>
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+                            <mat-form-field class="md:w-1/2 w-full px-3" appearance="outline">
+                                <mat-label>Owner</mat-label>
+                                <input spellcheck="false" required type=" text" placeholder="Pick a Owner"
+                                    aria-label="Number" matInput [formControl]="ownerControl" [matAutocomplete]="auto">
+                                <mat-autocomplete required autoActiveFirstOption #auto="matAutocomplete">
+                                    <mat-option (onSelectionChange)="setOwner($event)"
+                                        *ngFor="let option of ownerFilteredOptions | async" [value]="option.ownerName">
+                                        {{option.ownerName}}
+                                    </mat-option>
+                                </mat-autocomplete>
+                                <mat-error *ngIf="ownerControl.hasError('forbiddenNames')">
+                                    You should enter value from suggested one only.
+                                    <strong>'{{ownerControl.errors.forbiddenNames.value}}'</strong> is not allowed.
+                                </mat-error>
+                                <mat-error *ngIf="ownerControl.hasError('required')">
+                                    Owner is required
+                                </mat-error>
+                            </mat-form-field>
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Beneficiary</mat-label>
+                                <mat-select required formControlName="beneficiary">
+                                    <mat-option *ngFor="let item of beneficiaries" [value]="item.ownerId">
+                                        {{item.ownerName}}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                        </div>
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Type</mat-label>
+                                <mat-select required formControlName="resourceType">
+                                    <mat-option (onSelectionChange)="setResourceType($event)"
+                                        *ngFor="let item of resourceTypes" [value]="item.financialResourceTypeId">
+                                        {{item.financialResourceTypeName}}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Bank</mat-label>
+                                <mat-select required formControlName="bank">
+                                    <mat-option *ngFor="let item of banks" [value]="item.bankId">
+                                        {{item.bankName}}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                        </div>
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Account Holder</mat-label>
+                                <input spellcheck="false" required [autocomplete]="'off'" matInput value=""
+                                    formControlName="accountHolder" maxlength="50">
+                                <mat-icon matSuffix class="secondary-text"
+                                    svgIcon="mat_outline:drive_file_rename_outline">
+                                </mat-icon>
+                            </mat-form-field>
+
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Account Number</mat-label>
+                                <input spellcheck="false" required [autocomplete]="'off'" matInput value=""
+                                    formControlName="accountNumber" maxlength="50">
+                                <mat-icon matSuffix class="secondary-text"
+                                    svgIcon="mat_outline:drive_file_rename_outline">
+                                </mat-icon>
+                            </mat-form-field>
+
+                        </div>
+                        <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Bank Account Type</mat-label>
+                                <mat-select required formControlName="bankAccountType">
+                                    <mat-option (onSelectionChange)="setBankAccountType($event)"
+                                        *ngFor="let item of bankAccountTypes" [value]="item.bankAccountTypeId">
+                                        {{item.bankAccountTypeName}}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                            <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                                <mat-label>Status</mat-label>
+                                <mat-select required formControlName="status">
+                                    <mat-option [value]="1000001">
+                                        Active
+                                    </mat-option>
+                                    <mat-option [value]="1000000">
+                                        Inactive
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+
+                        </div>
+                        <div class="w-full mt-6" style="display: flex; align-items: center; place-content: center">
+                            <button class="mr-1" mat-flat-button color="primary" [disabled]="isLoading" (click)="save()"
+                                matStepperNext>{{pageType ===
+                                'new'?'Register' : 'Update'}}</button>
+                        </div>
+                        <div class="flex items-center flex-wrap content-center w-full py-2">
+                            <div class="w-auto h-auto min-h-15 m-auto">
+                                <fuse-alert *ngIf="_result.succeed" [appearance]="'soft'" [dismissible]=" true"
+                                    [dismissed]="true" [name]="'successMessage'" [type]="'success'">
+                                    <b>Result: </b> {{_result.message}}.
+                                </fuse-alert>
+                                <fuse-alert *ngIf="!_result.succeed" [appearance]="'soft'" [dismissible]="true"
+                                    [dismissed]="true" [name]="'errorMessage'" [type]="'error'">
+                                    <b>Result: </b> {{_result.message}}.
+                                </fuse-alert>
+                            </div>
+                        </div>
+                    </form>
+                </mat-tab>
+                <mat-tab label="Cheque">
+                    <app-notebook></app-notebook>
+                </mat-tab>
+            </mat-tab-group>
+        </div>
+    </ng-container>
+</div>

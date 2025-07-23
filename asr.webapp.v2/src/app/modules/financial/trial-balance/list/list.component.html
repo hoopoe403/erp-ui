@@ -1,0 +1,518 @@
+<div class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
+
+    <!-- Header -->
+    <div
+        class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4 px-6 md:px-8 border-b">
+        <!-- Loader -->
+        <div class="absolute inset-x-0 bottom-0" *ngIf="isLoading">
+            <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+        </div>
+        <!-- Title -->
+        <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+            <div class="text-4xl font-extrabold tracking-tight">Trial Balances</div>
+            <div class="cursor-pointer ml-3 mt-2">
+                <button mat-icon-button ngxPrint useExistingCss="true" printSectionId="section-to-print">
+                    <mat-icon [svgIcon]="'heroicons_outline:printer'"></mat-icon>
+                </button>
+            </div>
+        </div>
+        <!-- Actions -->
+        <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+            <!-- Search -->
+            <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
+                <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                <input #filter [autocomplete]="'off'" [formControl]="searchInputControl" matInput [autocomplete]="'off'"
+                    [placeholder]="'Search'">
+                <mat-icon matPostfix (click)="trialBalancesAdvancedSearch.toggle()" matTooltip="Advanced Search"
+                    class="cursor-pointer">
+                    settings
+                </mat-icon>
+            </mat-form-field>
+
+            <!-- Add product button -->
+            <button [matMenuTriggerFor]="downloadMenu" class="ml-4" mat-flat-button [color]="'primary'">
+                <mat-icon svgIcon="heroicons_outline:menu"></mat-icon>
+            </button>
+        </div>
+    </div>
+
+    <div class="flex flex-auto overflow-hidden">
+
+        <!-- Products list -->
+        <div class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+            <ng-container *ngIf="reportType === 1 && (trialBalances$ | async) as trialBalances">
+                <ng-container *ngIf="trialBalances.length > 0; else noTrialBalances">
+                    <div class="grid" id="section-to-print">
+                        <!-- Header -->
+                        <div class="trial-balance-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
+                            #sort="matSort" matSort matSortDisableClear>
+                            <div [mat-sort-header]="'ownerName'">
+                                Account
+                            </div>
+
+                            <div style="direction: rtl;" class="grid justify-items-start print:block"
+                                [mat-sort-header]="'debit'">
+                                Debit
+                            </div>
+
+                            <div style="direction: rtl;" class="pr-8 grid justify-items-start print:block"
+                                [mat-sort-header]="'credit'">
+                                Credit
+                            </div>
+
+                            <div style="direction: rtl;" class="pr-8  justify-items-start print:block
+                            hidden lg:block" [mat-sort-header]="'debitBalance'">
+                                Debit Balance
+                            </div>
+
+                            <div style="direction: rtl;" class="pr-8  justify-items-start print:block hidden lg:block"
+                                [mat-sort-header]="'creditBalance'">
+                                Credit Balance
+                            </div>
+
+
+                            <div class="print:hidden">More</div>
+                        </div>
+                        <!-- Rows -->
+                        <ng-container *ngIf="(trialBalances$ | async) as trialBalances">
+                            <ng-container *ngFor="let item of trialBalances; trackBy: trackByFn">
+                                <div class="trial-balance-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b">
+
+
+                                    <!-- SKU -->
+                                    <div class=" truncate">
+                                        {{item.ownerName}}
+                                        <div>
+                                            <div style="background-color: rgb(245 245 245)!important;"
+                                                class="bg-neutral-400 text-xs rounded-sm py-0.5 px-2 inline-block"
+                                                matTooltip="Issuer Type">
+                                                <div class="rounded-3xl w-2 h-2 mr-2 inline-block bg-green-500"></div>
+                                                <div class="inline-block">{{item.ownerTypeName}}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="text-right print:block">
+                                        {{item.debit|number:'1.0-5'}}
+                                    </div>
+
+                                    <div class="pr-8 text-right print:block">
+                                        {{item.credit|number:'1.0-5'}}
+                                    </div>
+                                    <div class="pr-8 text-right print:block hidden lg:block">
+                                        {{item.debitBalance|number:'1.0-5'}}
+                                    </div>
+                                    <div class="pr-8 text-right print:block hidden lg:block">
+                                        {{item.creditBalance|number:'1.0-5'}}
+                                    </div>
+
+                                    <div class="print:hidden">
+                                        <div class="flex items-center">
+                                            <ng-container>
+                                                <button style="width: 25px;" mat-icon-button class="info"
+                                                    [color]="'primary'"
+                                                    (click)="$event.stopPropagation(); selectedInfoRow = item"
+                                                    [matMenuTriggerFor]="infoMenu">
+                                                    <mat-icon class="icon-size-5">info</mat-icon>
+                                                </button>
+                                            </ng-container>
+                                            <ng-container fxLayout="row">
+                                                <button style="width: 25px;" mat-icon-button
+                                                    (click)="$event.stopPropagation(); selectedInfoRow = item"
+                                                    [matMenuTriggerFor]="contextMenu">
+                                                    <mat-icon color="accent">more_vert</mat-icon>
+                                                </button>
+                                            </ng-container>
+
+                                        </div>
+                                    </div>
+
+
+                                </div>
+                            </ng-container>
+                        </ng-container>
+                    </div>
+
+                    <mat-paginator #paginator
+                        class="sm:absolute sm:inset-x-0 sm:bottom-0 border-b sm:border-t sm:border-b-0 z-10 bg-gray-50 dark:bg-transparent"
+                        [ngClass]="{'pointer-events-none': isLoading}" [length]="pagination.length"
+                        [pageIndex]="pagination.pageIndex" [pageSize]="pagination.pageSize"
+                        [pageSizeOptions]="[50, 100,200,300,1000,2000,4000]" [showFirstLastButtons]="true">
+                    </mat-paginator>
+
+                </ng-container>
+            </ng-container>
+            <ng-container *ngIf="reportType === 2 &&(trialBalancesDetails$ | async) as trialBalancesDetails">
+                <ng-container *ngIf="trialBalancesDetails.length > 0; else noTrialBalances">
+                    <div class="grid" id="section-to-print">
+                        <!-- Header -->
+                        <div class="trial-balances-detail-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
+                            #sort="matSort" matSort matSortDisableClear>
+                            <div [mat-sort-header]="'ownerName'">
+                                Account
+                            </div>
+                            <div class="hidden lg:block" [mat-sort-header]="'documentNumber'">
+                                Number
+                            </div>
+                            <div class="hidden lg:block" [mat-sort-header]="'date'">
+                                D-Register
+                            </div>
+                            <div class="hidden lg:block" [mat-sort-header]="'updDate'">
+                                D-Update
+                            </div>
+                            <div style="direction: rtl;" class="pr-8 grid justify-items-start print:block"
+                                [mat-sort-header]="'debit'">
+                                Debit
+                            </div>
+
+                            <div style="direction: rtl;" class="pr-8 grid justify-items-start print:block"
+                                [mat-sort-header]="'credit'">
+                                Credit
+                            </div>
+
+                            <div style="direction: rtl;" class="pr-8 grid justify-items-start print:block"
+                                [mat-sort-header]="'remained'">
+                                Remained
+                            </div>
+                            <div class="hidden lg:block" [mat-sort-header]="'paymentType'">
+                                Payment Type
+                            </div>
+                            <div class="hidden lg:block" [mat-sort-header]="'category'">
+                                Category
+                            </div>
+                            <div [mat-sort-header]="'requestTypeName'">
+                                Applicant
+                            </div>
+
+
+                            <div class="print:hidden">More</div>
+                        </div>
+                        <!-- Rows -->
+                        <ng-container *ngIf="(trialBalancesDetails$ | async) as trialBalancesDetails">
+                            <ng-container *ngFor="let item of trialBalancesDetails; trackBy: trackByFn">
+                                <div
+                                    class="trial-balances-detail-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b">
+
+
+                                    <!-- SKU -->
+                                    <div class=" truncate">
+                                        {{item.ownerName}}
+                                        <div>
+                                            <div style="background-color: rgb(245 245 245)!important;"
+                                                class="bg-neutral-400 text-xs rounded-sm py-0.5 px-2 inline-block"
+                                                matTooltip="Issuer Type">
+                                                <div class="rounded-3xl w-2 h-2 mr-2 inline-block bg-green-500"></div>
+                                                <div class="inline-block">{{item.ownerTypeName}}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="truncate hidden lg:block">
+                                        {{item.documentNumber}}
+                                    </div>
+                                    <div class="truncate hidden lg:block">
+                                        {{item.localChangeDate}}
+                                    </div>
+                                    <div class="truncate hidden lg:block">
+                                        {{item.updateLocalDate}}
+                                    </div>
+                                    <div class="pr-8 text-right print:block">
+                                        {{item.debit|number:'1.0-5'}}
+                                    </div>
+
+                                    <div class="pr-8 text-right print:block">
+                                        {{item.credit|number:'1.0-5'}}
+                                    </div>
+                                    <div class="pr-8 text-right print:block">
+                                        {{item.remained|number:'1.0-5'}}
+                                    </div>
+                                    <div class="truncate hidden lg:block">
+                                        {{item.paymentTypeName}}
+                                    </div>
+                                    <div class="truncate hidden lg:block">
+                                        {{item.financialCategoryName}}
+                                    </div>
+                                    <div class=" truncate cursor-pointer"
+                                        (click)="openDetailDialog(item.requestId,item.requestDetailId, item.requestTypeId,item.documentNumber)">
+                                        {{item.requestTypeName}}
+                                        <div>
+                                            <div style="background-color: rgb(245 245 245)!important;"
+                                                class="bg-neutral-400 text-xs rounded-sm py-0.5 px-2 inline-block"
+                                                matTooltip="Status">
+                                                <div class="rounded-3xl w-2 h-2 mr-2 inline-block"
+                                                    [ngClass]="item.requestStatusColor"></div>
+                                                <div class="inline-block">{{item.requestStatusDescription}}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="print:hidden">
+                                        <div class="flex items-center">
+                                            <ng-container>
+                                                <button style="width: 25px;" mat-icon-button class="info"
+                                                    [color]="'primary'"
+                                                    (click)="$event.stopPropagation(); selectedInfoDetailRow = item"
+                                                    [matMenuTriggerFor]="infoMenu">
+                                                    <mat-icon class="icon-size-5">info</mat-icon>
+                                                </button>
+                                            </ng-container>
+                                            <ng-container fxLayout="row">
+                                                <button style="width: 25px;" mat-icon-button
+                                                    (click)="$event.stopPropagation(); selectedInfoDetailRow = item"
+                                                    [matMenuTriggerFor]="contextMenu">
+                                                    <mat-icon color="accent">more_vert</mat-icon>
+                                                </button>
+                                            </ng-container>
+
+                                        </div>
+                                    </div>
+
+
+                                </div>
+                            </ng-container>
+                        </ng-container>
+                    </div>
+
+                    <mat-paginator #paginator
+                        class="sm:absolute sm:inset-x-0 sm:bottom-0 border-b sm:border-t sm:border-b-0 z-10 bg-gray-50 dark:bg-transparent"
+                        [ngClass]="{'pointer-events-none': isLoading}" [length]="pagination.length"
+                        [pageIndex]="pagination.pageIndex" [pageSize]="pagination.pageSize"
+                        [pageSizeOptions]="[50, 100,200,300,400,1000,2000]" [showFirstLastButtons]="true">
+                    </mat-paginator>
+
+                </ng-container>
+            </ng-container>
+        </div>
+    </div>
+    <ng-template #noTrialBalances>
+        <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">There are no trial balances!
+        </div>
+    </ng-template>
+
+</div>
+<mat-menu #infoMenu="matMenu" xPosition="before">
+    <div class="p-2">
+        <h4 class="mb-1 text-gray-900 font-bold text-xl	">{{reportType===1?
+            selectedInfoRow.ownerName:selectedInfoDetailRow.ownerName}}</h4>
+        <div class="flex flex-col mb-1">
+            <span class="text-gray-400 text-sm">Creator User Name</span>
+            <p>{{reportType===1?
+                selectedInfoRow.registerUserName:selectedInfoDetailRow.registerUserName}}
+            </p>
+        </div>
+        <div class="flex flex-col mb-1">
+            <span class="text-gray-400 text-sm">Creator IP</span>
+            <p class="text-gray-900">
+                {{reportType===1?
+                selectedInfoRow.clientIP:selectedInfoDetailRow.clientIP}}
+            </p>
+        </div>
+        <div class="flex flex-col mb-1">
+            <span class="text-gray-400 text-sm">Update Date & time</span>
+            <p class="text-gray-900">
+                {{reportType===1?
+                selectedInfoRow.localChangeDate + ' ' +
+                selectedInfoRow.localChangeTime:selectedInfoDetailRow.localChangeDate + ' ' +
+                selectedInfoDetailRow.localChangeTime }}
+            </p>
+        </div>
+    </div>
+
+</mat-menu>
+
+<mat-menu #contextMenu="matMenu">
+    <ng-template matMenuContent>
+        <button mat-menu-item *ngIf="reportType===1">
+            View
+        </button>
+        <button mat-menu-item *ngIf="reportType===2"
+            (click)="openDetailDialog(selectedInfoDetailRow.requestId,selectedInfoDetailRow.requestTypeId,selectedInfoDetailRow.documentNumber)">
+            View
+        </button>
+    </ng-template>
+</mat-menu>
+
+<mat-menu #downloadMenu="matMenu">
+    <ng-template matMenuContent>
+        <button mat-menu-item (click)="download()">
+            <mat-icon svgIcon="mat_outline:file_download"></mat-icon>
+            PDF
+        </button>
+        <button mat-menu-item (click)="exportTable('full')">
+            <mat-icon svgIcon="mat_outline:file_download"></mat-icon>
+            EXCEL
+        </button>
+    </ng-template>
+</mat-menu>
+<fuse-drawer class="w-screen min-w-screen sm:w-80 sm:min-w-80" fixed transparentOverlay [mode]="'over'"
+    [name]="'trialBalancesAdvancedSearch'" [position]="'left'" #trialBalancesAdvancedSearch>
+    <div class="flex flex-col w-full" fuseScrollbar>
+        <div class="bg-gray-900 relative h-14 max-h-14 z-10 w-full">
+            <div class="inset-y-0 left-0 flex w-1/2">
+                <mat-icon class="mt-4 ml-1 text-white flex-auto" matPrefix [svgIcon]="'heroicons_outline:search'">
+                </mat-icon>
+
+                <h3 class="ml-2 mt-4 text-white flex-auto "><span>Advanced
+                        Search</span></h3>
+            </div>
+            <div class="inline-block">
+                <mat-icon class="mt-3 mr-2 absolute inset-y-0 right-0 cursor-pointer text-white"
+                    (click)="trialBalancesAdvancedSearch.toggle()">close
+                </mat-icon>
+            </div>
+        </div>
+        <form [formGroup]="frmAdvancedSearch">
+            <div class="pt-8 px-4 pb-4">
+                <div
+                    class="border border-solid border-gray-200 rounded-sm flex flex-initial flex-col relative mb-10 pt-4 px-4 pb-3">
+                    <h2 class="absolute -top-2.5 left-1.5 m-0 px-2 bg-white">Search Fields</h2>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Report Type</mat-label>
+                            <mat-select placeholder="Report Type" formControlName="reportType">
+                                <mat-option (onSelectionChange)="changeReportType($event)" [value]="1">Accumulative
+                                </mat-option>
+                                <mat-option (onSelectionChange)="changeReportType($event)" [value]="2">Detail
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Year</mat-label>
+                            <mat-select [(value)]="partitionKeyList" placeholder="Report Type" formControlName="year"
+                                multiple>
+                                <mat-option (onSelectionChange)="setFinancialYearValue($event)"
+                                    *ngFor="let year of financialYears" [value]="year.partitionKey">
+                                    {{year.partitionValue}}</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Account Type</mat-label>
+                            <mat-select placeholder="Account Type" formControlName="accountType">
+                                <mat-option (onSelectionChange)="setOwnerTypeValue($event)"
+                                    *ngFor="let item of ownerTypes" [value]="item.ownerTypeId">
+                                    {{item.ownerTypeName}}</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full" fuseScrollbar>
+                            <mat-select fuseScrollbar [(value)]="trialBalanceInfo.ownerIdList"
+                                [formControl]="ownersMultiCtrl" placeholder="Owners" [multiple]="true">
+                                <mat-option [value]="0">
+                                    <ngx-mat-select-search [placeholderLabel]="'Search'"
+                                        [noEntriesFoundLabel]="'Not found'" [formControl]="ownersMultiFilterCtrl">
+                                    </ngx-mat-select-search>
+                                </mat-option>
+                                <mat-option fuseScrollbar (onSelectionChange)="modifyOwners($event,'remove')"
+                                    *ngFor="let owner of selectedOwners" [value]="owner.ownerId">
+                                    {{owner.ownerName}}
+                                </mat-option>
+
+                                <hr class="m-0" />
+                                <mat-option (onSelectionChange)="modifyOwners($event,'add')"
+                                    *ngFor="let owner of filteredOwnersMulti" [value]="owner.ownerId">
+                                    {{owner.ownerName}}
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Payment Type</mat-label>
+                            <mat-select [(value)]="trialBalanceDetailInfo.paymentTypeIdList" placeholder="Status"
+                                formControlName="paymentType" multiple>
+                                <mat-option (onSelectionChange)="setPaymentTypeValue($event)"
+                                    *ngFor="let item of paymentTypes" [value]="item.key">
+                                    {{item.value}}</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Debit From</mat-label>
+                            <input type="number" [autocomplete]="'off'" matInput value="" formControlName="debitFrom"
+                                maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Debit To</mat-label>
+                            <input type="number" [autocomplete]="'off'" matInput value="" formControlName="debitTo"
+                                maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Credit From</mat-label>
+                            <input type="number" [autocomplete]="'off'" matInput value="" formControlName="creditFrom"
+                                maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Credit To</mat-label>
+                            <input type="number" [autocomplete]="'off'" matInput value="" formControlName="creditTo"
+                                maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Debit Balance From</mat-label>
+                            <input type="number" [autocomplete]="'off'" matInput value=""
+                                formControlName="debitBalanceFrom" maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Debit Balance To</mat-label>
+                            <input type="number" [autocomplete]="'off'" matInput value=""
+                                formControlName="debitBalanceTo" maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Credit Balance From</mat-label>
+                            <input type="number" [autocomplete]="'off'" matInput value=""
+                                formControlName="creditBalanceFrom" maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+                    <div>
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Credit Balacne To</mat-label>
+                            <input type="number" [autocomplete]="'off'" matInput value=""
+                                formControlName="creditBalanceTo" maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
+                            </mat-icon>
+                        </mat-form-field>
+                    </div>
+                </div>
+                <div class="flex flex-row w-full">
+                    <div class="py-2 w-1/2 pl-10 items-center align-middle">
+                        <button mat-raised-button style="color: darkgreen" (click)="trialBalancesSearch()">Apply
+                        </button>
+                    </div>
+                    <div class="py-2 w-1/2 items-center align-middle">
+                        <button (click)="resetAdvancedSearch()" mat-raised-button style="color: darkred">Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</fuse-drawer>

@@ -1,0 +1,8 @@
+.page-content {
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    background: #fff;
+    border-right: 1px solid #000;
+}

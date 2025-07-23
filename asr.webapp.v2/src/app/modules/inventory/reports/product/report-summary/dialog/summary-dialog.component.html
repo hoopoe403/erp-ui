@@ -1,0 +1,250 @@
+<div class="relative flex flex-col md:w-fit -m-6">
+
+    <!-- Header -->
+    <!--     -->
+    <div class="border border-slate-300 border-solid flex flex-col sm:flex-row items-center sm:items-start py-2 px-4">
+        <ng-container *ngIf="data.dismissible.show">
+            <div class="absolute top-0 right-0 py-2 pr-4">
+                <button [disabled]="data.dismissible.disabled" (click)="matDialogRef.close()" mat-icon-button
+                    [matDialogClose]="undefined">
+                    <mat-icon class="text-secondary" [svgIcon]="'heroicons_outline:x'"></mat-icon>
+                </button>
+            </div>
+        </ng-container>
+        <!-- Icon -->
+        <ng-container *ngIf="data.icon.show">
+            <div class="flex flex-0 items-center justify-center w-10 h-10 sm:mr-4 rounded-full" [ngClass]="{'text-primary-600 bg-primary-100 dark:text-primary-50 dark:bg-primary-600': data.icon.color === 'primary',
+                            'text-accent-600 bg-accent-100 dark:text-accent-50 dark:bg-accent-600': data.icon.color === 'accent',
+                            'text-warn-600 bg-warn-100 dark:text-warn-50 dark:bg-warn-600': data.icon.color === 'warn',
+                            'text-gray-600 bg-gray-100 dark:text-gray-50 dark:bg-gray-600': data.icon.color === 'basic',
+                            'text-blue-600 bg-blue-100 dark:text-blue-50 dark:bg-blue-600': data.icon.color === 'info',
+                            'text-green-500 bg-green-100 dark:text-green-50 dark:bg-green-500': data.icon.color === 'success',
+                            'text-amber-500 bg-amber-100 dark:text-amber-50 dark:bg-amber-500': data.icon.color === 'warning',
+                            'text-red-600 bg-red-100 dark:text-red-50 dark:bg-red-600': data.icon.color === 'error'
+                            }">
+                <mat-icon class="text-current" [svgIcon]="data.icon.name"></mat-icon>
+            </div>
+        </ng-container>
+
+        <ng-container *ngIf="data.title || data.message">
+            <div
+                class="flex flex-col items-center justify-center sm:items-start mt-4 pt-2 sm:mt-0 sm:pr-8 space-y-1 text-center sm:text-left">
+
+                <!-- Title -->
+                <ng-container *ngIf="data.title">
+                    <div class="text-xl leading-6 font-medium" [innerHTML]="data.title"></div>
+                </ng-container>
+
+                <!-- Message -->
+
+            </div>
+        </ng-container>
+
+    </div>
+    <div class="absolute inset-x-0 bottom-0" *ngIf="isLoading">
+        <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+    </div>
+    <!-- Content -->
+    <div fuseScrollbar style="max-height: 90vh;"
+        class="w-240 min-w-240 p-16 rounded-2xl shadow bg-card print:w-auto print:p-0 print:rounded-none print:shadow-none print:bg-transparent">
+
+        <div class="flex items-start">
+            <div class="grid grid-rows-1 place-items-start ">
+                <div class="grid auto-cols-max grid-flow-col gap-x-8">
+                    <div class="place-self-center w-24">
+                        <img class="w-24" src="assets/images/logo/logo.svg">
+                    </div>
+                    <div class="pl-10 border-l text-xl">
+                        <div class="font-medium">Ariyan System Ro</div>
+                        <div>Product Inventory Summary</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-x-1 mt-10">
+            <!-- Columns -->
+            <div class="col-span-9 font-medium text-md text-secondary">TITLE</div>
+            <div class="col-span-3 font-medium text-md text-right text-secondary">VALUE</div>
+
+            <!-- Divider -->
+            <div class="col-span-12 my-4 border-b"></div>
+
+            <div class="col-span-9">
+                <div class="text-lg font-medium">Number of Rows</div>
+            </div>
+            <div class="col-span-3 self-center text-right">{{numberOfRecords |number:'1.0-5'}}
+            </div>
+
+            <div class="col-span-12 my-4 border-b"></div>
+
+            <div class="col-span-9">
+                <div class="text-lg font-medium">Number of Distinct Products</div>
+            </div>
+            <div class="col-span-3 self-center text-right">{{numberOfDistinctProducts
+                |number:'1.0-5'}}
+            </div>
+
+            <!-- Divider -->
+            <div class="col-span-12 my-4 border-b"></div>
+
+            <div class="col-span-9">
+                <div class="text-lg font-medium">Initial Stock</div>
+                <div class="mt-2 text-md text-secondary">
+                    This record is sum of the all initial stocks
+                </div>
+            </div>
+            <div class="col-span-3 self-center text-right">{{inventorySummary.initialStock |number:'1.0-5'}}
+            </div>
+
+            <!-- Divider -->
+            <div class="col-span-12 my-4 border-b"></div>
+
+            <div class="col-span-9">
+                <div class="text-lg font-medium">Final Stock</div>
+                <div class="mt-2 text-md text-secondary">
+                    This record is sum of the all current stocks
+                </div>
+            </div>
+            <div class="col-span-3 self-center text-right">{{inventorySummary.stock|number:'1.0-5'}}</div>
+
+            <!-- Divider -->
+            <div class="col-span-12 my-4 border-b"></div>
+
+
+            <!-- Item -->
+            <div class="col-span-9">
+                <div class="text-lg font-medium">Pre Reserve</div>
+                <div class="mt-2 text-md text-secondary">
+                    This record is sum of the all pre reserves.
+                </div>
+            </div>
+            <div class="col-span-3 self-center text-right">{{inventorySummary.preReserve|number:'1.0-5'}}</div>
+
+            <div class="col-span-12 my-4 border-b"></div>
+
+
+            <!-- Item -->
+            <div class="col-span-9">
+                <div class="text-lg font-medium">Reserve</div>
+                <div class="mt-2 text-md text-secondary">
+                    This record is sum of the all reserves.
+                </div>
+            </div>
+            <div class="col-span-3 self-center text-right">{{inventorySummary.reserve}}</div>
+
+            <div class="col-span-12 my-4 border-b"></div>
+
+
+            <!-- Item -->
+            <div class="col-span-9">
+                <div class="text-lg font-medium">Remained</div>
+                <div class="mt-2 text-md text-secondary">
+                    This record is sum of stock - pre reserve - reserve for all records.
+                </div>
+            </div>
+            <div class="col-span-3 self-center text-right">{{inventorySummary.stock -
+                inventorySummary.preReserve - inventorySummary.reserve |number:'1.0-5'}}</div>
+
+            <!-- Divider -->
+            <div class="col-span-12 my-4 border-b"></div>
+
+            <!-- Item -->
+            <div class="col-span-9">
+                <div class="text-lg font-medium">Total Initial Price</div>
+                <div class="mt-2 text-md text-secondary">
+                    This record is sum of initial unit price multiplied by initial stock for all records.
+                </div>
+            </div>
+            <div class="col-span-3 self-center text-right">{{inventorySummary.totalInitialPrice|number:'1.0-5'}}
+            </div>
+
+
+            <!-- Divider -->
+            <div class="col-span-12 my-4 border-b"></div>
+
+            <!-- Item -->
+            <div class="col-span-9">
+                <div class="text-lg font-medium">Total Price</div>
+                <div class="mt-2 text-md text-secondary">
+                    This record is sum of current unit price multiplied by current stock for all records.
+                </div>
+            </div>
+            <div class="col-span-3 self-center text-right">{{inventorySummary.totalPrice|number:'1.0-5'}}</div>
+
+
+            <!-- Divider -->
+            <div class="col-span-12 my-4 border-b"></div>
+
+            <div class="col-span-9">
+                <div class="text-lg font-medium">Total Remained Price</div>
+                <div class="mt-2 text-md text-secondary">
+                    This record is sum of remained multipled by current price for all records.
+                </div>
+            </div>
+            <div class="col-span-3 self-center text-right">{{inventorySummary.totalRemainedPrice|number:'1.0-5'}}
+            </div>
+
+            <!-- Spacer -->
+            <div class="col-span-12 mt-16"></div>
+
+            <!-- Subtotal -->
+            <div class="col-span-9 self-center font-medium tracking-tight text-secondary">FINAL STOCK - INITIAL STOCK
+            </div>
+            <div [ngClass]="getSummmaryTextColor('a')" class="col-span-3 text-right text-lg">
+                {{inventorySummary.stock -
+                inventorySummary.initialStock|number:'1.0-5'}}</div>
+
+            <!-- Divider -->
+            <div class="col-span-12 my-3 border-b"></div>
+
+            <!-- Tax -->
+            <div class="col-span-9 self-center font-medium tracking-tight text-secondary">REMAINED STOCK - INITIAL
+                STOCK
+            </div>
+            <div [ngClass]="getSummmaryTextColor('b')" class="col-span-3 text-right text-lg">
+                {{inventorySummary.stock -
+                inventorySummary.preReserve - inventorySummary.reserve -
+                inventorySummary.initialStock|number:'1.0-5'}}</div>
+
+            <!-- Divider -->
+            <div class="col-span-12 my-3 border-b"></div>
+
+            <!-- Discount -->
+            <div class="col-span-9 self-center font-medium tracking-tight text-secondary">TOTAL FINAL PRICE - TOTAL
+                INITIAL PRICE</div>
+            <div [ngClass]="getSummmaryTextColor('c')" class="col-span-3 text-right text-lg">
+                {{inventorySummary.totalPrice -
+                inventorySummary.totalInitialPrice|number:'1.0-5'}}</div>
+
+            <!-- Divider -->
+            <div class="col-span-12 my-3 border-b"></div>
+
+            <!-- Total -->
+            <div class="col-span-9 self-center font-medium tracking-tight text-secondary">TOTAL REMAINED PRICE
+                - TOTAL INITIAL PRICE</div>
+            <div [ngClass]="getSummmaryTextColor('d')" class="col-span-3 text-right text-lg">
+                {{inventorySummary.totalRemainedPrice -
+                inventorySummary.totalInitialPrice|number:'1.0-5'}}</div>
+        </div>
+
+        <div class="mt-16">
+            <div class="font-medium">Ariyan System Ro</div>
+            <div class="flex items-start mt-4">
+                <img class="flex-0 w-10 mt-2" src="assets/images/logo/logo.svg">
+                <div class="ml-6 text-sm text-secondary">
+                    In condimentum malesuada efficitur. Mauris volutpat placerat auctor. Ut ac congue dolor. Quisque
+                    scelerisque lacus sed feugiat fermentum.
+                    Cras aliquet facilisis pellentesque. Nunc hendrerit quam at leo commodo, a suscipit tellus dapibus.
+                    Etiam at felis volutpat est mollis lacinia.
+                    Mauris placerat sem sit amet velit mollis, in porttitor ex finibus. Proin eu nibh id libero
+                    tincidunt lacinia et eget.
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Actions -->
