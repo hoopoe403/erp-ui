@@ -74,7 +74,8 @@ export const appRoutes: Route[] = [
         },
         children: [
             { path: 'example', loadChildren: () => import('app/modules/admin/example/example.module').then(m => m.ExampleModule) },
-            { path: 'support', loadChildren: () => import('app/modules/admin/chat/chat.module').then(m => m.ChatModule) },
+            { path: 'user-guide', loadChildren: () => import('app/modules/admin/user-guide/user-guide.module').then(m => m.UserGuideModule) },
+            { path: 'query-assist', loadChildren: () => import('app/modules/admin/query-assist/query-assist.module').then(m => m.QueryAssistModule) },
             {path: 'dashboards', children: [
                     { path: 'project', loadChildren: () => import('app/modules/admin/dashboards/project/project.module').then(m => m.ProjectModule) },
                     { path: 'analytics', loadChildren: () => import('app/modules/admin/dashboards/analytics/analytics.module').then(m => m.AnalyticsModule) },

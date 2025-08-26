@@ -1,3 +1,6 @@
+import { InjectionToken } from '@angular/core';
+import { Observable } from 'rxjs';
+
 export interface Profile
 {
     id?: string;
@@ -5,6 +8,18 @@ export interface Profile
     email?: string;
     avatar?: string;
     about?: string;
+}
+
+export interface ChatConfig {
+    title?: string;
+    icon?: string;
+    placeholder?: string;
+    welcomeMessage?: string;
+    assistantId?: number;
+    theme?: 'light' | 'dark' | 'auto';
+    showProfile?: boolean;
+    showSessions?: boolean;
+    maxMessages?: number;
 }
 
 export interface ChatSession
@@ -97,3 +112,25 @@ export interface Chat
         createdAt?: string;
     }[];
 }
+
+// Interface that both UserGuideService and QueryAssistService must implement
+export interface IChatService {
+    currentSession$: Observable<ChatSession | null>;
+    sessions$: Observable<SessionInfo[]>;
+    messages$: Observable<ChatMessage[]>;
+    profile$: Observable<Profile>;
+    loading$: Observable<boolean>;
+    
+    getSessions(): Observable<SessionInfo[]>;
+    getSession(sessionId: string): Observable<ChatSession>;
+    createSession(session: Partial<ChatSession>): Observable<ChatSession>;
+    deleteSession(sessionId: string): Observable<void>;
+    renameSession(sessionId: string, newName: string): Observable<ChatSession>;
+    sendMessage(sessionId: string | null, message: string): Observable<ChatResponse>;
+    getProfile(): Observable<Profile>;
+    resetSession(): void;
+    setCurrentSession(session: ChatSession): void;
+}
+
+// Injection token for chat service
+export const CHAT_SERVICE_TOKEN = new InjectionToken<IChatService>('ChatService');

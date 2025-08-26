@@ -2,13 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { ChatSession, ChatMessage, ChatRequest, ChatResponse, SessionInfo, Profile } from './chat.types';
+import { ChatConfigService } from 'app/modules/admin/chat/services/chat.config.service';
+import { ChatSession, ChatMessage, ChatRequest, ChatResponse, SessionInfo, Profile } from 'app/modules/admin/chat/chat.types';
 
 @Injectable({
     providedIn: 'root'
 })
-export class ChatService
-{
+export class QueryAssistService {
     private _currentSession: BehaviorSubject<ChatSession | null> = new BehaviorSubject(null);
     private _sessions: BehaviorSubject<SessionInfo[]> = new BehaviorSubject([]);
     private _messages: BehaviorSubject<ChatMessage[]> = new BehaviorSubject([]);
@@ -17,12 +17,15 @@ export class ChatService
 
     // Base URL for the API
     private readonly API_BASE_URL = "http://localhost:8000/api";
+    private readonly ASSISTANT_ID = 2; // Query assist assistant ID
 
     /**
      * Constructor
      */
-    constructor(private _httpClient: HttpClient)
-    {
+    constructor(
+        private _httpClient: HttpClient,
+        private _chatConfigService: ChatConfigService
+    ) {
     }
 
     // -----------------------------------------------------------------------------------------------------
@@ -32,40 +35,35 @@ export class ChatService
     /**
      * Getter for current session
      */
-    get currentSession$(): Observable<ChatSession | null>
-    {
+    get currentSession$(): Observable<ChatSession | null> {
         return this._currentSession.asObservable();
     }
 
     /**
      * Getter for sessions
      */
-    get sessions$(): Observable<SessionInfo[]>
-    {
+    get sessions$(): Observable<SessionInfo[]> {
         return this._sessions.asObservable();
     }
 
     /**
      * Getter for messages
      */
-    get messages$(): Observable<ChatMessage[]>
-    {
+    get messages$(): Observable<ChatMessage[]> {
         return this._messages.asObservable();
     }
 
     /**
      * Getter for profile
      */
-    get profile$(): Observable<Profile>
-    {
+    get profile$(): Observable<Profile> {
         return this._profile.asObservable();
     }
 
     /**
      * Getter for loading state
      */
-    get loading$(): Observable<boolean>
-    {
+    get loading$(): Observable<boolean> {
         return this._loading.asObservable();
     }
 
@@ -74,11 +72,10 @@ export class ChatService
     // -----------------------------------------------------------------------------------------------------
 
     /**
-     * Get all chat sessions
+     * Get query assist sessions
      */
-    getSessions(assistId?: number): Observable<SessionInfo[]>
-    {
-        const params = assistId ? { assist_id: assistId } : {};
+    getSessions(): Observable<SessionInfo[]> {
+        const params = { assist_id: this.ASSISTANT_ID };
         return this._httpClient.get<SessionInfo[]>(`${this.API_BASE_URL}/sessions/list`, { params }).pipe(
             tap((sessions: SessionInfo[]) => {
                 this._sessions.next(sessions);
@@ -89,8 +86,7 @@ export class ChatService
     /**
      * Get a specific session
      */
-    getSession(sessionId: string): Observable<ChatSession>
-    {
+    getSession(sessionId: string): Observable<ChatSession> {
         return this._httpClient.get<any>(`${this.API_BASE_URL}/sessions/${sessionId}`).pipe(
             tap((response: any) => {
                 // Transform backend response to frontend format
@@ -106,7 +102,7 @@ export class ChatService
                 const session: ChatSession = {
                     sessionId: response.session_id,
                     session_name: response.session_name,
-                    assist_id: response.assistant_type === 'general' ? 1 : 2, // Map assistant_type to assist_id
+                    assist_id: this.ASSISTANT_ID,
                     messages: transformedMessages,
                     created_at: response.created_at,
                     updated_at: response.updated_at
@@ -121,16 +117,16 @@ export class ChatService
     /**
      * Create a new session
      */
-    createSession(session: Partial<ChatSession>): Observable<ChatSession>
-    {
-        return this._httpClient.post<ChatSession>(`${this.API_BASE_URL}/sessions`, session).pipe(
+    createSession(session: Partial<ChatSession>): Observable<ChatSession> {
+        const sessionData = { ...session, assist_id: this.ASSISTANT_ID };
+        return this._httpClient.post<ChatSession>(`${this.API_BASE_URL}/sessions`, sessionData).pipe(
             tap((newSession: ChatSession) => {
                 // Update sessions list
                 const currentSessions = this._sessions.getValue();
                 const newSessionInfo: SessionInfo = {
                     session_id: newSession.sessionId,
                     session_name: newSession.session_name,
-                    assist_id: newSession.assist_id
+                    assist_id: this.ASSISTANT_ID
                 };
                 this._sessions.next([newSessionInfo, ...currentSessions]);
                 this._currentSession.next(newSession);
@@ -142,8 +138,7 @@ export class ChatService
     /**
      * Delete a session
      */
-    deleteSession(sessionId: string): Observable<void>
-    {
+    deleteSession(sessionId: string): Observable<void> {
         return this._httpClient.delete<void>(`${this.API_BASE_URL}/sessions/${sessionId}`).pipe(
             tap(() => {
                 // Remove from sessions list
@@ -164,8 +159,7 @@ export class ChatService
     /**
      * Rename a session
      */
-    renameSession(sessionId: string, newName: string): Observable<ChatSession>
-    {
+    renameSession(sessionId: string, newName: string): Observable<ChatSession> {
         return this._httpClient.put<ChatSession>(`${this.API_BASE_URL}/sessions/rename`, {
             session_id: sessionId,
             new_name: newName
@@ -192,12 +186,11 @@ export class ChatService
     /**
      * Send a message and get AI response
      */
-    sendMessage(sessionId: string | null, message: string): Observable<ChatResponse>
-    {
+    sendMessage(sessionId: string | null, message: string): Observable<ChatResponse> {
         this._loading.next(true);
         
         const request: ChatRequest = {
-            session_id: sessionId || '', // Send empty string if no session exists
+            session_id: sessionId || '',
             query: message
         };
         
@@ -231,7 +224,7 @@ export class ChatService
                     const newSession: ChatSession = {
                         sessionId: response.session_id,
                         session_name: response.session_name,
-                        assist_id: 1, // You might want to get this from the response
+                        assist_id: this.ASSISTANT_ID,
                         messages: [...currentMessages, userMessage, aiMessage]
                     };
                     this._currentSession.next(newSession);
@@ -246,16 +239,15 @@ export class ChatService
     }
 
     /**
-     * Get profile (mock data for now)
+     * Get profile
      */
-    getProfile(): Observable<Profile>
-    {
+    getProfile(): Observable<Profile> {
         const mockProfile: Profile = {
-            id: '1',
-            name: 'AI Assistant',
-            email: 'ai@assistant.com',
+            id: '2',
+            name: 'Query Assistant',
+            email: 'queryassist@assistant.com',
             avatar: null,
-            about: 'Your AI Assistant'
+            about: 'Your Query Assistant'
         };
         
         this._profile.next(mockProfile);
@@ -265,8 +257,7 @@ export class ChatService
     /**
      * Reset the selected session
      */
-    resetSession(): void
-    {
+    resetSession(): void {
         this._currentSession.next(null);
         this._messages.next([]);
     }
@@ -274,11 +265,12 @@ export class ChatService
     /**
      * Set current session
      */
-    setCurrentSession(session: ChatSession): void
-    {
+    setCurrentSession(session: ChatSession): void {
         this._currentSession.next(session);
         if (session.messages) {
             this._messages.next(session.messages);
         }
     }
+
+
 }

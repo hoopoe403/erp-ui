@@ -1,9 +1,8 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit, ViewEncapsulation, Inject } from '@angular/core';
 import { MatDrawer } from '@angular/material/sidenav';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { Profile } from '../chat.types';
-import { ChatService } from '../chat.service';
+import { Profile, IChatService, CHAT_SERVICE_TOKEN } from '../chat.types';
 
 @Component({
     selector       : 'chat-profile',
@@ -20,7 +19,9 @@ export class ProfileComponent implements OnInit, OnDestroy
     /**
      * Constructor
      */
-    constructor(private _chatService: ChatService)
+    constructor(
+        @Inject(CHAT_SERVICE_TOKEN) private _chatService: IChatService
+    )
     {
     }
 

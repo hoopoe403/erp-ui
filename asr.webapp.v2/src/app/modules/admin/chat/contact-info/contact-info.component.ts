@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input, ViewEncapsulation } from '@angular/core';
 import { MatDrawer } from '@angular/material/sidenav';
-import { Chat } from 'app/modules/admin/apps/chat/chat.types';
+import { Chat } from '../chat.types';
 
 @Component({
     selector       : 'chat-contact-info',

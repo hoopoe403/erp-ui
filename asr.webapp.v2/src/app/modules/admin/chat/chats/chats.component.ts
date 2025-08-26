@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, Inject } from '@angular/core';
 import { MatDrawer } from '@angular/material/sidenav';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SessionInfo, Profile } from '../chat.types';
-import { ChatService } from '../chat.service';
+import { SessionInfo, Profile, IChatService, CHAT_SERVICE_TOKEN } from '../chat.types';
+import { ChatConfigService } from '../services/chat.config.service';
 
 @Component({
     selector       : 'chat-chats',
@@ -23,14 +23,17 @@ export class ChatsComponent implements OnInit, OnDestroy
     editingSessionId: string | null = null;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
+    config: any;
+
     /**
      * Constructor
      */
     constructor(
         private _activatedRoute: ActivatedRoute,
         private _changeDetectorRef: ChangeDetectorRef,
-        private _chatService: ChatService,
-        private _router: Router
+        private _chatConfigService: ChatConfigService,
+        private _router: Router,
+        @Inject(CHAT_SERVICE_TOKEN) private _chatService: IChatService
     )
     {
     }
@@ -44,6 +47,14 @@ export class ChatsComponent implements OnInit, OnDestroy
      */
     ngOnInit(): void
     {
+        // Chat configuration
+        this._chatConfigService.config$
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe((config) => {
+                this.config = config;
+                this._changeDetectorRef.markForCheck();
+            });
+
         // Sessions
         this._chatService.sessions$
             .pipe(takeUntil(this._unsubscribeAll))

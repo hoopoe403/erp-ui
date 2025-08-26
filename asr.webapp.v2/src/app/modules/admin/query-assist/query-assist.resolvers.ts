@@ -2,19 +2,19 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Router, RouterStateSnapshot } from '@angular/router';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { ChatService } from './chat.service';
-import { ChatSession, SessionInfo, Profile } from './chat.types';
+import { QueryAssistService } from './query-assist.service';
+import { ChatSession, SessionInfo, Profile } from 'app/modules/admin/chat/chat.types';
 
 @Injectable({
     providedIn: 'root'
 })
-export class ChatSessionsResolver implements Resolve<any>
+export class QueryAssistSessionsResolver implements Resolve<any>
 {
     /**
      * Constructor
      */
     constructor(
-        private _chatService: ChatService,
+        private _queryAssistService: QueryAssistService,
         private _router: Router
     )
     {
@@ -32,20 +32,20 @@ export class ChatSessionsResolver implements Resolve<any>
      */
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<SessionInfo[]> | any
     {
-        return this._chatService.getSessions();
+        return this._queryAssistService.getSessions();
     }
 }
 
 @Injectable({
     providedIn: 'root'
 })
-export class ChatSessionResolver implements Resolve<any>
+export class QueryAssistSessionResolver implements Resolve<any>
 {
     /**
      * Constructor
      */
     constructor(
-        private _chatService: ChatService,
+        private _queryAssistService: QueryAssistService,
         private _router: Router
     )
     {
@@ -63,7 +63,7 @@ export class ChatSessionResolver implements Resolve<any>
      */
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<ChatSession>
     {
-        return this._chatService.getSession(route.paramMap.get('id'))
+        return this._queryAssistService.getSession(route.paramMap.get('id'))
                    .pipe(
                        // Error here means the requested session is not available
                        catchError((error) => {
@@ -87,13 +87,13 @@ export class ChatSessionResolver implements Resolve<any>
 @Injectable({
     providedIn: 'root'
 })
-export class ChatProfileResolver implements Resolve<any>
+export class QueryAssistProfileResolver implements Resolve<any>
 {
     /**
      * Constructor
      */
     constructor(
-        private _chatService: ChatService,
+        private _queryAssistService: QueryAssistService,
         private _router: Router
     )
     {
@@ -111,6 +111,6 @@ export class ChatProfileResolver implements Resolve<any>
      */
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<Profile> | any
     {
-        return this._chatService.getProfile();
+        return this._queryAssistService.getProfile();
     }
 }

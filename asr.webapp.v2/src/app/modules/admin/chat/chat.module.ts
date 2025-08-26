@@ -12,7 +12,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MarkdownModule } from 'ngx-markdown';
 import { SharedModule } from 'app/shared/shared.module';
-import { chatRoutes } from './chat.routing';
 import { ChatComponent } from './chat.component';
 import { ChatsComponent } from './chats/chats.component';
 import { EmptyConversationComponent } from './empty-conversation/empty-conversation.component';
@@ -33,7 +32,7 @@ import { ProfileComponent } from './profile/profile.component';
     ],
     imports     : [
         CommonModule,
-        RouterModule.forChild(chatRoutes),
+        RouterModule,
         FormsModule,
         HttpClientModule,
         MatButtonModule,

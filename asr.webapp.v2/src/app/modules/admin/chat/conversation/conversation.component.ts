@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, HostListener, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, HostListener, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation, Inject } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FuseMediaWatcherService } from '@fuse/services/media-watcher';
-import { ChatSession, ChatMessage } from '../chat.types';
-import { ChatService } from '../chat.service';
+import { ChatSession, ChatMessage, IChatService, CHAT_SERVICE_TOKEN } from '../chat.types';
+import { ChatConfigService } from '../services/chat.config.service';
 
 @Component({
     selector       : 'chat-conversation',
@@ -22,6 +22,7 @@ export class ConversationComponent implements OnInit, OnDestroy
     drawerMode: 'over' | 'side' = 'side';
     drawerOpened: boolean = false;
     isNewChat: boolean = false;
+    config: any;
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
     /**
@@ -29,11 +30,12 @@ export class ConversationComponent implements OnInit, OnDestroy
      */
     constructor(
         private _changeDetectorRef: ChangeDetectorRef,
-        private _chatService: ChatService,
+        private _chatConfigService: ChatConfigService,
         private _fuseMediaWatcherService: FuseMediaWatcherService,
         private _ngZone: NgZone,
         private _router: Router,
-        private _activatedRoute: ActivatedRoute
+        private _activatedRoute: ActivatedRoute,
+        @Inject(CHAT_SERVICE_TOKEN) private _chatService: IChatService
     )
     {
     }
@@ -82,6 +84,14 @@ export class ConversationComponent implements OnInit, OnDestroy
     {
         // Check if this is a new chat route
         this.isNewChat = this._router.url.includes('/new');
+
+        // Chat configuration
+        this._chatConfigService.config$
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe((config) => {
+                this.config = config;
+                this._changeDetectorRef.markForCheck();
+            });
 
         // Current session
         this._chatService.currentSession$

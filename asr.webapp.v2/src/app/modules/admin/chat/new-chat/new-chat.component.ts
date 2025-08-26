@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit, ViewEncapsulation, Inject } from '@angular/core';
 import { MatDrawer } from '@angular/material/sidenav';
 import { Subject } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
-import { ChatService } from '../chat.service';
+import { IChatService, CHAT_SERVICE_TOKEN } from '../chat.types';
 
 @Component({
     selector       : 'chat-new-chat',
@@ -19,9 +19,9 @@ export class NewChatComponent implements OnInit, OnDestroy
      * Constructor
      */
     constructor(
-        private _chatService: ChatService,
         private _router: Router,
-        private _activatedRoute: ActivatedRoute
+        private _activatedRoute: ActivatedRoute,
+        @Inject(CHAT_SERVICE_TOKEN) private _chatService: IChatService
     )
     {
     }
