@@ -46,7 +46,8 @@ export class EmbeddedChatComponent implements OnInit
             assistantId: 2, // Using query assist service
             showProfile: false,
             showSessions: false,
-            maxMessages: 50
+            maxMessages: 50,
+            embedMode: true
         });
     }
 

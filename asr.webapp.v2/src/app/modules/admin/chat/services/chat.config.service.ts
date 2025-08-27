@@ -17,7 +17,8 @@ export class ChatConfigService {
         theme: 'auto',
         showProfile: true,
         showSessions: true,
-        maxMessages: 100
+        maxMessages: 100,
+        embedMode: false
     });
 
     /**
@@ -70,7 +71,8 @@ export class ChatConfigService {
             theme: 'auto',
             showProfile: true,
             showSessions: true,
-            maxMessages: 100
+            maxMessages: 100,
+            embedMode: false
         });
     }
 

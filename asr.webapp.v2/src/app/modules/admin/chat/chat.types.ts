@@ -20,6 +20,7 @@ export interface ChatConfig {
     showProfile?: boolean;
     showSessions?: boolean;
     maxMessages?: number;
+    embedMode?: boolean;
 }
 
 export interface ChatSession
