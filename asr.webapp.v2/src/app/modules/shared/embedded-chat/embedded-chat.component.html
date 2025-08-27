@@ -1,7 +1,7 @@
-<div class="flex flex-col h-full bg-card dark:bg-default">
+<div class="flex flex-col h-full w-full bg-card dark:bg-default">
     
     <!-- Chat Header -->
-    <div class="flex items-center justify-between py-[20px] px-4 border-b bg-gray-50 dark:bg-transparent" style="height: 53px;">
+    <div class="flex flex-0 items-center justify-between py-[20px] px-4 sm:px-6 lg:px-8 border-b bg-gray-50 dark:bg-transparent" style="height: 53px;">
         <div class="flex items-center">
             <mat-icon class="text-primary mr-2" [svgIcon]="icon"></mat-icon>
             <h3 class="text-md font-semibold">{{ title }}</h3>
@@ -25,8 +25,8 @@
     </div>
 
     <!-- Chat Content - Using conversation component without routing -->
-    <div class="flex-auto overflow-hidden">
-        <chat-conversation></chat-conversation>
+    <div class="flex flex-auto overflow-hidden w-full">
+        <chat-conversation class="w-full h-full"></chat-conversation>
     </div>
 
 </div>

@@ -1,4 +1,4 @@
-<div class="flex flex-col flex-auto overflow-y-auto lg:overflow-hidden bg-card dark:bg-default">
+<div class="flex flex-col flex-auto bg-card dark:bg-default" [ngClass]="config?.embedMode ? 'overflow-hidden h-full' : 'overflow-y-auto lg:overflow-hidden'">
 
     <ng-container *ngIf="session || isNewChat || config?.embedMode; else selectSessionOrStartNew">
 
@@ -107,10 +107,10 @@
             </div>
 
             <!-- Message field -->
-            <div class="flex items-end p-4 border-t bg-gray-50 dark:bg-transparent">
-                <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript fuse-mat-rounded fuse-mat-bold w-full">
+            <div class="flex items-end px-4 py-3 sm:px-6 lg:px-8 border-t bg-gray-50 dark:bg-transparent flex-shrink-0 w-full">
+                <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript fuse-mat-rounded fuse-mat-bold flex-auto w-full">
                     <textarea
-                        class="min-h-5 my-0 resize-none"
+                        class="min-h-5 my-0 resize-none w-full"
                         style="margin: 11px 0 !important; padding: 0 !important;"
                         [rows]="1"
                         matInput
@@ -120,7 +120,7 @@
                         [placeholder]="config?.placeholder || 'Type your message...'"
                         #messageInput></textarea>
                 </mat-form-field>
-                <div class="flex items-center h-11 my-px ml-4">
+                <div class="flex items-center h-11 my-px ml-4 flex-shrink-0">
                     <button
                         mat-icon-button
                         [disabled]="!message.trim() || loading"
