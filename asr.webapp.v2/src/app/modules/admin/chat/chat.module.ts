@@ -44,6 +44,9 @@ import { ProfileComponent } from './profile/profile.component';
         MatSidenavModule,
         MarkdownModule.forChild(),
         SharedModule
+    ],
+    exports: [
+        ConversationComponent
     ]
 })
 export class ChatModule

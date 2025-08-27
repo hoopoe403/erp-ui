@@ -1,0 +1,32 @@
+<div class="flex flex-col h-full bg-card dark:bg-default">
+    
+    <!-- Chat Header -->
+    <div class="flex items-center justify-between p-4 border-b bg-gray-50 dark:bg-transparent">
+        <div class="flex items-center">
+            <mat-icon class="text-primary mr-2" [svgIcon]="icon"></mat-icon>
+            <h3 class="text-lg font-semibold">{{ title }}</h3>
+        </div>
+        <div class="flex items-center space-x-2">
+            <!-- Redirect to Query Assist button -->
+            <button
+                mat-icon-button
+                matTooltip="Open in Query Assistant"
+                (click)="onOpenQueryAssist()">
+                <mat-icon [svgIcon]="'heroicons_outline:arrow-top-right-on-square'"></mat-icon>
+            </button>
+            <!-- Close button -->
+            <button
+                mat-icon-button
+                matTooltip="Close Chat"
+                (click)="onCloseChat()">
+                <mat-icon [svgIcon]="'heroicons_outline:x-mark'"></mat-icon>
+            </button>
+        </div>
+    </div>
+
+    <!-- Chat Content - Using conversation component without routing -->
+    <div class="flex-auto overflow-hidden">
+        <chat-conversation></chat-conversation>
+    </div>
+
+</div>

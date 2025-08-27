@@ -36,6 +36,7 @@ import { DetailsPreviewComponent } from 'app/modules/sales/order/details/preview
 import { DetailsProductsComponent } from 'app/modules/sales/order/details/products/products.component';
 import { MatRadioModule } from '@angular/material/radio';
 import { NumberFormatDirective } from './formater.component';
+import { EmbeddedChatModule } from 'app/modules/shared/embedded-chat/embedded-chat.module';
 @NgModule({
     declarations: [
         OrderDetailsComponent,
@@ -73,7 +74,8 @@ import { NumberFormatDirective } from './formater.component';
         FuseAlertModule,
         FuseScrollbarModule,
         FuseDrawerModule,
-        MatAutocompleteModule
+        MatAutocompleteModule,
+        EmbeddedChatModule
     ],
     providers: [DecimalPipe
     ]

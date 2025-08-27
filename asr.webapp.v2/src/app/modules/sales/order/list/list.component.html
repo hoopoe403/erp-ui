@@ -10,9 +10,23 @@
         <!-- Title -->
         <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
             <div class="text-4xl font-extrabold tracking-tight">Orders</div>
-            <div class="cursor-pointer ml-3 mt-2">
-                <button mat-icon-button ngxPrint useExistingCss="true" printSectionId="section-to-print">
+            <div class="flex items-center ml-3 mt-2 space-x-2">
+                <!-- Print Button -->
+                <button 
+                    mat-icon-button 
+                    ngxPrint 
+                    useExistingCss="true" 
+                    printSectionId="section-to-print" 
+                    matTooltip="Print Orders">
                     <mat-icon [svgIcon]="'heroicons_outline:printer'"></mat-icon>
+                </button>
+                <!-- Chat Button -->
+                <button 
+                    mat-icon-button 
+                    matTooltip="Order Support Chat"
+                    [color]="isChatOpen ? 'primary' : 'basic'"
+                    (click)="toggleChat()">
+                    <mat-icon [svgIcon]="'heroicons_outline:chat'"></mat-icon>
                 </button>
             </div>
         </div>
@@ -37,8 +51,9 @@
 
     <div class="flex flex-auto overflow-hidden">
 
-        <!-- Products list -->
-        <div class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
+        <!-- Orders list - Adjustable width based on chat state -->
+        <div class="flex flex-col sm:mb-18 overflow-hidden sm:overflow-y-auto transition-all duration-300"
+             [ngClass]="isChatOpen ? 'w-full lg:w-1/2' : 'flex-auto'">
             <ng-container *ngIf="reportType === 1 && (orders$ | async) as ordersObs">
                 <ng-container *ngIf="orders.length > 0; else noOrders">
                     <div class="grid" id="section-to-print">
@@ -308,6 +323,19 @@
                 </ng-container>
             </ng-container>
         </div>
+
+        <!-- Embedded Chat Panel -->
+        <div *ngIf="isChatOpen" 
+             class="fixed lg:relative inset-0 lg:inset-auto w-full lg:w-1/2 border-l border-gray-200 dark:border-gray-700 bg-card dark:bg-default z-50 lg:z-auto">
+            <embedded-chat
+                [title]="'Order Support'"
+                [icon]="'heroicons_outline:chat'"
+                [placeholder]="'Ask about orders, statuses, customers...'"
+                [welcomeMessage]="'Hi! I can help you with order-related questions. What would you like to know?'"
+                (closeChat)="closeChat()">
+            </embedded-chat>
+        </div>
+
     </div>
     <ng-template #noorders>
         <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">There are no orders!

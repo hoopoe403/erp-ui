@@ -133,6 +133,9 @@ export class OrderListComponent implements OnInit, OnDestroy {
 
     orders: Array<CustomerOrder> = [];
     ordersDetails: Array<CustomerOrderDetail> = [];
+    
+    // Chat related properties
+    isChatOpen: boolean = false;
     /**
      * On init
      */
@@ -606,6 +609,44 @@ export class OrderListComponent implements OnInit, OnDestroy {
     setLocalStorageValues(documnet: CustomerOrder) {
         localStorage.setItem('customerId', documnet.customerId.toString());
         localStorage.setItem('orderId', documnet.orderId.toString());
+    }
+
+    /**
+     * Toggle chat panel
+     */
+    toggleChat(): void
+    {
+        this.isChatOpen = !this.isChatOpen;
+        this._changeDetectorRef.markForCheck();
+    }
+
+    /**
+     * Close chat panel
+     */
+    closeChat(): void
+    {
+        this.isChatOpen = false;
+        this._changeDetectorRef.markForCheck();
+    }
+
+    setSelectedCustomerId(customerId: number) {
+        localStorage.setItem('customerId', customerId.toString());
+    }
+
+    /**
+     * Export table to Excel
+     */
+    exportTable(): void {
+        // Implementation for exporting to Excel
+        console.log('Export table functionality to be implemented');
+    }
+
+    /**
+     * Download functionality
+     */
+    download(): void {
+        // Implementation for download functionality
+        console.log('Download functionality to be implemented');
     }
 }
 
