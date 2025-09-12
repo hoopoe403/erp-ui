@@ -189,50 +189,42 @@ export class UserGuideService {
     sendMessage(sessionId: string | null, message: string): Observable<ChatResponse> {
         this._loading.next(true);
         
-        const request = {
-            message: message,
-            sessionId: sessionId || null
+        const request: ChatRequest = {
+            session_id: sessionId || '',
+            query: message,
+            owner:"user_guide"
         };
         
-        return this._httpClient.post<any>(`http://localhost:5678/webhook/erp-support`, request).pipe(
+        return this._httpClient.post<any>(`${this.API_BASE_URL}/assist`, request).pipe(
             tap((response: any) => {
-                console.log(response);
                 // Transform backend response to frontend format
-                const responseSessionId = response && response.length > 0 ? response[0].sessionId : null;
                 const currentMessages = this._messages.getValue();
-                
-                // Use the sessionId from response if available, otherwise use the provided sessionId
-                const finalSessionId = responseSessionId || sessionId;
-                
                 const userMessage: ChatMessage = {
                     id: 'user_' + Date.now(),
                     isUser: true,
                     content: message,
                     timestamp: new Date().toISOString(),
-                    sessionId: finalSessionId,
-                    sessionName: 'User Guide Chat'
+                    sessionId: response.session_id,
+                    sessionName: response.session_name
                 };
                 
-                // Extract the AI response content from the array
-                const aiContent = response && response.length > 0 ? response[0].output : 'No response received';
-                
                 const aiMessage: ChatMessage = {
-                    id: 'ai_' + Date.now(),
+                    id: response.id || 'ai_' + Date.now(),
                     isUser: false,
-                    content: aiContent,
-                    timestamp: new Date().toISOString(),
-                    sessionId: finalSessionId,
-                    sessionName: 'User Guide Chat'
+                    content: response.content,
+                    timestamp: response.timestamp,
+                    sessionId: response.session_id,
+                    sessionName: response.session_name
                 };
                 
                 this._messages.next([...currentMessages, userMessage, aiMessage]);
                 
                 // If this was a new session (no sessionId was provided), 
                 // update the current session with the response data
-                if (!sessionId && finalSessionId) {
+                if (!sessionId) {
                     const newSession: ChatSession = {
-                        sessionId: finalSessionId,
-                        session_name: 'User Guide Chat',
+                        sessionId: response.session_id,
+                        session_name: response.session_name,
                         assist_id: this.ASSISTANT_ID,
                         messages: [...currentMessages, userMessage, aiMessage]
                     };
@@ -279,14 +271,5 @@ export class UserGuideService {
         if (session.messages) {
             this._messages.next(session.messages);
         }
-    }
-
-    /**
-     * Clear embedded chat session and messages (for embedded chat cleanup)
-     */
-    clearEmbeddedSession(): void {
-        this._currentSession.next(null);
-        this._messages.next([]);
-        this._loading.next(false);
     }
 }

@@ -21,11 +21,11 @@
                         <mat-icon [svgIcon]="config?.icon || 'heroicons_outline:chat'"></mat-icon>
                     </div>
                 </div>
-                <div class="ml-4">
-                    <div class="text-lg font-medium leading-5 truncate">
+                <div class="ml-4 min-w-0 flex-auto overflow-hidden">
+                    <div class="text-lg font-medium leading-5 truncate text-ellipsis whitespace-nowrap overflow-hidden">
                         {{ session?.session_name || 'New Chat' }}
                     </div>
-                    <div class="text-sm text-secondary">{{ config?.title || 'AI Assistant' }}</div>
+                    <div class="text-sm text-secondary truncate">{{ config?.title || 'AI Assistant' }}</div>
                 </div>
             </div>
 

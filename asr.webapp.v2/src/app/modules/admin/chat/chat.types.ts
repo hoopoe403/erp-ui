@@ -47,6 +47,7 @@ export interface ChatRequest
 {
     session_id: string;
     query: string;
+    owner: string;
 }
 
 export interface ChatResponse

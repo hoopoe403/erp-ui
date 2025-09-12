@@ -37,6 +37,9 @@ export class EmbeddedChatComponent implements OnInit
      */
     ngOnInit(): void
     {
+        // Clear any existing session for fresh start
+        this._queryAssistService.clearEmbeddedSession();
+        
         // Configure chat for embedded use
         this._chatConfigService.updateConfig({
             title: this.title,
@@ -46,7 +49,7 @@ export class EmbeddedChatComponent implements OnInit
             assistantId: 2, // Using query assist service
             showProfile: false,
             showSessions: false,
-            maxMessages: 50,
+            maxMessages: 20,
             embedMode: true
         });
     }
@@ -56,6 +59,8 @@ export class EmbeddedChatComponent implements OnInit
      */
     onCloseChat(): void
     {
+        // Clear the session and chat history for fresh start next time
+        this._queryAssistService.clearEmbeddedSession();
         this.closeChat.emit();
     }
 
