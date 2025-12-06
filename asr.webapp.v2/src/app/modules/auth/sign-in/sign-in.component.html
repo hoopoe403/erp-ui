@@ -1,3 +1,4 @@
+<ng-container *transloco="let t">
 <div class="flex flex-col sm:flex-row items-center md:items-start sm:justify-center md:justify-start flex-auto min-w-0">
     <div
         class="md:flex md:items-center md:justify-end w-full sm:w-auto md:h-full md:w-1/2 py-8 px-4 sm:p-12 md:p-16 sm:rounded-2xl md:rounded-none sm:shadow md:shadow-none sm:bg-card">
@@ -8,10 +9,10 @@
             </div>
 
             <!-- Title -->
-            <div class="mt-2 text-4xl font-extrabold tracking-tight leading-tight">Sign in</div>
+            <div class="mt-2 text-4xl font-extrabold tracking-tight leading-tight">{{ t('auth.signIn') }}</div>
             <div class="flex items-baseline mt-0.5 font-medium">
-                <div>Don't have an account?</div>
-                <a class="ml-1 text-primary-500 hover:underline" [routerLink]="['/sign-up']">Sign up
+                <div>{{ t('auth.dontHaveAccount') }}</div>
+                <a class="ml-1 text-primary-500 hover:underline" [routerLink]="['/sign-up']">{{ t('auth.signUp') }}
                 </a>
             </div>
 
@@ -26,16 +27,16 @@
 
                 <!-- Email field -->
                 <mat-form-field class="w-full">
-                    <mat-label>Username</mat-label>
+                    <mat-label>{{ t('auth.username') }}</mat-label>
                     <input id="email" matInput [formControlName]="'username'">
                     <mat-error *ngIf="signInForm.get('username').hasError('required')">
-                        Username
+                        {{ t('auth.usernameRequired') }}
                     </mat-error>
                 </mat-form-field>
 
                 <!-- Password field -->
                 <mat-form-field class="w-full">
-                    <mat-label>Password</mat-label>
+                    <mat-label>{{ t('auth.password') }}</mat-label>
                     <input id="password" matInput type="password" [formControlName]="'password'" #passwordField>
                     <button mat-icon-button type="button"
                         (click)="passwordField.type === 'password' ? passwordField.type = 'text' : passwordField.type = 'password'"
@@ -46,17 +47,17 @@
                             [svgIcon]="'heroicons_solid:eye-off'"></mat-icon>
                     </button>
                     <mat-error>
-                        Password is required
+                        {{ t('auth.passwordRequired') }}
                     </mat-error>
                 </mat-form-field>
 
                 <!-- Actions -->
                 <div class="inline-flex items-end justify-between w-full mt-1.5">
                     <mat-checkbox [color]="'primary'" [formControlName]="'rememberMe'">
-                        Remember me
+                        {{ t('auth.rememberMe') }}
                     </mat-checkbox>
                     <a class="text-md font-medium text-primary-500 hover:underline"
-                        [routerLink]="['/forgot-password']">Forgot password?
+                        [routerLink]="['/forgot-password']">{{ t('auth.forgotPassword') }}
                     </a>
                 </div>
 
@@ -64,7 +65,7 @@
                 <button class="fuse-mat-button-large w-full mt-6" mat-flat-button [color]="'primary'"
                     [disabled]="signInForm.disabled" (click)="signIn()">
                     <span *ngIf="!signInForm.disabled">
-                        Sign in
+                        {{ t('auth.signIn') }}
                     </span>
                     <mat-progress-spinner *ngIf="signInForm.disabled" [diameter]="24" [mode]="'indeterminate'">
                     </mat-progress-spinner>
@@ -73,7 +74,7 @@
                 <!-- Separator -->
                 <div class="flex items-center mt-8">
                     <div class="flex-auto mt-px border-t"></div>
-                    <div class="mx-2 text-secondary">Or continue with</div>
+                    <div class="mx-2 text-secondary">{{ t('auth.orContinueWith') }}</div>
                     <div class="flex-auto mt-px border-t"></div>
                 </div>
 
@@ -118,11 +119,11 @@
         <!-- Content -->
         <div class="z-10 relative w-full max-w-2xl">
             <div class="text-7xl font-bold leading-none text-gray-100">
-                <div>Welcome to</div>
-                <div>Arian System Ro</div>
+                <div>{{ t('auth.welcomeTo') }}</div>
+                <div>{{ t('auth.arianSystemRo') }}</div>
             </div>
             <div class="mt-6 text-lg tracking-tight leading-6 text-gray-400">
-                Arian System Ro manufacturing elevator car and landing doors.
+                {{ t('auth.companyDescription') }}
             </div>
             <div class="flex items-center mt-8">
                 <div class="flex flex-0 items-center -space-x-1.5">
@@ -136,10 +137,10 @@
                         src="assets/images/avatars/elevator-door.jpg"> 
                 </div>
                 <div class="ml-4 font-medium tracking-tight text-gray-400">
-                    ASR industrial group is always looking forward to the best quality, for our costumers only deserve
-                    the best.
+                    {{ t('auth.companySlogan') }}
                 </div>
             </div>
         </div>
     </div>
 </div>
+</ng-container>

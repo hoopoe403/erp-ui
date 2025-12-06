@@ -1,3 +1,4 @@
+<ng-container *transloco="let t">
 <div class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
 
     <!-- Header -->
@@ -9,7 +10,7 @@
         </div>
         <!-- Title -->
         <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
-            <div class="text-4xl font-extrabold tracking-tight">Factory Orders</div>
+            <div class="text-4xl font-extrabold tracking-tight">{{ t('production.factoryOrders') }}</div>
             <div class="cursor-pointer ml-3 mt-2">
                 <button mat-icon-button ngxPrint useExistingCss="true" printSectionId="section-to-print">
                     <mat-icon [svgIcon]="'heroicons_outline:printer'"></mat-icon>
@@ -22,8 +23,8 @@
             <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
                 <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
                 <input #filter [autocomplete]="'off'" [formControl]="searchInputControl" matInput [autocomplete]="'off'"
-                    [placeholder]="'Search'">
-                <mat-icon matPostfix (click)="factoryOrderAdvancedSearch.toggle()" matTooltip="Advanced Search"
+                    [placeholder]="t('common.search')">
+                <mat-icon matPostfix (click)="factoryOrderAdvancedSearch.toggle()" [matTooltip]="t('common.advancedSearch')"
                     class="cursor-pointer">
                     settings
                 </mat-icon>
@@ -441,3 +442,5 @@
             </form>
         </div>
     </fuse-drawer>
+</div>
+</ng-container>

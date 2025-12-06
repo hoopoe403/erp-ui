@@ -1,3 +1,4 @@
+<ng-container *transloco="let t">
 <div class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
 
     <!-- Header -->
@@ -9,7 +10,7 @@
         </div>
         <!-- Title -->
         <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
-            <div class="text-4xl font-extrabold tracking-tight">Orders</div>
+            <div class="text-4xl font-extrabold tracking-tight">{{ t('sales.orders') }}</div>
             <div class="flex items-center ml-3 mt-2 space-x-2">
                 <!-- Print Button -->
                 <button 
@@ -17,13 +18,13 @@
                     ngxPrint 
                     useExistingCss="true" 
                     printSectionId="section-to-print" 
-                    matTooltip="Print Orders">
+                    [matTooltip]="t('sales.printOrders')">
                     <mat-icon [svgIcon]="'heroicons_outline:printer'"></mat-icon>
                 </button>
                 <!-- Chat Button -->
                 <button 
                     mat-icon-button 
-                    matTooltip="Order Support Chat"
+                    [matTooltip]="t('sales.orderSupportChat')"
                     [color]="isChatOpen ? 'primary' : 'basic'"
                     (click)="toggleChat()">
                     <mat-icon [svgIcon]="'heroicons_outline:chat'"></mat-icon>
@@ -36,8 +37,8 @@
             <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
                 <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
                 <input [autocomplete]="'off'" [formControl]="searchInputControl" matInput [autocomplete]="'off'"
-                    [placeholder]="'Search'">
-                <mat-icon matPostfix (click)="ordersAdvancedSearch.toggle()" matTooltip="Advanced Search"
+                    [placeholder]="t('common.search')">
+                <mat-icon matPostfix (click)="ordersAdvancedSearch.toggle()" [matTooltip]="t('common.advancedSearch')"
                     class="cursor-pointer">
                     settings
                 </mat-icon>
@@ -351,12 +352,13 @@
         </div>
 
     </div>
-    <ng-template #noorders>
-        <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">There are no orders!
+    <ng-template #noOrders>
+        <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">{{ t('common.noData') }}
         </div>
     </ng-template>
 
 </div>
+</ng-container>
 <mat-menu #infoMenu="matMenu" xPosition="before">
     <div class="p-2">
         <h4 class="mb-1 text-gray-900 font-bold text-xl	">{{selectedInfoRow.orderCode}}</h4>

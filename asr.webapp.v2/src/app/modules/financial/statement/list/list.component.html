@@ -1,3 +1,4 @@
+<ng-container *transloco="let t">
 <div class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
   <!-- Header -->
   <div class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4 px-6 md:px-8 border-b">
@@ -7,7 +8,7 @@
     </div>
     <!-- Title -->
     <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
-      <div class="text-4xl font-extrabold tracking-tight">Statements</div>
+      <div class="text-4xl font-extrabold tracking-tight">{{ t('financial.statements') }}</div>
       <div class="cursor-pointer ml-3 mt-2">
         <button mat-icon-button ngxPrint useExistingCss="true" printSectionId="section-to-print">
           <mat-icon [svgIcon]="'heroicons_outline:printer'"></mat-icon>
@@ -20,8 +21,8 @@
       <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
         <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
         <input [autocomplete]="'off'" [formControl]="searchInputControl" matInput [autocomplete]="'off'"
-          [placeholder]="'Search'" />
-        <mat-icon matPostfix (click)="statementsAdvancedSearch.toggle()" matTooltip="Advanced Search"
+          [placeholder]="t('common.search')" />
+        <mat-icon matPostfix (click)="statementsAdvancedSearch.toggle()" [matTooltip]="t('common.advancedSearch')"
           class="cursor-pointer">
           settings
         </mat-icon>
@@ -44,13 +45,13 @@
             <div
               class="statement-grid3 z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
               matSort matSortDisableClear>
-              <div [mat-sort-header]="'financialResource'">Name</div>
-              <div [mat-sort-header]="'accountHolder'">Account Holder</div>
-              <div [mat-sort-header]="'bank'">Bank</div>
-              <div [mat-sort-header]="'chequeNumber'">Cheque Number</div>
-              <div [mat-sort-header]="'balance'">Balance</div>
+              <div [mat-sort-header]="'financialResource'">{{ t('common.name') }}</div>
+              <div [mat-sort-header]="'accountHolder'">{{ t('common.accountHolder') }}</div>
+              <div [mat-sort-header]="'bank'">{{ t('financial.bank') }}</div>
+              <div [mat-sort-header]="'chequeNumber'">{{ t('financial.chequeNumber') }}</div>
+              <div [mat-sort-header]="'balance'">{{ t('common.balance') }}</div>
 
-              <div class="print:hidden">More</div>
+              <div class="print:hidden">{{ t('common.more') }}</div>
             </div>
             <!-- Rows -->
             <ng-container *ngIf="statements$ | async as statementsObs">
@@ -108,17 +109,17 @@
             <div
               class="statement-detail-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
               matSort matSortDisableClear>
-              <div [mat-sort-header]="'requestType'">Applicant</div>
-              <div [mat-sort-header]="'date'">Date-Time</div>
+              <div [mat-sort-header]="'requestType'">{{ t('financial.applicant') }}</div>
+              <div [mat-sort-header]="'date'">{{ t('common.dateTime') }}</div>
 
-              <div [mat-sort-header]="'amount'">Amount</div>
-              <div [mat-sort-header]="'transactionType'">Type</div>
-              <div [mat-sort-header]="'balance'">Balance</div>
+              <div [mat-sort-header]="'amount'">{{ t('common.amount') }}</div>
+              <div [mat-sort-header]="'transactionType'">{{ t('common.type') }}</div>
+              <div [mat-sort-header]="'balance'">{{ t('common.balance') }}</div>
               <div class="hidden lg:block" [mat-sort-header]="'description'">
-                Description
+                {{ t('common.description') }}
               </div>
 
-              <div class="print:hidden">More</div>
+              <div class="print:hidden">{{ t('common.more') }}</div>
             </div>
             <!-- Rows -->
             <ng-container *ngIf="statementDetails$ | async as statementDetailsObs">
@@ -181,7 +182,7 @@
   </div>
   <ng-template #noStatements>
     <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">
-      There are no statements!
+      {{ t('financial.noStatements') }}
     </div>
   </ng-template>
 </div>
@@ -194,17 +195,17 @@
       {{ selectedInfoDetailRow.accountHolder }}
     </h4>
     <div class="flex flex-col mb-1">
-      <span class="text-gray-400 text-sm">Creator User Name</span>
+      <span class="text-gray-400 text-sm">{{ t('common.creatorUserName') }}</span>
       <p>{{ selectedInfoDetailRow.registerUserName }}</p>
     </div>
     <div class="flex flex-col mb-1">
-      <span class="text-gray-400 text-sm">Creator IP</span>
+      <span class="text-gray-400 text-sm">{{ t('common.creatorIP') }}</span>
       <p class="text-gray-900">
         {{ selectedInfoDetailRow.clientIP }}
       </p>
     </div>
     <div class="flex flex-col mb-1">
-      <span class="text-gray-400 text-sm">Update Date & time</span>
+      <span class="text-gray-400 text-sm">{{ t('common.updateDateTime') }}</span>
       <p class="text-gray-900">
         {{
         selectedInfoDetailRow.localChangeDate +
@@ -220,11 +221,11 @@
   <ng-template matMenuContent>
     <button mat-menu-item (click)="download()">
       <mat-icon svgIcon="mat_outline:file_download"></mat-icon>
-      PDF
+      {{ t('common.pdf') }}
     </button>
     <button mat-menu-item (click)="exportTable()">
       <mat-icon svgIcon="mat_outline:file_download"></mat-icon>
-      EXCEL
+      {{ t('common.excel') }}
     </button>
   </ng-template>
 </mat-menu>
@@ -238,7 +239,7 @@
         </mat-icon>
 
         <h3 class="ml-2 mt-4 text-white flex-auto">
-          <span>Advanced Search</span>
+          <span>{{ t('common.advancedSearch') }}</span>
         </h3>
       </div>
       <div class="inline-block">
@@ -252,23 +253,23 @@
         <div
           class="border border-solid border-gray-200 rounded-sm flex flex-initial flex-col relative mb-10 pt-4 px-4 pb-3">
           <h2 class="absolute -top-2.5 left-1.5 m-0 px-2 bg-white">
-            Search Fields
+            {{ t('common.searchFields') }}
           </h2>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Report Type</mat-label>
-              <mat-select placeholder="Report Type" formControlName="reportType">
-                <mat-option (onSelectionChange)="changeReportType($event)" [value]="1">Accumulative
+              <mat-label>{{ t('financial.reportType') }}</mat-label>
+              <mat-select [placeholder]="t('financial.reportType')" formControlName="reportType">
+                <mat-option (onSelectionChange)="changeReportType($event)" [value]="1">{{ t('financial.accumulative') }}
                 </mat-option>
-                <mat-option (onSelectionChange)="changeReportType($event)" [value]="2">Detail
+                <mat-option (onSelectionChange)="changeReportType($event)" [value]="2">{{ t('financial.detail') }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Year</mat-label>
-              <mat-select [(value)]="statementDetailInfo.partitionKeyList" placeholder="Report Type"
+              <mat-label>{{ t('common.year') }}</mat-label>
+              <mat-select [(value)]="statementDetailInfo.partitionKeyList" [placeholder]="t('financial.reportType')"
                 formControlName="year" multiple>
                 <mat-option (onSelectionChange)="setFinancialYearValue($event)" *ngFor="let year of financialYears"
                   [value]="year.partitionKey">
@@ -278,8 +279,8 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Owner Type</mat-label>
-              <mat-select placeholder="Owner Type" formControlName="ownerType">
+              <mat-label>{{ t('financial.ownerType') }}</mat-label>
+              <mat-select [placeholder]="t('financial.ownerType')" formControlName="ownerType">
                 <mat-option (onSelectionChange)="setOwnerTypeValue($event)" *ngFor="let item of ownerTypes"
                   [value]="item.ownerTypeId">
                   {{ item.ownerTypeName }}</mat-option>
@@ -289,9 +290,9 @@
           <div>
             <mat-form-field appearance="outline" class="w-full" fuseScrollbar>
               <mat-select fuseScrollbar [(value)]="statementInfo.ownerIdList" [formControl]="ownersMultiCtrl"
-                placeholder="Owners" [multiple]="true">
+                [placeholder]="t('common.owners')" [multiple]="true">
                 <mat-option [value]="0">
-                  <ngx-mat-select-search [placeholderLabel]="'Search'" [noEntriesFoundLabel]="'Not found'"
+                  <ngx-mat-select-search [placeholderLabel]="t('common.search')" [noEntriesFoundLabel]="t('common.notFound')"
                     [formControl]="ownersMultiFilterCtrl">
                   </ngx-mat-select-search>
                 </mat-option>
@@ -310,29 +311,29 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Resource Type</mat-label>
-              <mat-select placeholder="Resource Type" formControlName="resourceType">
+              <mat-label>{{ t('financial.resourceType') }}</mat-label>
+              <mat-select [placeholder]="t('financial.resourceType')" formControlName="resourceType">
                 <mat-option (onSelectionChange)="setFinancialResourceTypeValue($event)" [value]="'1001051'">
-                  Bank Account</mat-option>
+                  {{ t('financial.bankAccount') }}</mat-option>
                 <mat-option (onSelectionChange)="setFinancialResourceTypeValue($event)" [value]="'1001052'">
-                  Safe</mat-option>
+                  {{ t('financial.safe') }}</mat-option>
               </mat-select>
             </mat-form-field>
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Credit</mat-label>
-              <mat-select placeholder="Credit" formControlName="credit">
+              <mat-label>{{ t('financial.credit') }}</mat-label>
+              <mat-select [placeholder]="t('financial.credit')" formControlName="credit">
                 <mat-option (onSelectionChange)="setCreditValue($event)" [value]="true">
-                  Credit</mat-option>
+                  {{ t('financial.credit') }}</mat-option>
                 <mat-option (onSelectionChange)="setCreditValue($event)" [value]="false">
-                  Non Credit</mat-option>
+                  Non {{ t('financial.credit') }}</mat-option>
               </mat-select>
             </mat-form-field>
           </div>
           <div>
             <mat-form-field class="w-full" appearance="outline">
-              <mat-label>Financial Resource</mat-label>
+              <mat-label>{{ t('financial.resource') }}</mat-label>
               <input spellcheck="false" type=" text" aria-label="Number" matInput
                 [formControl]="financialResourceControl" [matAutocomplete]="auto" />
               <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete">
@@ -352,21 +353,21 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Transaction Type</mat-label>
-              <mat-select [(value)]="statementDetailInfo.financialTransactionTypeIdList" placeholder="Transaction Type"
+              <mat-label>{{ t('financial.transactionType') }}</mat-label>
+              <mat-select [(value)]="statementDetailInfo.financialTransactionTypeIdList" [placeholder]="t('financial.transactionType')"
                 formControlName="transactionType" multiple>
                 <mat-option (onSelectionChange)="setTransactionTypeValue($event)" [value]="'1001121'">
-                  Deposit
+                  {{ t('financial.deposit') }}
                 </mat-option>
                 <mat-option (onSelectionChange)="setTransactionTypeValue($event)" [value]="'1001122'">
-                  Withdrawal
+                  {{ t('financial.withdrawal') }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>From Date</mat-label>
+              <mat-label>{{ t('financial.dateFrom') }}</mat-label>
               <input [autocomplete]="'off'" matInput value="" formControlName="dateFrom" maxlength="50" />
               <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
               </mat-icon>
@@ -374,7 +375,7 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>To Date</mat-label>
+              <mat-label>{{ t('financial.dateTo') }}</mat-label>
               <input [autocomplete]="'off'" matInput value="" formControlName="dateTo" maxlength="50" />
               <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
               </mat-icon>
@@ -382,7 +383,7 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Amount From</mat-label>
+              <mat-label>{{ t('financial.amountFrom') }}</mat-label>
               <input type="number" [autocomplete]="'off'" matInput value="" formControlName="amountFrom"
                 maxlength="50" />
               <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
@@ -391,7 +392,7 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Amount To</mat-label>
+              <mat-label>{{ t('financial.amountTo') }}</mat-label>
               <input type="number" [autocomplete]="'off'" matInput value="" formControlName="amountTo" maxlength="50" />
               <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
               </mat-icon>
@@ -399,7 +400,7 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Balance From</mat-label>
+              <mat-label>{{ t('financial.balanceFrom') }}</mat-label>
               <input type="number" [autocomplete]="'off'" matInput value="" formControlName="balanceFrom"
                 maxlength="50" />
               <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
@@ -408,7 +409,7 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Balance To</mat-label>
+              <mat-label>{{ t('financial.balanceTo') }}</mat-label>
               <input type="number" [autocomplete]="'off'" matInput value="" formControlName="balanceTo"
                 maxlength="50" />
               <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
@@ -419,12 +420,12 @@
         <div class="flex flex-row w-full">
           <div class="py-2 w-1/2 pl-10 items-center align-middle">
             <button mat-raised-button style="color: darkgreen" (click)="statementSearch()">
-              Apply
+              {{ t('common.apply') }}
             </button>
           </div>
           <div class="py-2 w-1/2 items-center align-middle">
             <button (click)="resetAdvancedSearch()" mat-raised-button style="color: darkred">
-              Cancel
+              {{ t('common.cancel') }}
             </button>
           </div>
         </div>
@@ -432,3 +433,4 @@
     </form>
   </div>
 </fuse-drawer>
+</ng-container>

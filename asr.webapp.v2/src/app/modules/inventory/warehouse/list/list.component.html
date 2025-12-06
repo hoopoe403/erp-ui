@@ -1,3 +1,4 @@
+<ng-container *transloco="let t">
 <div class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
   <!-- Header -->
   <div class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4 px-6 md:px-8 border-b">
@@ -8,7 +9,7 @@
     <!-- Title -->
     <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
       <div class="text-4xl font-extrabold tracking-tight">
-        Warehouses
+        {{ t('inventory.warehouses') }}
       </div>
       <div class="cursor-pointer ml-3 mt-2">
         <button mat-icon-button ngxPrint useExistingCss="true" printSectionId="section-to-print">
@@ -22,15 +23,15 @@
       <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
         <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
         <input #filter [autocomplete]="'off'" [formControl]="searchInputControl" matInput [autocomplete]="'off'"
-          [placeholder]="'Search'">
-        <mat-icon matPostfix (click)="warehouseAdvancedSearch.toggle()" matTooltip="Advanced Search"
+          [placeholder]="t('common.search')">
+        <mat-icon matPostfix (click)="warehouseAdvancedSearch.toggle()" [matTooltip]="t('common.advancedSearch')"
           class="cursor-pointer">
           settings
         </mat-icon>
       </mat-form-field>
       <!-- Add product button -->
       <button class="ml-4" mat-flat-button [color]="'primary'" [routerLink]="['./details']">
-        <span class="ml-2 mr-1">NEW</span>
+        <span class="ml-2 mr-1">{{ t('common.new') }}</span>
       </button>
     </div>
   </div>
@@ -45,17 +46,17 @@
             <div
               class="warehouses-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
               matSort matSortDisableClear>
-              <div [mat-sort-header]="'warehouseCode'">Code</div>
-              <div [mat-sort-header]="'warehouseName'">Name</div>
+              <div [mat-sort-header]="'warehouseCode'">{{ t('common.code') }}</div>
+              <div [mat-sort-header]="'warehouseName'">{{ t('common.name') }}</div>
 
               <div class="hidden lg:block print:block" [mat-sort-header]="'ownerName'">
                 Owner
               </div>
 
               <div class="hidden lg:block print:block" [mat-sort-header]="'status'">
-                Status
+                {{ t('common.status') }}
               </div>
-              <div class="print:hidden">More</div>
+              <div class="print:hidden">{{ t('common.more') }}</div>
             </div>
             <!-- Rows -->
             <ng-container *ngIf="warehouses$ | async as warehouseObs">
@@ -139,7 +140,7 @@
   </div>
   <ng-template #noWarehouses>
     <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">
-      There are no Warehouses!
+      {{ t('common.noData') }}
     </div>
   </ng-template>
 </div>
@@ -149,7 +150,7 @@
       {{ selectedInfoRow.warehouseName }}
     </h4>
     <div class="flex flex-col mb-1">
-      <span class="text-gray-400 text-sm">Creator User Name</span>
+      <span class="text-gray-400 text-sm">{{ t('common.createdBy') }}</span>
       <p>{{ selectedInfoRow.registerUserName }}</p>
     </div>
     <div class="flex flex-col mb-1">
@@ -157,7 +158,7 @@
       <p class="text-gray-900">{{ selectedInfoRow.clientIP }}</p>
     </div>
     <div class="flex flex-col mb-1">
-      <span class="text-gray-400 text-sm">Update Date & time</span>
+      <span class="text-gray-400 text-sm">{{ t('common.updatedAt') }}</span>
       <p class="text-gray-900">
         {{
         selectedInfoRow.localChangeDate +
@@ -172,7 +173,7 @@
 <mat-menu #contextMenu="matMenu">
   <ng-template matMenuContent>
     <button mat-menu-item [routerLink]="['./details', selectedInfoRow.warehouseId]">
-      Edit
+      {{ t('common.edit') }}
     </button>
   </ng-template>
 </mat-menu>
@@ -186,7 +187,7 @@
         </mat-icon>
 
         <h3 class="ml-2 mt-4 text-white flex-auto">
-          <span>Advanced Search</span>
+          <span>{{ t('common.advancedSearch') }}</span>
         </h3>
       </div>
       <div class="inline-block">
@@ -200,12 +201,12 @@
         <div
           class="border border-solid border-gray-200 rounded-sm flex flex-initial flex-col relative mb-10 pt-4 px-4 pb-3">
           <h2 class="absolute -top-2.5 left-1.5 m-0 px-2 bg-white">
-            Search Fields
+            {{ t('common.filter') }}
           </h2>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Status</mat-label>
-              <mat-select [(value)]="warehouseInfo.statusIdList" placeholder="Status" formControlName="status" multiple>
+              <mat-label>{{ t('common.status') }}</mat-label>
+              <mat-select [(value)]="warehouseInfo.statusIdList" [placeholder]="t('common.status')" formControlName="status" multiple>
                 <mat-option (onSelectionChange)="setStatusValue($event)" *ngFor="let status of statuses"
                   [value]="status.statusId" [checked]="status.isDefault === 1">
                   {{ status.statusDescription }}</mat-option>
@@ -214,14 +215,14 @@
           </div>
           <div>
             <mat-form-field class="w-full" appearance="outline" fxFlex>
-              <mat-label>Code</mat-label>
+              <mat-label>{{ t('common.code') }}</mat-label>
               <input matInput value="" formControlName="Code" maxlength="20">
               <mat-icon matSuffix class="secondary-text">assignment</mat-icon>
             </mat-form-field>
           </div>
           <div>
             <mat-form-field class="w-full" appearance="outline" fxFlex>
-              <mat-label>Name</mat-label>
+              <mat-label>{{ t('common.name') }}</mat-label>
               <input matInput value="" formControlName="Name" maxlength="20">
               <mat-icon matSuffix class="secondary-text">assignment</mat-icon>
             </mat-form-field>
@@ -248,7 +249,7 @@
             </mat-form-field>
           </div>
           <mat-form-field appearance="outline" fxFlex="100" class="w-full">
-            <mat-label>Unit</mat-label>
+            <mat-label>{{ t('common.unit') }}</mat-label>
             <mat-select formControlName="dimensionUnit">
               <mat-option *ngFor="let UD of dimUnitData " [value]="UD.unitId">{{UD.unitName}}</mat-option>
             </mat-select>
@@ -262,7 +263,7 @@
             </mat-form-field>
           </div>
           <mat-form-field appearance="outline" fxFlex="100" class="w-full">
-            <mat-label>Unit</mat-label>
+            <mat-label>{{ t('common.unit') }}</mat-label>
             <mat-select formControlName="weightUnit">
               <mat-option *ngFor="let UD of massUnitData" [value]="UD.unitId">{{UD.unitName}}</mat-option>
             </mat-select>
@@ -273,12 +274,12 @@
         <div class="flex flex-row w-full">
           <div class="py-2 w-1/2 pl-10 items-center align-middle">
             <button mat-raised-button style="color: darkgreen" (click)="warehouseSearch()">
-              Apply
+              {{ t('common.apply') }}
             </button>
           </div>
           <div class="py-2 w-1/2 items-center align-middle">
             <button (click)="resetAdvancedSearch()" mat-raised-button style="color: darkred">
-              Cancel
+              {{ t('common.cancel') }}
             </button>
           </div>
         </div>
@@ -287,3 +288,4 @@
     </form>
   </div>
 </fuse-drawer>
+</ng-container>

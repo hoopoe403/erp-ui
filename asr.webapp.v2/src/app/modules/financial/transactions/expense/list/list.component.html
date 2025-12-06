@@ -1,3 +1,4 @@
+<ng-container *transloco="let t">
 <div class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
   <!-- Header -->
   <div class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4 px-6 md:px-8 border-b">
@@ -7,7 +8,7 @@
     </div>
     <!-- Title -->
     <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
-      <div class="text-4xl font-extrabold tracking-tight">Expenses</div>
+      <div class="text-4xl font-extrabold tracking-tight">{{ t('financial.expenses') }}</div>
       <div class="cursor-pointer ml-3 mt-2">
         <button mat-icon-button ngxPrint useExistingCss="true" printSectionId="section-to-print">
           <mat-icon [svgIcon]="'heroicons_outline:printer'"></mat-icon>
@@ -20,8 +21,8 @@
       <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
         <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
         <input [autocomplete]="'off'" [formControl]="searchInputControl" matInput [autocomplete]="'off'"
-          [placeholder]="'Search'" />
-        <mat-icon matPostfix (click)="expensesAdvancedSearch.toggle()" matTooltip="Advanced Search"
+          [placeholder]="t('common.search')" />
+        <mat-icon matPostfix (click)="expensesAdvancedSearch.toggle()" [matTooltip]="t('common.advancedSearch')"
           class="cursor-pointer">
           settings
         </mat-icon>
@@ -29,7 +30,7 @@
       <!-- Add product button -->
       <button class="ml-4" mat-flat-button [color]="'primary'" [routerLink]="['../details']">
         <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
-        <span class="ml-2 mr-1">Add</span>
+        <span class="ml-2 mr-1">{{ t('common.add') }}</span>
       </button>
     </div>
   </div>
@@ -44,22 +45,22 @@
             <div
               class="expenses-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
               matSort matSortDisableClear>
-              <div [mat-sort-header]="'payer'">Payer</div>
-              <div [mat-sort-header]="'paymentType'">Payment Type</div>
+              <div [mat-sort-header]="'payer'">{{ t('financial.payer') }}</div>
+              <div [mat-sort-header]="'paymentType'">{{ t('financial.paymentType') }}</div>
 
               <div class="hidden lg:block print:block" [mat-sort-header]="'recipient'">
-                Recipient
+                {{ t('financial.recipient') }}
               </div>
               <div class="hidden lg:block print:block" [mat-sort-header]="'expenseDate'">
-                Expense Date
+                {{ t('financial.expenseDate') }}
               </div>
               <div class="hidden lg:block" [mat-sort-header]="'amount'">
-                Amount
+                {{ t('common.amount') }}
               </div>
               <div class="hidden lg:block print:block" [mat-sort-header]="'status'">
-                Status
+                {{ t('common.status') }}
               </div>
-              <div class="print:hidden">More</div>
+              <div class="print:hidden">{{ t('common.more') }}</div>
             </div>
             <!-- Rows -->
             <ng-container *ngIf="expenses$ | async as expensesObs">
@@ -130,7 +131,7 @@
   </div>
   <ng-template #noExpenses>
     <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">
-      There are no expenses!
+      {{ t('financial.noExpenses') }}
     </div>
   </ng-template>
 </div>
@@ -140,15 +141,15 @@
       {{ selectedInfoRow.payerName }}
     </h4>
     <div class="flex flex-col mb-1">
-      <span class="text-gray-400 text-sm">Creator User Name</span>
+      <span class="text-gray-400 text-sm">{{ t('common.creatorUserName') }}</span>
       <p>{{ selectedInfoRow.registerUserName }}</p>
     </div>
     <div class="flex flex-col mb-1">
-      <span class="text-gray-400 text-sm">Creator IP</span>
+      <span class="text-gray-400 text-sm">{{ t('common.creatorIP') }}</span>
       <p class="text-gray-900">{{ selectedInfoRow.clientIP }}</p>
     </div>
     <div class="flex flex-col mb-1">
-      <span class="text-gray-400 text-sm">Update Date & time</span>
+      <span class="text-gray-400 text-sm">{{ t('common.updateDateTime') }}</span>
       <p class="text-gray-900">
         {{
         selectedInfoRow.localChangeDate +
@@ -163,10 +164,10 @@
 <mat-menu #contextMenu="matMenu">
   <ng-template matMenuContent>
     <button mat-menu-item [routerLink]="['../details', selectedInfoRow.expenseId]">
-      Edit
+      {{ t('common.edit') }}
     </button>
     <button mat-menu-item (click)="createDraft()">
-      Create Draft
+      {{ t('common.createDraft') }}
     </button>
   </ng-template>
 </mat-menu>
@@ -180,7 +181,7 @@
         </mat-icon>
 
         <h3 class="ml-2 mt-4 text-white flex-auto">
-          <span>Advanced Search</span>
+          <span>{{ t('common.advancedSearch') }}</span>
         </h3>
       </div>
       <div class="inline-block">
@@ -194,12 +195,12 @@
         <div
           class="border border-solid border-gray-200 rounded-sm flex flex-initial flex-col relative mb-10 pt-4 px-4 pb-3">
           <h2 class="absolute -top-2.5 left-1.5 m-0 px-2 bg-white">
-            Search Fields
+            {{ t('common.searchFields') }}
           </h2>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Status</mat-label>
-              <mat-select [(value)]="expenseInfo.statusIdList" placeholder="Status" formControlName="status" multiple>
+              <mat-label>{{ t('common.status') }}</mat-label>
+              <mat-select [(value)]="expenseInfo.statusIdList" [placeholder]="t('common.status')" formControlName="status" multiple>
                 <mat-option (onSelectionChange)="setStatusValue($event)" *ngFor="let status of statuses"
                   [value]="status.statusId" [checked]="status.isDefault === 1">
                   {{ status.statusDescription }}</mat-option>
@@ -209,9 +210,9 @@
           <div>
             <mat-form-field appearance="outline" class="w-full" fuseScrollbar>
               <mat-select fuseScrollbar [disabled]="this.payers.length === 0" [(value)]="expenseInfo.payerIdList"
-                [formControl]="payersMultiCtrl" placeholder="Payers" [multiple]="true">
+                [formControl]="payersMultiCtrl" [placeholder]="t('financial.payers')" [multiple]="true">
                 <mat-option [value]="0">
-                  <ngx-mat-select-search [placeholderLabel]="'Search'" [noEntriesFoundLabel]="'Not found'"
+                  <ngx-mat-select-search [placeholderLabel]="t('common.search')" [noEntriesFoundLabel]="t('common.notFound')"
                     [formControl]="payersMultiFilterCtrl">
                   </ngx-mat-select-search>
                 </mat-option>
@@ -229,8 +230,8 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Payment Type</mat-label>
-              <mat-select multiple placeholder="Payment Type" formControlName="paymentType">
+              <mat-label>{{ t('financial.paymentType') }}</mat-label>
+              <mat-select multiple [placeholder]="t('financial.paymentType')" formControlName="paymentType">
                 <mat-option *ngFor="let paymentType of paymentTypes" (onSelectionChange)="setPaymentTypeValue($event)"
                   [value]="paymentType.key">
                   {{ paymentType.value }}
@@ -240,7 +241,7 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Amount From</mat-label>
+              <mat-label>{{ t('financial.amountFrom') }}</mat-label>
               <input [autocomplete]="'off'" matInput value="" formControlName="amountFrom" maxlength="20" />
               <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
               </mat-icon>
@@ -248,7 +249,7 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Amount To</mat-label>
+              <mat-label>{{ t('financial.amountTo') }}</mat-label>
               <input [autocomplete]="'off'" matInput value="" formControlName="amountTo" maxlength="20" />
               <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
               </mat-icon>
@@ -256,7 +257,7 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Date From</mat-label>
+              <mat-label>{{ t('financial.dateFrom') }}</mat-label>
               <input [autocomplete]="'off'" matInput value="" formControlName="dateFrom" maxlength="10">
               <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
               </mat-icon>
@@ -264,7 +265,7 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Date To</mat-label>
+              <mat-label>{{ t('financial.dateTo') }}</mat-label>
               <input [autocomplete]="'off'" matInput value="" formControlName="dateTo" maxlength="10">
               <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
               </mat-icon>
@@ -274,12 +275,12 @@
         <div class="flex flex-row w-full">
           <div class="py-2 w-1/2 pl-10 items-center align-middle">
             <button mat-raised-button style="color: darkgreen" (click)="expenseSearch()">
-              Apply
+              {{ t('common.apply') }}
             </button>
           </div>
           <div class="py-2 w-1/2 items-center align-middle">
             <button (click)="resetAdvancedSearch()" mat-raised-button style="color: darkred">
-              Cancel
+              {{ t('common.cancel') }}
             </button>
           </div>
         </div>
@@ -287,3 +288,4 @@
     </form>
   </div>
 </fuse-drawer>
+</ng-container>

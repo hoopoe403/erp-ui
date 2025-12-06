@@ -1,3 +1,4 @@
+<ng-container *transloco="let t">
 <div class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
 
     <!-- Header -->
@@ -9,7 +10,7 @@
         </div>
         <!-- Title -->
         <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
-            <div class="text-4xl font-extrabold tracking-tight">Trial Balances</div>
+            <div class="text-4xl font-extrabold tracking-tight">{{ t('financial.trialBalances') }}</div>
             <div class="cursor-pointer ml-3 mt-2">
                 <button mat-icon-button ngxPrint useExistingCss="true" printSectionId="section-to-print">
                     <mat-icon [svgIcon]="'heroicons_outline:printer'"></mat-icon>
@@ -22,8 +23,8 @@
             <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
                 <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
                 <input #filter [autocomplete]="'off'" [formControl]="searchInputControl" matInput [autocomplete]="'off'"
-                    [placeholder]="'Search'">
-                <mat-icon matPostfix (click)="trialBalancesAdvancedSearch.toggle()" matTooltip="Advanced Search"
+                    [placeholder]="t('common.search')">
+                <mat-icon matPostfix (click)="trialBalancesAdvancedSearch.toggle()" [matTooltip]="t('common.advancedSearch')"
                     class="cursor-pointer">
                     settings
                 </mat-icon>
@@ -47,31 +48,31 @@
                         <div class="trial-balance-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
                             #sort="matSort" matSort matSortDisableClear>
                             <div [mat-sort-header]="'ownerName'">
-                                Account
+                                {{ t('financial.account') }}
                             </div>
 
                             <div style="direction: rtl;" class="grid justify-items-start print:block"
                                 [mat-sort-header]="'debit'">
-                                Debit
+                                {{ t('financial.debit') }}
                             </div>
 
                             <div style="direction: rtl;" class="pr-8 grid justify-items-start print:block"
                                 [mat-sort-header]="'credit'">
-                                Credit
+                                {{ t('financial.credit') }}
                             </div>
 
                             <div style="direction: rtl;" class="pr-8  justify-items-start print:block
                             hidden lg:block" [mat-sort-header]="'debitBalance'">
-                                Debit Balance
+                                {{ t('financial.debitBalance') }}
                             </div>
 
                             <div style="direction: rtl;" class="pr-8  justify-items-start print:block hidden lg:block"
                                 [mat-sort-header]="'creditBalance'">
-                                Credit Balance
+                                {{ t('financial.creditBalance') }}
                             </div>
 
 
-                            <div class="print:hidden">More</div>
+                            <div class="print:hidden">{{ t('common.more') }}</div>
                         </div>
                         <!-- Rows -->
                         <ng-container *ngIf="(trialBalances$ | async) as trialBalances">
@@ -85,7 +86,7 @@
                                         <div>
                                             <div style="background-color: rgb(245 245 245)!important;"
                                                 class="bg-neutral-400 text-xs rounded-sm py-0.5 px-2 inline-block"
-                                                matTooltip="Issuer Type">
+                                                [matTooltip]="t('financial.issuerType')">
                                                 <div class="rounded-3xl w-2 h-2 mr-2 inline-block bg-green-500"></div>
                                                 <div class="inline-block">{{item.ownerTypeName}}</div>
                                             </div>
@@ -149,43 +150,43 @@
                         <div class="trial-balances-detail-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
                             #sort="matSort" matSort matSortDisableClear>
                             <div [mat-sort-header]="'ownerName'">
-                                Account
+                                {{ t('financial.account') }}
                             </div>
                             <div class="hidden lg:block" [mat-sort-header]="'documentNumber'">
-                                Number
+                                {{ t('common.number') }}
                             </div>
                             <div class="hidden lg:block" [mat-sort-header]="'date'">
-                                D-Register
+                                {{ t('financial.dateRegister') }}
                             </div>
                             <div class="hidden lg:block" [mat-sort-header]="'updDate'">
-                                D-Update
+                                {{ t('financial.dateUpdate') }}
                             </div>
                             <div style="direction: rtl;" class="pr-8 grid justify-items-start print:block"
                                 [mat-sort-header]="'debit'">
-                                Debit
+                                {{ t('financial.debit') }}
                             </div>
 
                             <div style="direction: rtl;" class="pr-8 grid justify-items-start print:block"
                                 [mat-sort-header]="'credit'">
-                                Credit
+                                {{ t('financial.credit') }}
                             </div>
 
                             <div style="direction: rtl;" class="pr-8 grid justify-items-start print:block"
                                 [mat-sort-header]="'remained'">
-                                Remained
+                                {{ t('financial.remained') }}
                             </div>
                             <div class="hidden lg:block" [mat-sort-header]="'paymentType'">
-                                Payment Type
+                                {{ t('financial.paymentType') }}
                             </div>
                             <div class="hidden lg:block" [mat-sort-header]="'category'">
-                                Category
+                                {{ t('common.category') }}
                             </div>
                             <div [mat-sort-header]="'requestTypeName'">
-                                Applicant
+                                {{ t('financial.applicant') }}
                             </div>
 
 
-                            <div class="print:hidden">More</div>
+                            <div class="print:hidden">{{ t('common.more') }}</div>
                         </div>
                         <!-- Rows -->
                         <ng-container *ngIf="(trialBalancesDetails$ | async) as trialBalancesDetails">
@@ -200,7 +201,7 @@
                                         <div>
                                             <div style="background-color: rgb(245 245 245)!important;"
                                                 class="bg-neutral-400 text-xs rounded-sm py-0.5 px-2 inline-block"
-                                                matTooltip="Issuer Type">
+                                                [matTooltip]="t('financial.issuerType')">
                                                 <div class="rounded-3xl w-2 h-2 mr-2 inline-block bg-green-500"></div>
                                                 <div class="inline-block">{{item.ownerTypeName}}</div>
                                             </div>
@@ -237,7 +238,7 @@
                                         <div>
                                             <div style="background-color: rgb(245 245 245)!important;"
                                                 class="bg-neutral-400 text-xs rounded-sm py-0.5 px-2 inline-block"
-                                                matTooltip="Status">
+                                                [matTooltip]="t('common.status')">
                                                 <div class="rounded-3xl w-2 h-2 mr-2 inline-block"
                                                     [ngClass]="item.requestStatusColor"></div>
                                                 <div class="inline-block">{{item.requestStatusDescription}}</div>
@@ -283,7 +284,7 @@
         </div>
     </div>
     <ng-template #noTrialBalances>
-        <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">There are no trial balances!
+        <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">{{ t('financial.noTrialBalances') }}
         </div>
     </ng-template>
 
@@ -293,20 +294,20 @@
         <h4 class="mb-1 text-gray-900 font-bold text-xl	">{{reportType===1?
             selectedInfoRow.ownerName:selectedInfoDetailRow.ownerName}}</h4>
         <div class="flex flex-col mb-1">
-            <span class="text-gray-400 text-sm">Creator User Name</span>
+            <span class="text-gray-400 text-sm">{{ t('common.creatorUserName') }}</span>
             <p>{{reportType===1?
                 selectedInfoRow.registerUserName:selectedInfoDetailRow.registerUserName}}
             </p>
         </div>
         <div class="flex flex-col mb-1">
-            <span class="text-gray-400 text-sm">Creator IP</span>
+            <span class="text-gray-400 text-sm">{{ t('common.creatorIP') }}</span>
             <p class="text-gray-900">
                 {{reportType===1?
                 selectedInfoRow.clientIP:selectedInfoDetailRow.clientIP}}
             </p>
         </div>
         <div class="flex flex-col mb-1">
-            <span class="text-gray-400 text-sm">Update Date & time</span>
+            <span class="text-gray-400 text-sm">{{ t('common.updateDateTime') }}</span>
             <p class="text-gray-900">
                 {{reportType===1?
                 selectedInfoRow.localChangeDate + ' ' +
@@ -321,11 +322,11 @@
 <mat-menu #contextMenu="matMenu">
     <ng-template matMenuContent>
         <button mat-menu-item *ngIf="reportType===1">
-            View
+            {{ t('common.view') }}
         </button>
         <button mat-menu-item *ngIf="reportType===2"
             (click)="openDetailDialog(selectedInfoDetailRow.requestId,selectedInfoDetailRow.requestTypeId,selectedInfoDetailRow.documentNumber)">
-            View
+            {{ t('common.view') }}
         </button>
     </ng-template>
 </mat-menu>
@@ -334,11 +335,11 @@
     <ng-template matMenuContent>
         <button mat-menu-item (click)="download()">
             <mat-icon svgIcon="mat_outline:file_download"></mat-icon>
-            PDF
+            {{ t('common.pdf') }}
         </button>
         <button mat-menu-item (click)="exportTable('full')">
             <mat-icon svgIcon="mat_outline:file_download"></mat-icon>
-            EXCEL
+            {{ t('common.excel') }}
         </button>
     </ng-template>
 </mat-menu>
@@ -350,8 +351,7 @@
                 <mat-icon class="mt-4 ml-1 text-white flex-auto" matPrefix [svgIcon]="'heroicons_outline:search'">
                 </mat-icon>
 
-                <h3 class="ml-2 mt-4 text-white flex-auto "><span>Advanced
-                        Search</span></h3>
+                <h3 class="ml-2 mt-4 text-white flex-auto "><span>{{ t('common.advancedSearch') }}</span></h3>
             </div>
             <div class="inline-block">
                 <mat-icon class="mt-3 mr-2 absolute inset-y-0 right-0 cursor-pointer text-white"
@@ -363,22 +363,22 @@
             <div class="pt-8 px-4 pb-4">
                 <div
                     class="border border-solid border-gray-200 rounded-sm flex flex-initial flex-col relative mb-10 pt-4 px-4 pb-3">
-                    <h2 class="absolute -top-2.5 left-1.5 m-0 px-2 bg-white">Search Fields</h2>
+                    <h2 class="absolute -top-2.5 left-1.5 m-0 px-2 bg-white">{{ t('common.searchFields') }}</h2>
                     <div>
                         <mat-form-field appearance="outline" class="w-full">
-                            <mat-label>Report Type</mat-label>
-                            <mat-select placeholder="Report Type" formControlName="reportType">
-                                <mat-option (onSelectionChange)="changeReportType($event)" [value]="1">Accumulative
+                            <mat-label>{{ t('financial.reportType') }}</mat-label>
+                            <mat-select [placeholder]="t('financial.reportType')" formControlName="reportType">
+                                <mat-option (onSelectionChange)="changeReportType($event)" [value]="1">{{ t('financial.accumulative') }}
                                 </mat-option>
-                                <mat-option (onSelectionChange)="changeReportType($event)" [value]="2">Detail
+                                <mat-option (onSelectionChange)="changeReportType($event)" [value]="2">{{ t('financial.detail') }}
                                 </mat-option>
                             </mat-select>
                         </mat-form-field>
                     </div>
                     <div>
                         <mat-form-field appearance="outline" class="w-full">
-                            <mat-label>Year</mat-label>
-                            <mat-select [(value)]="partitionKeyList" placeholder="Report Type" formControlName="year"
+                            <mat-label>{{ t('common.year') }}</mat-label>
+                            <mat-select [(value)]="partitionKeyList" [placeholder]="t('financial.reportType')" formControlName="year"
                                 multiple>
                                 <mat-option (onSelectionChange)="setFinancialYearValue($event)"
                                     *ngFor="let year of financialYears" [value]="year.partitionKey">
@@ -388,8 +388,8 @@
                     </div>
                     <div>
                         <mat-form-field appearance="outline" class="w-full">
-                            <mat-label>Account Type</mat-label>
-                            <mat-select placeholder="Account Type" formControlName="accountType">
+                            <mat-label>{{ t('financial.accountType') }}</mat-label>
+                            <mat-select [placeholder]="t('financial.accountType')" formControlName="accountType">
                                 <mat-option (onSelectionChange)="setOwnerTypeValue($event)"
                                     *ngFor="let item of ownerTypes" [value]="item.ownerTypeId">
                                     {{item.ownerTypeName}}</mat-option>
@@ -399,10 +399,10 @@
                     <div>
                         <mat-form-field appearance="outline" class="w-full" fuseScrollbar>
                             <mat-select fuseScrollbar [(value)]="trialBalanceInfo.ownerIdList"
-                                [formControl]="ownersMultiCtrl" placeholder="Owners" [multiple]="true">
+                                [formControl]="ownersMultiCtrl" [placeholder]="t('common.owners')" [multiple]="true">
                                 <mat-option [value]="0">
-                                    <ngx-mat-select-search [placeholderLabel]="'Search'"
-                                        [noEntriesFoundLabel]="'Not found'" [formControl]="ownersMultiFilterCtrl">
+                                    <ngx-mat-select-search [placeholderLabel]="t('common.search')"
+                                        [noEntriesFoundLabel]="t('common.notFound')" [formControl]="ownersMultiFilterCtrl">
                                     </ngx-mat-select-search>
                                 </mat-option>
                                 <mat-option fuseScrollbar (onSelectionChange)="modifyOwners($event,'remove')"
@@ -420,8 +420,8 @@
                     </div>
                     <div>
                         <mat-form-field appearance="outline" class="w-full">
-                            <mat-label>Payment Type</mat-label>
-                            <mat-select [(value)]="trialBalanceDetailInfo.paymentTypeIdList" placeholder="Status"
+                            <mat-label>{{ t('financial.paymentType') }}</mat-label>
+                            <mat-select [(value)]="trialBalanceDetailInfo.paymentTypeIdList" [placeholder]="t('common.status')"
                                 formControlName="paymentType" multiple>
                                 <mat-option (onSelectionChange)="setPaymentTypeValue($event)"
                                     *ngFor="let item of paymentTypes" [value]="item.key">
@@ -431,7 +431,7 @@
                     </div>
                     <div>
                         <mat-form-field appearance="outline" class="w-full">
-                            <mat-label>Debit From</mat-label>
+                            <mat-label>{{ t('financial.debitFrom') }}</mat-label>
                             <input type="number" [autocomplete]="'off'" matInput value="" formControlName="debitFrom"
                                 maxlength="50">
                             <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
@@ -440,7 +440,7 @@
                     </div>
                     <div>
                         <mat-form-field appearance="outline" class="w-full">
-                            <mat-label>Debit To</mat-label>
+                            <mat-label>{{ t('financial.debitTo') }}</mat-label>
                             <input type="number" [autocomplete]="'off'" matInput value="" formControlName="debitTo"
                                 maxlength="50">
                             <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
@@ -449,7 +449,7 @@
                     </div>
                     <div>
                         <mat-form-field appearance="outline" class="w-full">
-                            <mat-label>Credit From</mat-label>
+                            <mat-label>{{ t('financial.creditFrom') }}</mat-label>
                             <input type="number" [autocomplete]="'off'" matInput value="" formControlName="creditFrom"
                                 maxlength="50">
                             <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
@@ -458,7 +458,7 @@
                     </div>
                     <div>
                         <mat-form-field appearance="outline" class="w-full">
-                            <mat-label>Credit To</mat-label>
+                            <mat-label>{{ t('financial.creditTo') }}</mat-label>
                             <input type="number" [autocomplete]="'off'" matInput value="" formControlName="creditTo"
                                 maxlength="50">
                             <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
@@ -467,7 +467,7 @@
                     </div>
                     <div>
                         <mat-form-field appearance="outline" class="w-full">
-                            <mat-label>Debit Balance From</mat-label>
+                            <mat-label>{{ t('financial.debitBalanceFrom') }}</mat-label>
                             <input type="number" [autocomplete]="'off'" matInput value=""
                                 formControlName="debitBalanceFrom" maxlength="50">
                             <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
@@ -476,7 +476,7 @@
                     </div>
                     <div>
                         <mat-form-field appearance="outline" class="w-full">
-                            <mat-label>Debit Balance To</mat-label>
+                            <mat-label>{{ t('financial.debitBalanceTo') }}</mat-label>
                             <input type="number" [autocomplete]="'off'" matInput value=""
                                 formControlName="debitBalanceTo" maxlength="50">
                             <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
@@ -485,7 +485,7 @@
                     </div>
                     <div>
                         <mat-form-field appearance="outline" class="w-full">
-                            <mat-label>Credit Balance From</mat-label>
+                            <mat-label>{{ t('financial.creditBalanceFrom') }}</mat-label>
                             <input type="number" [autocomplete]="'off'" matInput value=""
                                 formControlName="creditBalanceFrom" maxlength="50">
                             <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
@@ -494,7 +494,7 @@
                     </div>
                     <div>
                         <mat-form-field appearance="outline" class="w-full">
-                            <mat-label>Credit Balacne To</mat-label>
+                            <mat-label>{{ t('financial.creditBalanceTo') }}</mat-label>
                             <input type="number" [autocomplete]="'off'" matInput value=""
                                 formControlName="creditBalanceTo" maxlength="50">
                             <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
@@ -504,11 +504,11 @@
                 </div>
                 <div class="flex flex-row w-full">
                     <div class="py-2 w-1/2 pl-10 items-center align-middle">
-                        <button mat-raised-button style="color: darkgreen" (click)="trialBalancesSearch()">Apply
+                        <button mat-raised-button style="color: darkgreen" (click)="trialBalancesSearch()">{{ t('common.apply') }}
                         </button>
                     </div>
                     <div class="py-2 w-1/2 items-center align-middle">
-                        <button (click)="resetAdvancedSearch()" mat-raised-button style="color: darkred">Cancel
+                        <button (click)="resetAdvancedSearch()" mat-raised-button style="color: darkred">{{ t('common.cancel') }}
                         </button>
                     </div>
                 </div>
@@ -516,3 +516,4 @@
         </form>
     </div>
 </fuse-drawer>
+</ng-container>

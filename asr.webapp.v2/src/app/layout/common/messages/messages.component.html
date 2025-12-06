@@ -1,3 +1,4 @@
+<ng-container *transloco="let t">
 <!-- Messages toggle -->
 <button
     mat-icon-button
@@ -29,12 +30,12 @@
                         [svgIcon]="'heroicons_solid:x'"></mat-icon>
                 </button>
             </div>
-            <div class="text-lg font-medium leading-10">Messages</div>
+            <div class="text-lg font-medium leading-10">{{ t('messages.title') }}</div>
             <div class="ml-auto">
                 <button
                     mat-icon-button
                     [disabled]="unreadCount === 0"
-                    [matTooltip]="'Mark all as read'"
+                    [matTooltip]="t('notifications.markAllRead')"
                     (click)="markAllAsRead()">
                     <mat-icon
                         class="icon-size-5 text-current"
@@ -85,7 +86,7 @@
                             class="w-6 h-6 min-h-6"
                             mat-icon-button
                             (click)="toggleRead(message)"
-                            [matTooltip]="message.read ? 'Mark as unread' : 'Mark as read'">
+                            [matTooltip]="message.read ? t('common.markAsUnread') : t('common.markAsRead')">
                             <span
                                 class="w-2 h-2 rounded-full"
                                 [ngClass]="{'bg-gray-400 dark:bg-gray-500 sm:opacity-0 sm:group-hover:opacity-100': message.read,
@@ -96,7 +97,7 @@
                             class="w-6 h-6 min-h-6 sm:opacity-0 sm:group-hover:opacity-100"
                             mat-icon-button
                             (click)="delete(message)"
-                            [matTooltip]="'Remove'">
+                            [matTooltip]="t('common.remove')">
                             <mat-icon
                                 class="icon-size-4"
                                 [svgIcon]="'heroicons_solid:x'"></mat-icon>
@@ -149,10 +150,11 @@
                             class="text-primary-500-700"
                             [svgIcon]="'heroicons_outline:inbox'"></mat-icon>
                     </div>
-                    <div class="mt-5 text-2xl font-semibold tracking-tight">No messages</div>
-                    <div class="w-full max-w-60 mt-1 text-md text-center text-secondary">When you have messages, they will appear here.</div>
+                    <div class="mt-5 text-2xl font-semibold tracking-tight">{{ t('messages.noMessages') }}</div>
+                    <div class="w-full max-w-60 mt-1 text-md text-center text-secondary">{{ t('messages.viewAll') }}</div>
                 </div>
             </ng-container>
         </div>
     </div>
 </ng-template>
+</ng-container>

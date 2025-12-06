@@ -76,6 +76,9 @@ export class LanguagesComponent implements OnInit, OnDestroy
     {
         // Set the active lang
         this._translocoService.setActiveLang(lang);
+
+        // Store the selected language in localStorage for persistence
+        localStorage.setItem('selectedLanguage', lang);
     }
 
     /**

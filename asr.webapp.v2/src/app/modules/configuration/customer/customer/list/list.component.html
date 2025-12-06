@@ -1,3 +1,4 @@
+<ng-container *transloco="let t">
 <div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
 
     <mat-drawer-container class="flex-auto h-full bg-card dark:bg-transparent" (backdropClick)="onBackdropClicked()">
@@ -24,7 +25,7 @@
                     <!-- Title -->
                     <div>
 
-                        <div class="text-4xl font-extrabold tracking-tight leading-none">Customers</div>
+                        <div class="text-4xl font-extrabold tracking-tight leading-none">{{ t('configuration.customer.customers') }}</div>
 
 
                     </div>
@@ -36,8 +37,8 @@
                             <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript w-full min-w-50">
                                 <mat-icon class="icon-size-5" matPrefix [svgIcon]="'heroicons_solid:search'"></mat-icon>
                                 <input #filter matInput [formControl]="searchInputControl" [autocomplete]="'off'"
-                                    [placeholder]="'Search'">
-                                <mat-icon matPostfix (click)="advancedSearch.toggle()" matTooltip="Advanced Search"
+                                    [placeholder]="t('common.search')">
+                                <mat-icon matPostfix (click)="advancedSearch.toggle()" [matTooltip]="t('common.advancedSearch')"
                                     class="cursor-pointer">
                                     settings
                                 </mat-icon>
@@ -386,7 +387,8 @@
 </fuse-drawer>
 <ng-template #userMenu let-user>
     <section class="user-menu">
-        <div (click)="openInNewWindow()">View</div>
+        <div (click)="openInNewWindow()">{{ t('common.view') }}</div>
         <div (click)="openDialog()">Show Budget History</div>
     </section>
 </ng-template>
+</ng-container>

@@ -34,13 +34,22 @@ import { TranslocoHttpLoader } from 'app/core/transloco/transloco.http-loader';
             useClass: TranslocoHttpLoader
         },
         {
-            // Preload the default language before the app starts to prevent empty/jumping content
+            // Preload the language before the app starts to prevent empty/jumping content
+            // Check localStorage for a stored language preference, otherwise use default
             provide   : APP_INITIALIZER,
             deps      : [TranslocoService],
             useFactory: (translocoService: TranslocoService): any => (): Promise<Translation> => {
-                const defaultLang = translocoService.getDefaultLang();
-                translocoService.setActiveLang(defaultLang);
-                return translocoService.load(defaultLang).toPromise();
+                // Check if there's a stored language preference in localStorage
+                const storedLang = localStorage.getItem('selectedLanguage');
+                const availableLangs = ['en', 'tr'];
+                
+                // Use stored language if valid, otherwise use default
+                const langToLoad = storedLang && availableLangs.includes(storedLang) 
+                    ? storedLang 
+                    : translocoService.getDefaultLang();
+                
+                translocoService.setActiveLang(langToLoad);
+                return translocoService.load(langToLoad).toPromise();
             },
             multi     : true
         }

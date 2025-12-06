@@ -1,3 +1,4 @@
+<ng-container *transloco="let t">
 <div class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
   <!-- Header -->
   <div class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4 px-6 md:px-8 border-b">
@@ -7,7 +8,7 @@
     </div>
     <!-- Title -->
     <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
-      <div class="text-4xl font-extrabold tracking-tight">Invoices</div>
+      <div class="text-4xl font-extrabold tracking-tight">{{ t('financial.invoices') }}</div>
       <div class="cursor-pointer ml-3 mt-2">
         <button mat-icon-button ngxPrint useExistingCss="true" printSectionId="section-to-print">
           <mat-icon [svgIcon]="'heroicons_outline:printer'"></mat-icon>
@@ -20,8 +21,8 @@
       <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
         <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
         <input [autocomplete]="'off'" [formControl]="searchInputControl" matInput [autocomplete]="'off'"
-          [placeholder]="'Search'" />
-        <mat-icon matPostfix (click)="invoicesAdvancedSearch.toggle()" matTooltip="Advanced Search"
+          [placeholder]="t('common.search')" />
+        <mat-icon matPostfix (click)="invoicesAdvancedSearch.toggle()" [matTooltip]="t('common.advancedSearch')"
           class="cursor-pointer">
           settings
         </mat-icon>
@@ -43,18 +44,18 @@
             <div
               class="invoices-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
               matSort matSortDisableClear>
-              <div [mat-sort-header]="'invoiceNumber'">Number</div>
+              <div [mat-sort-header]="'invoiceNumber'">{{ t('common.number') }}</div>
 
-              <div [mat-sort-header]="'ownerName'">Issuer</div>
-              <div [mat-sort-header]="'requestTypeName'">Source</div>
+              <div [mat-sort-header]="'ownerName'">{{ t('financial.issuer') }}</div>
+              <div [mat-sort-header]="'requestTypeName'">{{ t('financial.source') }}</div>
 
               <div style="direction: rtl" class="pr-8 grid justify-items-start print:block" [mat-sort-header]="'total'">
-                Total
+                {{ t('common.total') }}
               </div>
               <div class="hidden lg:block print:block" [mat-sort-header]="'status'">
-                Status
+                {{ t('common.status') }}
               </div>
-              <div class="print:hidden">More</div>
+              <div class="print:hidden">{{ t('common.more') }}</div>
             </div>
             <!-- Rows -->
             <ng-container *ngIf="invoices$ | async as invoices">
@@ -68,7 +69,7 @@
                     {{ invoice.ownerName }}
                     <div>
                       <div style="background-color: rgb(245 245 245) !important"
-                        class="bg-neutral-400 text-xs rounded-sm py-0.5 px-2 inline-block" matTooltip="Issuer Type">
+                        class="bg-neutral-400 text-xs rounded-sm py-0.5 px-2 inline-block" [matTooltip]="t('financial.issuerType')">
                         <div class="rounded-3xl w-2 h-2 mr-2 inline-block bg-green-500"></div>
                         <div class="inline-block">
                           {{ invoice.ownerTypeName }}
@@ -80,14 +81,14 @@
                   <div class="truncate">
                     {{ invoice.requestTypeName }}
                     <div>
-                      <div matTooltip="Code" style="background-color: rgb(245 245 245) !important"
+                      <div [matTooltip]="t('common.code')" style="background-color: rgb(245 245 245) !important"
                         class="bg-neutral-400 text-xs rounded-sm py-0.5 px-2 inline-block">
                         <div class="rounded-3xl w-2 h-2 mr-2 inline-block bg-green-500"></div>
                         <div class="inline-block">
                           {{ invoice.requestCode }}
                         </div>
                       </div>
-                      <div matTooltip="Reference No" style="background-color: rgb(245 245 245) !important"
+                      <div [matTooltip]="t('financial.referenceNo')" style="background-color: rgb(245 245 245) !important"
                         class="ml-0.5 bg-neutral-400 text-xs rounded-sm py-0.5 px-2 inline-block">
                         <div class="rounded-3xl w-2 h-2 mr-2 inline-block bg-green-500"></div>
                         <div class="inline-block">
@@ -144,7 +145,7 @@
   </div>
   <ng-template #noInvoices>
     <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">
-      There are no invoices!
+      {{ t('financial.noInvoices') }}
     </div>
   </ng-template>
 </div>
@@ -154,15 +155,15 @@
       {{ selectedInfoRow.financialCategoryName }}
     </h4>
     <div class="flex flex-col mb-1">
-      <span class="text-gray-400 text-sm">Creator User Name</span>
+      <span class="text-gray-400 text-sm">{{ t('common.creatorUserName') }}</span>
       <p>{{ selectedInfoRow.registerUserName }}</p>
     </div>
     <div class="flex flex-col mb-1">
-      <span class="text-gray-400 text-sm">Creator IP</span>
+      <span class="text-gray-400 text-sm">{{ t('common.creatorIP') }}</span>
       <p class="text-gray-900">{{ selectedInfoRow.clientIP }}</p>
     </div>
     <div class="flex flex-col mb-1">
-      <span class="text-gray-400 text-sm">Update Date & time</span>
+      <span class="text-gray-400 text-sm">{{ t('common.updateDateTime') }}</span>
       <p class="text-gray-900">
         {{
         selectedInfoRow.localChangeDate +
@@ -177,7 +178,7 @@
 <mat-menu #contextMenu="matMenu">
   <ng-template matMenuContent>
     <button mat-menu-item [routerLink]="['../details', selectedInfoRow.invoiceId]">
-      View
+      {{ t('common.view') }}
     </button>
   </ng-template>
 </mat-menu>
@@ -185,15 +186,15 @@
   <ng-template matMenuContent>
     <button mat-menu-item disabled="true" [routerLink]="['../details']">
       <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
-      ADD
+      {{ t('common.add') }}
     </button>
     <button mat-menu-item (click)="download()">
       <mat-icon svgIcon="mat_outline:file_download"></mat-icon>
-      PDF
+      {{ t('common.pdf') }}
     </button>
     <button mat-menu-item (click)="exportTable()">
       <mat-icon svgIcon="mat_outline:file_download"></mat-icon>
-      EXCEL
+      {{ t('common.excel') }}
     </button>
   </ng-template>
 </mat-menu>
@@ -207,7 +208,7 @@
         </mat-icon>
 
         <h3 class="ml-2 mt-4 text-white flex-auto">
-          <span>Advanced Search</span>
+          <span>{{ t('common.advancedSearch') }}</span>
         </h3>
       </div>
       <div class="inline-block">
@@ -221,12 +222,12 @@
         <div
           class="border border-solid border-gray-200 rounded-sm flex flex-initial flex-col relative mb-10 pt-4 px-4 pb-3">
           <h2 class="absolute -top-2.5 left-1.5 m-0 px-2 bg-white">
-            Search Fields
+            {{ t('common.searchFields') }}
           </h2>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Status</mat-label>
-              <mat-select [(value)]="invoiceInfo.statusIdList" placeholder="Status" formControlName="status" multiple>
+              <mat-label>{{ t('common.status') }}</mat-label>
+              <mat-select [(value)]="invoiceInfo.statusIdList" [placeholder]="t('common.status')" formControlName="status" multiple>
                 <mat-option (onSelectionChange)="setStatusValue($event)" *ngFor="let status of statuses"
                   [value]="status.statusId" [checked]="status.isDefault === 1">
                   {{ status.statusDescription }}</mat-option>
@@ -235,7 +236,7 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Invoice Number%</mat-label>
+              <mat-label>{{ t('financial.invoiceNumber') }}%</mat-label>
               <input [autocomplete]="'off'" matInput value="" formControlName="invoiceNumber" maxlength="50" />
               <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
               </mat-icon>
@@ -243,18 +244,18 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Issuer Type</mat-label>
-              <mat-select placeholder="Issuer Type" formControlName="issuerType" multiple>
+              <mat-label>{{ t('financial.issuerType') }}</mat-label>
+              <mat-select [placeholder]="t('financial.issuerType')" formControlName="issuerType" multiple>
                 <mat-option value="1000613" checked="true">
-                  Contractor</mat-option>
+                  {{ t('financial.contractor') }}</mat-option>
                 <mat-option value="1000614" checked="true">
-                  Personnel</mat-option>
+                  {{ t('financial.personnel') }}</mat-option>
               </mat-select>
             </mat-form-field>
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Issuer%</mat-label>
+              <mat-label>{{ t('financial.issuer') }}%</mat-label>
               <input [autocomplete]="'off'" matInput value="" formControlName="issuer" maxlength="50" />
               <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
               </mat-icon>
@@ -262,7 +263,7 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Source Code%</mat-label>
+              <mat-label>{{ t('financial.sourceCode') }}%</mat-label>
               <input [autocomplete]="'off'" matInput value="" formControlName="sourceCode" maxlength="50" />
               <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
               </mat-icon>
@@ -270,7 +271,7 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Reference No%</mat-label>
+              <mat-label>{{ t('financial.referenceNo') }}%</mat-label>
               <input [autocomplete]="'off'" matInput value="" formControlName="referenceNo" maxlength="50" />
               <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
               </mat-icon>
@@ -278,7 +279,7 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Total From</mat-label>
+              <mat-label>{{ t('financial.totalFrom') }}</mat-label>
               <input type="number" [autocomplete]="'off'" matInput value="" formControlName="totalFrom"
                 maxlength="50" />
               <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
@@ -287,7 +288,7 @@
           </div>
           <div>
             <mat-form-field appearance="outline" class="w-full">
-              <mat-label>Total To</mat-label>
+              <mat-label>{{ t('financial.totalTo') }}</mat-label>
               <input type="number" [autocomplete]="'off'" matInput value="" formControlName="totalTo" maxlength="50" />
               <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:dialpad">
               </mat-icon>
@@ -298,12 +299,12 @@
         <div class="flex flex-row w-full">
           <div class="py-2 w-1/2 pl-10 items-center align-middle">
             <button mat-raised-button style="color: darkgreen" (click)="invoicesSearch()">
-              Apply
+              {{ t('common.apply') }}
             </button>
           </div>
           <div class="py-2 w-1/2 items-center align-middle">
             <button (click)="resetAdvancedSearch()" mat-raised-button style="color: darkred">
-              Cancel
+              {{ t('common.cancel') }}
             </button>
           </div>
         </div>
@@ -311,3 +312,4 @@
     </form>
   </div>
 </fuse-drawer>
+</ng-container>
