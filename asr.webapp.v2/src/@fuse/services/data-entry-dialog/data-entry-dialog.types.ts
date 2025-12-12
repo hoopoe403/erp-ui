@@ -22,5 +22,5 @@ export interface FuseDataEntryDialogConfig {
 }
 export interface FuseDataEntryDialogFormControls {
     formControlName: string, index: number, label: string, placeHolder: string,
-    type: string, disabled: boolean, value: any
+    type: string, disabled: boolean, value: any, options?: Array<{ value: any, label: string }>
 }

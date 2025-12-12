@@ -305,6 +305,8 @@
     "profitLoss": "Profit & Loss",
     "debit": "Debit",
     "credit": "Credit",
+    "both": "Both",
+    "nature": "Nature",
     "debitBalance": "Debit Balance",
     "creditBalance": "Credit Balance",
     "debitFrom": "Debit From",

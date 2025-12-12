@@ -305,6 +305,8 @@
     "profitLoss": "Kar ve Zarar",
     "debit": "Borç",
     "credit": "Alacak",
+    "both": "Her İkisi",
+    "nature": "Hesap Niteliği",
     "debitBalance": "Borç Bakiyesi",
     "creditBalance": "Alacak Bakiyesi",
     "debitFrom": "Borç Başlangıç",

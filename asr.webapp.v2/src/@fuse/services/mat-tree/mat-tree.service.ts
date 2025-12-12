@@ -59,6 +59,7 @@ export class ChecklistDatabase {
             node.code = element.code;
             node.item = element.item;
             node.status = element.status;
+            node.nature = element.nature || 1; // Default to Debit (1) if not provided
             node.frameConformity = element.frameConformity;
             node.panelConformity = element.panelConformity;
             let children = baseArray.filter(x => x.levelId === level + 1 && x.parentId === element.id);
@@ -119,9 +120,9 @@ export class ChecklistDatabase {
 
     /** Add an item to to-do list */
     insertItem(parent: TodoItemNode, name: string, id: number, status: number, code: string,
-        frameConformity: number, panelConformity: number) {
+        nature: number, frameConformity: number, panelConformity: number) {
         const child = <TodoItemNode>{
-            item: name, id: id, code: code, status: status,
+            item: name, id: id, code: code, status: status, nature: nature,
             children: [], isSelected: false, parentId: null, frameConformity: frameConformity, panelConformity: panelConformity
         };
         if (parent === undefined) {
@@ -146,11 +147,12 @@ export class ChecklistDatabase {
         }
     }
 
-    updateItem(node: TodoItemNode, name: string, id: number, code: string, status: number) {
+    updateItem(node: TodoItemNode, name: string, id: number, code: string, status: number, nature: number) {
         node.item = name;
         node.id = id;
         node.status = status;
         node.code = code;
+        node.nature = nature;
         this.dataChange.next(this.data);
     }
 }
@@ -162,6 +164,7 @@ export class TodoItemNode {
     id: number;
     code: string;
     status: number;
+    nature: number; // 1: Debit, 2: Credit, 3: Both
     panelConformity: number;
     frameConformity: number;
 }
@@ -173,6 +176,7 @@ export class TodoItemFlatNode {
     code: string;
     parentId: number;
     status: number;
+    nature: number; // 1: Debit, 2: Credit, 3: Both
     levelId: number;
     expandable: boolean;
     panelConformity: number;
