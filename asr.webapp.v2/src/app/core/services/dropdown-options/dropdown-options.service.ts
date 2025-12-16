@@ -174,3 +174,4 @@ export class DropdownOptionsService {
         return this._translocoService.getActiveLang();
     }
 }
+

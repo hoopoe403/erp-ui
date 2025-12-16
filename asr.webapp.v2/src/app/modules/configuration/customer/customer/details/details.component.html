@@ -147,10 +147,13 @@
             </div>
         </div>
 
-        <!-- Customer form -->
+        <!-- Customer form with tabs -->
         <div class="relative flex flex-col flex-auto items-center px-6 sm:px-12">
             <div class="w-full max-w-3xl">
-                <form [formGroup]="customerForm">
+                <mat-tab-group class="mt-8">
+                    <!-- Information Tab -->
+                    <mat-tab label="Information">
+                        <form [formGroup]="customerForm">
 
                     <!-- Avatar -->
                     <div class="flex flex-auto items-end -mt-16">
@@ -358,7 +361,19 @@
                         </button>
                     </div>
 
-                </form>
+                        </form>
+                    </mat-tab>
+                    
+                    <!-- Bank Accounts Tab -->
+                    <mat-tab label="Bank Accounts">
+                        <div class="mt-8">
+                            <app-bank-account 
+                                [ownerId]="customer?.customerId || customerForm.get('customerId')?.value || null" 
+                                [ownerTypeId]="1">
+                            </app-bank-account>
+                        </div>
+                    </mat-tab>
+                </mat-tab-group>
             </div>
         </div>
     </ng-container>

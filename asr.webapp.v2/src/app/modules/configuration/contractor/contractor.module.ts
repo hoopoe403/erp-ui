@@ -24,6 +24,7 @@ import { contractorsRoutes } from "./contractor.routing";
 import { ContractorsComponent } from "./contractors.component";
 import { ContractorsDetailsComponent } from "./details/details.component";
 import { ContractorsListComponent } from "./list/list.component";
+import { BankAccountModule } from '../shared/bank-account/bank-account.module';
 
 @NgModule({
   declarations: [
@@ -34,6 +35,7 @@ import { ContractorsListComponent } from "./list/list.component";
   imports: [
     RouterModule.forChild(contractorsRoutes),
     CommonModule,
+    BankAccountModule,
     MatIconModule,
     MatButtonModule,
     NgxPrintModule,

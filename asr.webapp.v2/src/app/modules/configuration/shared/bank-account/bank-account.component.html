@@ -1,0 +1,182 @@
+<div class="w-full">
+    <form [formGroup]="bankAccountForm" class="flex rounded-b-md rounded-tr-md flex-col px-8 py-4 bg-card shadow">
+        <div class="h-2">
+            <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+        </div>
+
+        <!-- Warning if no ownerId (TEMPORARILY DISABLED FOR TESTING) -->
+        <!--
+        <div *ngIf="!ownerId || !ownerTypeId" class="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+            <div class="flex items-center">
+                <mat-icon class="text-yellow-600 dark:text-yellow-400 mr-2">info</mat-icon>
+                <span class="text-yellow-800 dark:text-yellow-200">
+                    Please save the customer/contractor information first. Bank accounts will be saved after the owner is saved.
+                </span>
+            </div>
+        </div>
+        -->
+
+        <!-- Single Form for Adding/Editing at the TOP -->
+        <div class="bank-account-form border-b pb-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h4 class="text-lg font-medium">
+                    {{ editingAccountId ? 'Edit Bank Account' : 'Add New Bank Account' }}
+                </h4>
+                <button *ngIf="editingAccountId" mat-button type="button" (click)="cancelEdit()">
+                    Cancel
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Bank Dropdown -->
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Bank</mat-label>
+                    <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:account_balance"></mat-icon>
+                    <mat-select formControlName="bankId" required>
+                        <mat-option *ngFor="let bank of banks" [value]="bank.bankId">
+                            {{ bank.bankName }} ({{ bank.bankCode }})
+                        </mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="bankAccountForm.get('bankId')?.hasError('required')">
+                        Bank is required
+                    </mat-error>
+                </mat-form-field>
+
+                <!-- Account Type -->
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Account Type</mat-label>
+                    <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:credit_card"></mat-icon>
+                    <mat-select formControlName="accountTypeId" required>
+                        <mat-option *ngFor="let type of bankAccountTypes" [value]="type.bankAccountTypeId">
+                            {{ type.bankAccountTypeName }}
+                        </mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="bankAccountForm.get('accountTypeId')?.hasError('required')">
+                        Account type is required
+                    </mat-error>
+                </mat-form-field>
+
+                <!-- Branch Code -->
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Branch Code</mat-label>
+                    <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:business"></mat-icon>
+                    <input matInput formControlName="branchCode" required maxlength="50">
+                    <mat-error *ngIf="bankAccountForm.get('branchCode')?.hasError('required')">
+                        Branch code is required
+                    </mat-error>
+                </mat-form-field>
+
+                <!-- Branch Name -->
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Branch Name</mat-label>
+                    <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:business"></mat-icon>
+                    <input matInput formControlName="branchName" required maxlength="100">
+                    <mat-error *ngIf="bankAccountForm.get('branchName')?.hasError('required')">
+                        Branch name is required
+                    </mat-error>
+                </mat-form-field>
+
+                <!-- Account Number -->
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Account Number</mat-label>
+                    <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:account_balance_wallet"></mat-icon>
+                    <input matInput formControlName="accountNumber" required maxlength="50">
+                    <mat-error *ngIf="bankAccountForm.get('accountNumber')?.hasError('required')">
+                        Account number is required
+                    </mat-error>
+                </mat-form-field>
+
+                <!-- SWIFT Code -->
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>SWIFT Code</mat-label>
+                    <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:code"></mat-icon>
+                    <input matInput formControlName="swiftCode" maxlength="11" 
+                        placeholder="e.g., CHASUS33">
+                </mat-form-field>
+
+                <!-- IBAN -->
+                <mat-form-field appearance="outline" class="w-full md:col-span-2">
+                    <mat-label>IBAN</mat-label>
+                    <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:account_balance"></mat-icon>
+                    <input matInput formControlName="iban" maxlength="34" 
+                        placeholder="e.g., GB82WEST12345698765432">
+                </mat-form-field>
+            </div>
+
+            <!-- Save/Add Button -->
+            <div class="flex justify-end mt-6">
+                <button mat-flat-button color="primary" type="button" 
+                    [disabled]="isLoading || bankAccountForm.invalid"
+                    (click)="saveAccount()">
+                    <mat-icon>{{ editingAccountId ? 'save' : 'add' }}</mat-icon>
+                    <span class="ml-2">{{ editingAccountId ? 'Update Account' : 'Add Account' }}</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Saved Accounts Table List -->
+        <div *ngIf="bankAccounts.length > 0" class="mt-6">
+            <h4 class="text-lg font-medium mb-4">Bank Accounts List</h4>
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Bank</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Account Type</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Branch Code</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Branch Name</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Account Number</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">SWIFT Code</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">IBAN</th>
+                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let account of bankAccounts; let i = index" 
+                            class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <td class="px-4 py-3 text-sm">{{ getBankName(account.bankId) }}</td>
+                            <td class="px-4 py-3 text-sm">{{ getAccountTypeName(account.accountTypeId) }}</td>
+                            <td class="px-4 py-3 text-sm">{{ account.branchCode }}</td>
+                            <td class="px-4 py-3 text-sm">{{ account.branchName }}</td>
+                            <td class="px-4 py-3 text-sm font-medium">{{ account.accountNumber }}</td>
+                            <td class="px-4 py-3 text-sm">{{ account.swiftCode || '-' }}</td>
+                            <td class="px-4 py-3 text-sm">{{ account.iban || '-' }}</td>
+                            <td class="px-4 py-3 text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    <button mat-icon-button color="primary" type="button" 
+                                            (click)="editAccount(account)" [matTooltip]="'Edit'">
+                                        <mat-icon>edit</mat-icon>
+                                    </button>
+                                    <button mat-icon-button color="warn" type="button" 
+                                            (click)="deleteAccount(account.bankAccountId)" [matTooltip]="'Delete'">
+                                        <mat-icon>delete</mat-icon>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- No Accounts Message -->
+        <div *ngIf="bankAccounts.length === 0" class="text-center py-8 text-gray-500">
+            No bank accounts added yet. Fill the form above and click "Add Account" to add one.
+        </div>
+
+        <!-- Alerts -->
+        <div class="flex items-center flex-wrap content-center w-full py-2">
+            <div class="w-auto h-auto min-h-15 m-auto">
+                <fuse-alert *ngIf="_result.succeed" [appearance]="'soft'" [dismissible]="true"
+                    [dismissed]="true" [name]="'successMessage'" [type]="'success'">
+                    <b>Result: </b> {{ _result.message }}.
+                </fuse-alert>
+                <fuse-alert *ngIf="!_result.succeed && _result.message" [appearance]="'soft'" [dismissible]="true"
+                    [dismissed]="true" [name]="'errorMessage'" [type]="'error'">
+                    <b>Result: </b> {{ _result.message }}.
+                </fuse-alert>
+            </div>
+        </div>
+    </form>
+</div>
+
