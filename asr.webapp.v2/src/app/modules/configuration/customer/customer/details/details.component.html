@@ -368,8 +368,8 @@
                     <mat-tab label="Bank Accounts">
                         <div class="mt-8">
                             <app-bank-account 
-                                [ownerId]="customer?.customerId || customerForm.get('customerId')?.value || null" 
-                                [ownerTypeId]="1">
+                                [bankAccounts]="bankAccounts"
+                                (bankAccountsChange)="onBankAccountsChange($event)">
                             </app-bank-account>
                         </div>
                     </mat-tab>

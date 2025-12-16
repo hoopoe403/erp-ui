@@ -20,9 +20,9 @@
         <div class="bank-account-form border-b pb-6 mb-6">
             <div class="flex items-center justify-between mb-4">
                 <h4 class="text-lg font-medium">
-                    {{ editingAccountId ? 'Edit Bank Account' : 'Add New Bank Account' }}
+                    {{ editingIndex !== null ? 'Edit Bank Account' : 'Add New Bank Account' }}
                 </h4>
-                <button *ngIf="editingAccountId" mat-button type="button" (click)="cancelEdit()">
+                <button *ngIf="editingIndex !== null" mat-button type="button" (click)="cancelEdit()">
                     Cancel
                 </button>
             </div>
@@ -42,13 +42,13 @@
                     </mat-error>
                 </mat-form-field>
 
-                <!-- Account Type -->
+                <!-- Account Type (Currency) -->
                 <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Account Type</mat-label>
+                    <mat-label>Account Type (Currency)</mat-label>
                     <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:credit_card"></mat-icon>
                     <mat-select formControlName="accountTypeId" required>
-                        <mat-option *ngFor="let type of bankAccountTypes" [value]="type.bankAccountTypeId">
-                            {{ type.bankAccountTypeName }}
+                        <mat-option *ngFor="let type of accountTypes" [value]="type.accountTypeId">
+                            {{ type.accountTypeName }} ({{ type.accountTypeCode }})
                         </mat-option>
                     </mat-select>
                     <mat-error *ngIf="bankAccountForm.get('accountTypeId')?.hasError('required')">
@@ -108,8 +108,8 @@
                 <button mat-flat-button color="primary" type="button" 
                     [disabled]="isLoading || bankAccountForm.invalid"
                     (click)="saveAccount()">
-                    <mat-icon>{{ editingAccountId ? 'save' : 'add' }}</mat-icon>
-                    <span class="ml-2">{{ editingAccountId ? 'Update Account' : 'Add Account' }}</span>
+                    <mat-icon>{{ editingIndex !== null ? 'save' : 'add' }}</mat-icon>
+                    <span class="ml-2">{{ editingIndex !== null ? 'Update Account' : 'Add Account' }}</span>
                 </button>
             </div>
         </div>
@@ -134,8 +134,8 @@
                     <tbody>
                         <tr *ngFor="let account of bankAccounts; let i = index" 
                             class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            <td class="px-4 py-3 text-sm">{{ getBankName(account.bankId) }}</td>
-                            <td class="px-4 py-3 text-sm">{{ getAccountTypeName(account.accountTypeId) }}</td>
+                            <td class="px-4 py-3 text-sm">{{ account.bankName || getBankName(account.bankId) }}</td>
+                            <td class="px-4 py-3 text-sm">{{ account.accountTypeName || getAccountTypeName(account.accountTypeId) }}</td>
                             <td class="px-4 py-3 text-sm">{{ account.branchCode }}</td>
                             <td class="px-4 py-3 text-sm">{{ account.branchName }}</td>
                             <td class="px-4 py-3 text-sm font-medium">{{ account.accountNumber }}</td>
@@ -144,11 +144,11 @@
                             <td class="px-4 py-3 text-center">
                                 <div class="flex items-center justify-center gap-2">
                                     <button mat-icon-button color="primary" type="button" 
-                                            (click)="editAccount(account)" [matTooltip]="'Edit'">
+                                            (click)="editAccount(i)" [matTooltip]="'Edit'">
                                         <mat-icon>edit</mat-icon>
                                     </button>
                                     <button mat-icon-button color="warn" type="button" 
-                                            (click)="deleteAccount(account.bankAccountId)" [matTooltip]="'Delete'">
+                                            (click)="deleteAccount(i)" [matTooltip]="'Delete'">
                                         <mat-icon>delete</mat-icon>
                                     </button>
                                 </div>

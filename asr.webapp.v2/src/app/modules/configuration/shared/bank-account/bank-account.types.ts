@@ -1,37 +1,33 @@
-import { BaseModel } from "app/core/type/base/BaseModel";
-import { Paging } from "app/core/type/paging/paging.type";
-
 /**
- * Bank Account model
+ * Bank Account interface
  */
-export class BankAccount extends BaseModel {
-    bankAccountId: number;
-    ownerId: number; // Customer ID or Contractor ID
-    ownerTypeId: number; // Type: Customer or Contractor
+export interface BankAccount {
+    bankAccountId?: number;
     bankId: number;
-    bankCode: string;
-    bankName: string;
+    bankName?: string; // For display purposes
     branchCode: string;
     branchName: string;
     accountNumber: string;
-    swiftCode: string;
-    iban: string;
+    swiftCode?: string;
+    iban?: string;
     accountTypeId: number;
-    accountTypeCode: string;
-    accountTypeName: string;
-    status: number;
-    statusDescription: string;
-    statusColor: string;
-    page: Paging;
+    accountTypeName?: string; // For display purposes
 }
 
 /**
- * Bank Account Type
+ * Account Type interface (Currency type: Dollar, Euro, Turkish Lira)
  */
-export class BankAccountType {
-    bankAccountTypeId: number;
-    bankAccountTypeCode: string;
-    bankAccountTypeName: string;
-    status: number;
+export interface AccountType {
+    accountTypeId: number;
+    accountTypeName: string;
+    accountTypeCode: string;
 }
 
+/**
+ * Hardcoded account types (currencies)
+ */
+export const ACCOUNT_TYPES: AccountType[] = [
+    { accountTypeId: 1, accountTypeName: 'Dollar', accountTypeCode: 'USD' },
+    { accountTypeId: 2, accountTypeName: 'Euro', accountTypeCode: 'EUR' },
+    { accountTypeId: 3, accountTypeName: 'Turkish Lira', accountTypeCode: 'TRY' }
+];

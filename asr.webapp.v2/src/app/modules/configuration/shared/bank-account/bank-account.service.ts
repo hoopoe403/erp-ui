@@ -3,84 +3,20 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
-import { BankAccount, BankAccountType } from './bank-account.types';
 import { ApiHelperService } from 'environments/api-helper.service';
-import { Bank } from '../../../financial/shared/financial.types';
 
 @Injectable({
     providedIn: 'root'
 })
 export class BankAccountService {
-    private url: string = 'configuration/bankAccount/';
 
     constructor(private _httpClient: HttpClient) { }
 
     /**
-     * Get bank accounts for an owner (customer or contractor)
+     * Get banks dropdown list (uses existing financial resource endpoint)
+     * TODO: Switch to this method when backend is ready
      */
-    getBankAccounts(ownerId: number, ownerTypeId: number): Observable<any> {
-        return this._httpClient.post(ApiHelperService.BASE_URL + this.url + 'findByOwner', {
-            ownerId: ownerId,
-            ownerTypeId: ownerTypeId
-        }).pipe(
-            map((data) => data),
-            switchMap((data) => {
-                if (!data) {
-                    return throwError('Could not fetch bank accounts');
-                }
-                return of(data);
-            })
-        );
-    }
-
-    /**
-     * Create a new bank account
-     */
-    create(bankAccount: BankAccount): Observable<any> {
-        return this._httpClient.post(ApiHelperService.BASE_URL + this.url + 'create', bankAccount).pipe(
-            map((data) => data)
-        );
-    }
-
-    /**
-     * Update an existing bank account
-     */
-    update(bankAccount: BankAccount): Observable<any> {
-        return this._httpClient.post(ApiHelperService.BASE_URL + this.url + 'edit', bankAccount).pipe(
-            map((data) => data)
-        );
-    }
-
-    /**
-     * Delete a bank account
-     */
-    delete(bankAccountId: number): Observable<any> {
-        return this._httpClient.post(ApiHelperService.BASE_URL + this.url + 'delete', {
-            bankAccountId: bankAccountId
-        }).pipe(
-            map((data) => data)
-        );
-    }
-
-    /**
-     * Get bank account types
-     */
-    getBankAccountTypes(): Observable<any> {
-        return this._httpClient.get(ApiHelperService.BASE_URL + this.url + 'drp/bankAccountType').pipe(
-            map((data) => data),
-            switchMap((data) => {
-                if (!data) {
-                    return throwError('Could not fetch bank account types');
-                }
-                return of(data);
-            })
-        );
-    }
-
-    /**
-     * Get banks (uses existing financial resource endpoint)
-     */
-    getBanks(): Observable<any> {
+    getBanksFromApi(): Observable<any> {
         return this._httpClient.get(ApiHelperService.BASE_URL + 'financial/resource/drp/bank').pipe(
             map((data) => data),
             switchMap((data) => {
@@ -91,5 +27,25 @@ export class BankAccountService {
             })
         );
     }
-}
 
+    /**
+     * Get mock banks for testing
+     * TODO: Remove this method when backend is ready and use getBanksFromApi() instead
+     */
+    getBanks(): Observable<any> {
+        const mockBanks = [
+            { bankId: 1, bankCode: 'ZRT', bankName: 'Ziraat Bankası', status: 1, url: '' },
+            { bankId: 2, bankCode: 'GAR', bankName: 'Garanti BBVA', status: 1, url: '' },
+            { bankId: 3, bankCode: 'ISB', bankName: 'İş Bankası', status: 1, url: '' },
+            { bankId: 4, bankCode: 'YKB', bankName: 'Yapı Kredi', status: 1, url: '' },
+            { bankId: 5, bankCode: 'AKB', bankName: 'Akbank', status: 1, url: '' },
+            { bankId: 6, bankCode: 'HLK', bankName: 'Halkbank', status: 1, url: '' },
+            { bankId: 7, bankCode: 'VKF', bankName: 'Vakıfbank', status: 1, url: '' },
+            { bankId: 8, bankCode: 'DEN', bankName: 'Denizbank', status: 1, url: '' },
+            { bankId: 9, bankCode: 'TEB', bankName: 'TEB', status: 1, url: '' },
+            { bankId: 10, bankCode: 'ING', bankName: 'ING Bank', status: 1, url: '' }
+        ];
+        
+        return of({ data: mockBanks, succeed: true });
+    }
+}

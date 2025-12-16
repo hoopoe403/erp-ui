@@ -152,8 +152,8 @@
         <mat-tab label="Bank Accounts">
           <div class="mt-4">
             <app-bank-account 
-              [ownerId]="contractorInfo?.contractorId || formContractor.get('contractorId')?.value || null" 
-              [ownerTypeId]="2">
+              [bankAccounts]="bankAccounts"
+              (bankAccountsChange)="onBankAccountsChange($event)">
             </app-bank-account>
           </div>
         </mat-tab>

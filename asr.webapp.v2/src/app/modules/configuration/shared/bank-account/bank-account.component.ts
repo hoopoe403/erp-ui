@@ -1,10 +1,10 @@
-import { Component, Input, OnInit, OnDestroy, OnChanges, SimpleChanges, ChangeDetectorRef, ViewEncapsulation } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectorRef, ViewEncapsulation } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { BankAccount, BankAccountType } from './bank-account.types';
+import { BankAccount, AccountType, ACCOUNT_TYPES } from './bank-account.types';
 import { BankAccountService } from './bank-account.service';
-import { Bank, BankAccountType as FinancialBankAccountType } from '../../../financial/shared/financial.types';
+import { Bank } from '../../../financial/shared/financial.types';
 import { FuseAlertService } from '@fuse/components/alert';
 import { OpResult } from 'app/core/type/result/result.types';
 
@@ -14,54 +14,20 @@ import { OpResult } from 'app/core/type/result/result.types';
     styleUrls: ['./bank-account.component.scss'],
     encapsulation: ViewEncapsulation.None
 })
-export class BankAccountComponent implements OnInit, OnDestroy, OnChanges {
-    @Input() ownerId: number; // Customer ID or Contractor ID
-    @Input() ownerTypeId: number; // 1: Customer, 2: Contractor (or your type IDs)
+export class BankAccountComponent implements OnInit, OnDestroy {
+    // Input: receive bank accounts from parent component
+    @Input() bankAccounts: BankAccount[] = [];
+    
+    // Output: emit changes to parent component
+    @Output() bankAccountsChange = new EventEmitter<BankAccount[]>();
     
     bankAccountForm: FormGroup;
-    bankAccounts: BankAccount[] = [];
     banks: Bank[] = [];
-    bankAccountTypes: FinancialBankAccountType[] = [];
+    accountTypes: AccountType[] = ACCOUNT_TYPES; // Hardcoded: Dollar, Euro, Turkish Lira
     isLoading: boolean = false;
     _result: OpResult = new OpResult();
-    editingAccountId: number | null = null; // Track which account is being edited
+    editingIndex: number | null = null; // Track which account index is being edited
     private _unsubscribeAll: Subject<any> = new Subject<any>();
-
-    // Mock account types (temporary until backend is ready)
-    private mockAccountTypes: FinancialBankAccountType[] = [
-        { 
-            bankAccountTypeId: 1, 
-            bankAccountTypeCode: 'CHECKING', 
-            bankAccountTypeName: 'Checking Account', 
-            status: 1,
-            statusDescription: 'Active',
-            statusColor: 'green'
-        },
-        { 
-            bankAccountTypeId: 2, 
-            bankAccountTypeCode: 'SAVINGS', 
-            bankAccountTypeName: 'Savings Account', 
-            status: 1,
-            statusDescription: 'Active',
-            statusColor: 'green'
-        },
-        { 
-            bankAccountTypeId: 3, 
-            bankAccountTypeCode: 'CURRENT', 
-            bankAccountTypeName: 'Current Account', 
-            status: 1,
-            statusDescription: 'Active',
-            statusColor: 'green'
-        },
-        { 
-            bankAccountTypeId: 4, 
-            bankAccountTypeCode: 'DEPOSIT', 
-            bankAccountTypeName: 'Deposit Account', 
-            status: 1,
-            statusDescription: 'Active',
-            statusColor: 'green'
-        }
-    ];
 
     constructor(
         private _formBuilder: FormBuilder,
@@ -73,24 +39,12 @@ export class BankAccountComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     ngOnInit(): void {
-        // Always load banks and account types (they don't depend on ownerId)
+        // Load banks dropdown
         this.loadBanks();
-        this.loadBankAccountTypes();
         
-        // Initialize based on ownerId
-        this.initializeData();
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        // If ownerId changes from null/undefined to a value, load existing accounts
-        if (changes['ownerId'] && !changes['ownerId'].firstChange) {
-            const previousOwnerId = changes['ownerId'].previousValue;
-            const currentOwnerId = changes['ownerId'].currentValue;
-            
-            // If ownerId was null/undefined and now has a value, load accounts
-            if (!previousOwnerId && currentOwnerId && this.ownerTypeId) {
-                this.loadBankAccounts();
-            }
+        // Initialize bankAccounts if null
+        if (!this.bankAccounts) {
+            this.bankAccounts = [];
         }
     }
 
@@ -104,7 +58,6 @@ export class BankAccountComponent implements OnInit, OnDestroy, OnChanges {
      */
     private createForm(): void {
         this.bankAccountForm = this._formBuilder.group({
-            bankAccountId: [null],
             bankId: [null, Validators.required],
             branchCode: ['', Validators.required],
             branchName: ['', Validators.required],
@@ -113,16 +66,6 @@ export class BankAccountComponent implements OnInit, OnDestroy, OnChanges {
             iban: [''],
             accountTypeId: [null, Validators.required]
         });
-    }
-
-    /**
-     * Initialize data based on ownerId
-     */
-    private initializeData(): void {
-        // Only load existing accounts if ownerId exists
-        if (this.ownerId && this.ownerTypeId) {
-            this.loadBankAccounts();
-        }
     }
 
     /**
@@ -136,63 +79,18 @@ export class BankAccountComponent implements OnInit, OnDestroy, OnChanges {
             next: (response) => {
                 this.banks = response.data || [];
                 this.isLoading = false;
-                this._cdr.markForCheck();
+                this._cdr.detectChanges();
             },
             error: (error) => {
                 console.error('Error loading banks:', error);
                 this.isLoading = false;
-                this._cdr.markForCheck();
+                this._cdr.detectChanges();
             }
         });
     }
 
     /**
-     * Load bank account types from backend
-     */
-    private loadBankAccountTypes(): void {
-        this._bankAccountService.getBankAccountTypes().pipe(
-            takeUntil(this._unsubscribeAll)
-        ).subscribe({
-            next: (response) => {
-                this.bankAccountTypes = response.data || this.mockAccountTypes; // Use mock if backend fails
-                this._cdr.markForCheck();
-            },
-            error: (error) => {
-                console.error('Error loading bank account types, using mock data:', error);
-                // Use mock data if backend fails
-                this.bankAccountTypes = this.mockAccountTypes;
-                this._cdr.markForCheck();
-            }
-        });
-    }
-
-    /**
-     * Load existing bank accounts
-     */
-    private loadBankAccounts(): void {
-        if (!this.ownerId || !this.ownerTypeId) {
-            return;
-        }
-
-        this.isLoading = true;
-        this._bankAccountService.getBankAccounts(this.ownerId, this.ownerTypeId).pipe(
-            takeUntil(this._unsubscribeAll)
-        ).subscribe({
-            next: (response) => {
-                this.bankAccounts = response.data || [];
-                this.isLoading = false;
-                this._cdr.markForCheck();
-            },
-            error: (error) => {
-                console.error('Error loading bank accounts:', error);
-                this.isLoading = false;
-                this._cdr.markForCheck();
-            }
-        });
-    }
-
-    /**
-     * Save or update bank account
+     * Add or update bank account in local list
      */
     saveAccount(): void {
         // Validate form
@@ -201,124 +99,54 @@ export class BankAccountComponent implements OnInit, OnDestroy, OnChanges {
             return;
         }
 
-        this.isLoading = true;
         this.dismissAlert('successMessage');
         this.dismissAlert('errorMessage');
 
         const formValue = this.bankAccountForm.value;
         
-        // TEMPORARY: For testing, use mock ownerId if not provided
-        const testOwnerId = this.ownerId || 999; // Mock ID for testing
-        const testOwnerTypeId = this.ownerTypeId || 1; // Default to Customer type
+        // Create bank account object
+        const bankAccount: BankAccount = {
+            bankId: formValue.bankId,
+            bankName: this.getBankName(formValue.bankId),
+            branchCode: formValue.branchCode,
+            branchName: formValue.branchName,
+            accountNumber: formValue.accountNumber,
+            swiftCode: formValue.swiftCode || '',
+            iban: formValue.iban || '',
+            accountTypeId: formValue.accountTypeId,
+            accountTypeName: this.getAccountTypeName(formValue.accountTypeId)
+            // bankAccountId is omitted for new accounts - backend will assign ID
+        };
 
-        // For now, just add to local list without backend call (for testing)
-        // TODO: Uncomment backend call when ready
-        /*
-        const bankAccount = new BankAccount();
-        bankAccount.bankAccountId = formValue.bankAccountId;
-        bankAccount.ownerId = testOwnerId;
-        bankAccount.ownerTypeId = testOwnerTypeId;
-        bankAccount.bankId = formValue.bankId;
-        bankAccount.branchCode = formValue.branchCode;
-        bankAccount.branchName = formValue.branchName;
-        bankAccount.accountNumber = formValue.accountNumber;
-        bankAccount.swiftCode = formValue.swiftCode || '';
-        bankAccount.iban = formValue.iban || '';
-        bankAccount.accountTypeId = formValue.accountTypeId;
-
-        const saveObservable = bankAccount.bankAccountId
-            ? this._bankAccountService.update(bankAccount)
-            : this._bankAccountService.create(bankAccount);
-
-        saveObservable.pipe(takeUntil(this._unsubscribeAll)).subscribe({
-            next: (response) => {
-                if (response.succeed) {
-                    this.showAlert('successMessage');
-                    this._result.message = response.message;
-                    this._result.succeed = true;
-                    
-                    // Clear form and reset editing state
-                    this.resetForm();
-                    
-                    // Reload accounts to get updated list
-                    this.loadBankAccounts();
-                } else {
-                    this.showAlert('errorMessage');
-                    this._result.message = response.message;
-                    this._result.succeed = false;
-                }
-                this.isLoading = false;
-                this._cdr.markForCheck();
-            },
-            error: (error) => {
-                console.error('Error saving bank account:', error);
-                this.showAlert('errorMessage');
-                this._result.message = 'Error saving bank account';
-                this._result.succeed = false;
-                this.isLoading = false;
-                this._cdr.markForCheck();
-            }
-        });
-        */
-
-        // TEMPORARY: Add to local list for testing (without backend)
-        const newAccount = new BankAccount();
-        newAccount.bankAccountId = formValue.bankAccountId || Date.now(); // Use timestamp as temporary ID
-        newAccount.ownerId = testOwnerId;
-        newAccount.ownerTypeId = testOwnerTypeId;
-        newAccount.bankId = formValue.bankId;
-        newAccount.bankCode = '';
-        newAccount.bankName = this.getBankName(formValue.bankId);
-        newAccount.branchCode = formValue.branchCode;
-        newAccount.branchName = formValue.branchName;
-        newAccount.accountNumber = formValue.accountNumber;
-        newAccount.swiftCode = formValue.swiftCode || '';
-        newAccount.iban = formValue.iban || '';
-        newAccount.accountTypeId = formValue.accountTypeId;
-        newAccount.accountTypeCode = '';
-        newAccount.accountTypeName = this.getAccountTypeName(formValue.accountTypeId);
-        newAccount.status = 1;
-        newAccount.statusDescription = 'Active';
-        newAccount.statusColor = 'green';
-        // BaseModel properties (required)
-        newAccount.clientIP = '';
-        newAccount.registerUserID = 0;
-        newAccount.registerUserName = '';
-        newAccount.localChangeDate = '';
-        newAccount.localChangeTime = '';
-        newAccount.chaneDate = '';
-        newAccount.page = null;
-
-        if (formValue.bankAccountId) {
-            // Update existing account in list
-            const index = this.bankAccounts.findIndex(a => a.bankAccountId === formValue.bankAccountId);
-            if (index !== -1) {
-                this.bankAccounts[index] = newAccount;
-                this._result.message = 'Bank account updated successfully';
-            }
+        if (this.editingIndex !== null) {
+            // Update existing account in list (preserve existing ID if any)
+            bankAccount.bankAccountId = this.bankAccounts[this.editingIndex].bankAccountId;
+            this.bankAccounts[this.editingIndex] = bankAccount;
+            this._result.message = 'Bank account updated successfully';
         } else {
-            // Add new account to list
-            this.bankAccounts.push(newAccount);
+            // Add new account (ID is null, backend will assign)
+            this.bankAccounts.push(bankAccount);
             this._result.message = 'Bank account added successfully';
         }
+
+        // Emit changes to parent
+        this.bankAccountsChange.emit([...this.bankAccounts]);
 
         this.showAlert('successMessage');
         this._result.succeed = true;
         
         // Clear form and reset editing state
         this.resetForm();
-        
-        this.isLoading = false;
-        this._cdr.markForCheck();
+        this._cdr.detectChanges();
     }
 
     /**
      * Edit an existing account - load data into form
      */
-    editAccount(account: BankAccount): void {
-        this.editingAccountId = account.bankAccountId;
+    editAccount(index: number): void {
+        const account = this.bankAccounts[index];
+        this.editingIndex = index;
         this.bankAccountForm.patchValue({
-            bankAccountId: account.bankAccountId,
             bankId: account.bankId,
             branchCode: account.branchCode,
             branchName: account.branchName,
@@ -336,77 +164,38 @@ export class BankAccountComponent implements OnInit, OnDestroy, OnChanges {
             }
         }, 100);
         
-        this._cdr.markForCheck();
+        this._cdr.detectChanges();
     }
 
     /**
-     * Delete bank account
+     * Delete bank account from local list
      */
-    deleteAccount(bankAccountId: number): void {
+    deleteAccount(index: number): void {
         if (!confirm('Are you sure you want to delete this bank account?')) {
             return;
         }
 
-        // TEMPORARY: For testing, just remove from local list
-        // TODO: Uncomment backend call when ready
-        /*
-        this.isLoading = true;
         this.dismissAlert('successMessage');
         this.dismissAlert('errorMessage');
 
-        this._bankAccountService.delete(bankAccountId).pipe(
-            takeUntil(this._unsubscribeAll)
-        ).subscribe({
-            next: (response) => {
-                if (response.succeed) {
-                    // Remove from list
-                    const index = this.bankAccounts.findIndex(a => a.bankAccountId === bankAccountId);
-                    if (index !== -1) {
-                        this.bankAccounts.splice(index, 1);
-                    }
-                    
-                    // If we were editing this account, reset form
-                    if (this.editingAccountId === bankAccountId) {
-                        this.resetForm();
-                    }
-                    
-                    this.showAlert('successMessage');
-                    this._result.message = response.message;
-                    this._result.succeed = true;
-                } else {
-                    this.showAlert('errorMessage');
-                    this._result.message = response.message;
-                    this._result.succeed = false;
-                }
-                this.isLoading = false;
-                this._cdr.markForCheck();
-            },
-            error: (error) => {
-                console.error('Error deleting bank account:', error);
-                this.showAlert('errorMessage');
-                this._result.message = 'Error deleting bank account';
-                this._result.succeed = false;
-                this.isLoading = false;
-                this._cdr.markForCheck();
-            }
-        });
-        */
-
-        // TEMPORARY: Remove from local list for testing
-        const index = this.bankAccounts.findIndex(a => a.bankAccountId === bankAccountId);
-        if (index !== -1) {
-            this.bankAccounts.splice(index, 1);
-        }
+        // Remove from local list
+        this.bankAccounts.splice(index, 1);
         
         // If we were editing this account, reset form
-        if (this.editingAccountId === bankAccountId) {
+        if (this.editingIndex === index) {
             this.resetForm();
+        } else if (this.editingIndex !== null && this.editingIndex > index) {
+            // Adjust editing index if we deleted an item before the one being edited
+            this.editingIndex--;
         }
         
+        // Emit changes to parent
+        this.bankAccountsChange.emit([...this.bankAccounts]);
+        
         this.showAlert('successMessage');
-        this._result.message = 'Bank account deleted successfully';
+        this._result.message = 'Bank account removed';
         this._result.succeed = true;
-        this._cdr.markForCheck();
+        this._cdr.detectChanges();
     }
 
     /**
@@ -418,20 +207,38 @@ export class BankAccountComponent implements OnInit, OnDestroy, OnChanges {
 
     /**
      * Reset form to initial state
+     * If there are existing accounts, pre-fill with first account's data (except SWIFT & IBAN)
+     * to make it easier for users to add multiple accounts
      */
     private resetForm(): void {
         this.bankAccountForm.reset();
-        this.editingAccountId = null;
-        this.bankAccountForm.patchValue({
-            bankAccountId: null,
-            bankId: null,
-            branchCode: '',
-            branchName: '',
-            accountNumber: '',
-            swiftCode: '',
-            iban: '',
-            accountTypeId: null
-        });
+        this.editingIndex = null;
+        
+        // If there are existing accounts, pre-fill form with first account's data
+        // (except SWIFT Code and IBAN which are unique per account)
+        if (this.bankAccounts && this.bankAccounts.length > 0) {
+            const firstAccount = this.bankAccounts[0];
+            this.bankAccountForm.patchValue({
+                bankId: firstAccount.bankId,
+                branchCode: firstAccount.branchCode,
+                branchName: firstAccount.branchName,
+                accountNumber: '', // Clear - user needs to enter new account number
+                swiftCode: '', // Don't copy - unique per account
+                iban: '', // Don't copy - unique per account
+                accountTypeId: firstAccount.accountTypeId
+            });
+        } else {
+            // No existing accounts - clear everything
+            this.bankAccountForm.patchValue({
+                bankId: null,
+                branchCode: '',
+                branchName: '',
+                accountNumber: '',
+                swiftCode: '',
+                iban: '',
+                accountTypeId: null
+            });
+        }
     }
 
     /**
@@ -446,8 +253,8 @@ export class BankAccountComponent implements OnInit, OnDestroy, OnChanges {
      * Get account type name by ID
      */
     getAccountTypeName(accountTypeId: number): string {
-        const type = this.bankAccountTypes.find(t => t.bankAccountTypeId === accountTypeId);
-        return type ? type.bankAccountTypeName : '';
+        const type = this.accountTypes.find(t => t.accountTypeId === accountTypeId);
+        return type ? type.accountTypeName : '';
     }
 
     private showAlert(name: string): void {
@@ -458,4 +265,3 @@ export class BankAccountComponent implements OnInit, OnDestroy, OnChanges {
         this._fuseAlertService.dismiss(name);
     }
 }
-
