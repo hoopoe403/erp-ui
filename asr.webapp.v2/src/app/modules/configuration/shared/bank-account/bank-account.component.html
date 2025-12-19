@@ -42,17 +42,17 @@
                     </mat-error>
                 </mat-form-field>
 
-                <!-- Account Type (Currency) -->
+                <!-- Currency -->
                 <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Account Type (Currency)</mat-label>
+                    <mat-label>Currency</mat-label>
                     <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:credit_card"></mat-icon>
-                    <mat-select formControlName="accountTypeId" required>
-                        <mat-option *ngFor="let type of accountTypes" [value]="type.accountTypeId">
-                            {{ type.accountTypeName }} ({{ type.accountTypeCode }})
+                    <mat-select formControlName="currencyId" required>
+                        <mat-option *ngFor="let currency of currencies" [value]="currency.currencyId">
+                            {{ currency.currencyName }} ({{ currency.currencyAbbreviation }})
                         </mat-option>
                     </mat-select>
-                    <mat-error *ngIf="bankAccountForm.get('accountTypeId')?.hasError('required')">
-                        Account type is required
+                    <mat-error *ngIf="bankAccountForm.get('currencyId')?.hasError('required')">
+                        Currency is required
                     </mat-error>
                 </mat-form-field>
 
@@ -122,7 +122,7 @@
                     <thead>
                         <tr class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Bank</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Account Type</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Currency</th>
                             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Branch Code</th>
                             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Branch Name</th>
                             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Account Number</th>
@@ -135,7 +135,7 @@
                         <tr *ngFor="let account of bankAccounts; let i = index" 
                             class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                             <td class="px-4 py-3 text-sm">{{ account.bankName || getBankName(account.bankId) }}</td>
-                            <td class="px-4 py-3 text-sm">{{ account.accountTypeName || getAccountTypeName(account.accountTypeId) }}</td>
+                            <td class="px-4 py-3 text-sm">{{ account.currencyAbbreviation || getCurrencyName(account.currencyId) }}</td>
                             <td class="px-4 py-3 text-sm">{{ account.branchCode }}</td>
                             <td class="px-4 py-3 text-sm">{{ account.branchName }}</td>
                             <td class="px-4 py-3 text-sm font-medium">{{ account.accountNumber }}</td>

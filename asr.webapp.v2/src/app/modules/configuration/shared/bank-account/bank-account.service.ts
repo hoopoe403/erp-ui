@@ -13,7 +13,7 @@ export class BankAccountService {
     constructor(private _httpClient: HttpClient) { }
 
     /**
-     * Get banks dropdown list (uses existing financial resource endpoint)
+     * Get banks dropdown list from API
      * TODO: Switch to this method when backend is ready
      */
     getBanksFromApi(): Observable<any> {
@@ -47,5 +47,33 @@ export class BankAccountService {
         ];
         
         return of({ data: mockBanks, succeed: true });
+    }
+
+    /**
+     * Get currencies dropdown list from API
+     */
+    getCurrencies(): Observable<any> {
+        return this._httpClient.get(ApiHelperService.BASE_URL + 'drp/currency').pipe(
+            map((data) => data),
+            switchMap((data) => {
+                if (!data) {
+                    return throwError('Could not fetch currencies');
+                }
+                return of(data);
+            })
+        );
+    }
+
+    /**
+     * Get mock currencies for testing (fallback)
+     */
+    getCurrenciesMock(): Observable<any> {
+        const mockCurrencies = [
+            { currencyId: 1, currencyName: 'Dollar', currencyAbbreviation: 'USD' },
+            { currencyId: 2, currencyName: 'Euro', currencyAbbreviation: 'EUR' },
+            { currencyId: 3, currencyName: 'Turkish Lira', currencyAbbreviation: 'TRY' }
+        ];
+        
+        return of({ data: mockCurrencies, succeed: true });
     }
 }

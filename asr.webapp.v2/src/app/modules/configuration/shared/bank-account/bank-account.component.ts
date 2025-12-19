@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetect
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { BankAccount, AccountType, ACCOUNT_TYPES } from './bank-account.types';
+import { BankAccount, Currency } from './bank-account.types';
 import { BankAccountService } from './bank-account.service';
 import { Bank } from '../../../financial/shared/financial.types';
 import { FuseAlertService } from '@fuse/components/alert';
@@ -23,7 +23,7 @@ export class BankAccountComponent implements OnInit, OnDestroy {
     
     bankAccountForm: FormGroup;
     banks: Bank[] = [];
-    accountTypes: AccountType[] = ACCOUNT_TYPES; // Hardcoded: Dollar, Euro, Turkish Lira
+    currencies: Currency[] = [];
     isLoading: boolean = false;
     _result: OpResult = new OpResult();
     editingIndex: number | null = null; // Track which account index is being edited
@@ -39,8 +39,9 @@ export class BankAccountComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        // Load banks dropdown
+        // Load dropdowns
         this.loadBanks();
+        this.loadCurrencies();
         
         // Initialize bankAccounts if null
         if (!this.bankAccounts) {
@@ -64,7 +65,7 @@ export class BankAccountComponent implements OnInit, OnDestroy {
             accountNumber: ['', Validators.required],
             swiftCode: [''],
             iban: [''],
-            accountTypeId: [null, Validators.required]
+            currencyId: [null, Validators.required]
         });
     }
 
@@ -90,6 +91,28 @@ export class BankAccountComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Load currencies from backend
+     */
+    private loadCurrencies(): void {
+        this._bankAccountService.getCurrencies().pipe(
+            takeUntil(this._unsubscribeAll)
+        ).subscribe({
+            next: (response) => {
+                this.currencies = response.data || [];
+                this._cdr.detectChanges();
+            },
+            error: (error) => {
+                console.error('Error loading currencies:', error);
+                // Fallback to mock data if API fails
+                this._bankAccountService.getCurrenciesMock().subscribe(res => {
+                    this.currencies = res.data || [];
+                    this._cdr.detectChanges();
+                });
+            }
+        });
+    }
+
+    /**
      * Add or update bank account in local list
      */
     saveAccount(): void {
@@ -103,8 +126,9 @@ export class BankAccountComponent implements OnInit, OnDestroy {
         this.dismissAlert('errorMessage');
 
         const formValue = this.bankAccountForm.value;
+        const currency = this.getCurrency(formValue.currencyId);
         
-        // Create bank account object
+        // Create bank account object matching backend model
         const bankAccount: BankAccount = {
             bankId: formValue.bankId,
             bankName: this.getBankName(formValue.bankId),
@@ -113,8 +137,9 @@ export class BankAccountComponent implements OnInit, OnDestroy {
             accountNumber: formValue.accountNumber,
             swiftCode: formValue.swiftCode || '',
             iban: formValue.iban || '',
-            accountTypeId: formValue.accountTypeId,
-            accountTypeName: this.getAccountTypeName(formValue.accountTypeId)
+            currencyId: formValue.currencyId,
+            currencyName: currency?.currencyName || '',
+            currencyAbbreviation: currency?.currencyAbbreviation || ''
             // bankAccountId is omitted for new accounts - backend will assign ID
         };
 
@@ -153,7 +178,7 @@ export class BankAccountComponent implements OnInit, OnDestroy {
             accountNumber: account.accountNumber,
             swiftCode: account.swiftCode || '',
             iban: account.iban || '',
-            accountTypeId: account.accountTypeId
+            currencyId: account.currencyId
         });
         
         // Scroll to form
@@ -225,7 +250,7 @@ export class BankAccountComponent implements OnInit, OnDestroy {
                 accountNumber: '', // Clear - user needs to enter new account number
                 swiftCode: '', // Don't copy - unique per account
                 iban: '', // Don't copy - unique per account
-                accountTypeId: firstAccount.accountTypeId
+                currencyId: firstAccount.currencyId
             });
         } else {
             // No existing accounts - clear everything
@@ -236,7 +261,7 @@ export class BankAccountComponent implements OnInit, OnDestroy {
                 accountNumber: '',
                 swiftCode: '',
                 iban: '',
-                accountTypeId: null
+                currencyId: null
             });
         }
     }
@@ -250,11 +275,18 @@ export class BankAccountComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Get account type name by ID
+     * Get currency by ID
      */
-    getAccountTypeName(accountTypeId: number): string {
-        const type = this.accountTypes.find(t => t.accountTypeId === accountTypeId);
-        return type ? type.accountTypeName : '';
+    getCurrency(currencyId: number): Currency | undefined {
+        return this.currencies.find(c => c.currencyId === currencyId);
+    }
+
+    /**
+     * Get currency name by ID
+     */
+    getCurrencyName(currencyId: number): string {
+        const currency = this.getCurrency(currencyId);
+        return currency ? `${currency.currencyName} (${currency.currencyAbbreviation})` : '';
     }
 
     private showAlert(name: string): void {

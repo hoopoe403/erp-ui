@@ -1,33 +1,43 @@
 /**
- * Bank Account interface
+ * Bank Account interface - matches backend model
  */
 export interface BankAccount {
     bankAccountId?: number;
     bankId: number;
-    bankName?: string; // For display purposes
+    bankName?: string;
+    bankLogoUrl?: string;
+    ownerId?: number;
+    ownerName?: string;
+    ownerTypeId?: number;
+    ownerTypeName?: string;
     branchCode: string;
     branchName: string;
     accountNumber: string;
+    currencyId: number;
+    currencyName?: string;
+    currencyAbbreviation?: string;
     swiftCode?: string;
     iban?: string;
-    accountTypeId: number;
-    accountTypeName?: string; // For display purposes
+    status?: number;
+    statusDescription?: string;
+    statusColor?: string;
+    statusIdList?: number[];
 }
 
 /**
- * Account Type interface (Currency type: Dollar, Euro, Turkish Lira)
+ * Currency type interface
  */
-export interface AccountType {
-    accountTypeId: number;
-    accountTypeName: string;
-    accountTypeCode: string;
+export interface Currency {
+    currencyId: number;
+    currencyName: string;
+    currencyAbbreviation: string;
 }
 
 /**
- * Hardcoded account types (currencies)
+ * Hardcoded currencies (temporary - until backend provides endpoint)
  */
-export const ACCOUNT_TYPES: AccountType[] = [
-    { accountTypeId: 1, accountTypeName: 'Dollar', accountTypeCode: 'USD' },
-    { accountTypeId: 2, accountTypeName: 'Euro', accountTypeCode: 'EUR' },
-    { accountTypeId: 3, accountTypeName: 'Turkish Lira', accountTypeCode: 'TRY' }
+export const CURRENCIES: Currency[] = [
+    { currencyId: 1, currencyName: 'Dollar', currencyAbbreviation: 'USD' },
+    { currencyId: 2, currencyName: 'Euro', currencyAbbreviation: 'EUR' },
+    { currencyId: 3, currencyName: 'Turkish Lira', currencyAbbreviation: 'TRY' }
 ];
