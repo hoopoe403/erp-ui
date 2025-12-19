@@ -39,8 +39,6 @@ import { BudgetDetailDialogComponent } from './dialog/dialog.component';
 import { DialogService } from './dialog/dialog.service';
 import { MatDialogModule } from '@angular/material/dialog';
 import { FuseAlertModule } from "@fuse/components/alert";
-import { BankAccountModule } from '../../shared/bank-account/bank-account.module';
-import { MatTabsModule } from '@angular/material/tabs';
 
 @NgModule({
     declarations: [BudgetDetailDialogComponent,
@@ -49,8 +47,6 @@ import { MatTabsModule } from '@angular/material/tabs';
         CustomerDetailsComponent
     ],
     imports: [ScrollingModule, MatDialogModule,
-        BankAccountModule,
-        MatTabsModule,
         MatSortModule,
         FuseScrollbarModule,
         FuseDrawerModule,

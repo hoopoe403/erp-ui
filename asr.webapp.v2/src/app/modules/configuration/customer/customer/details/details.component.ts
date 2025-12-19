@@ -12,7 +12,6 @@ import { CustomerListComponent } from 'app/modules/configuration/customer/custom
 import { CustomerService } from 'app/modules/configuration/customer/customer/customer.service';
 import { FuseAlertService } from '@fuse/components/alert';
 import { OpResult } from 'app/core/type/result/result.types';
-import { BankAccount } from '../../../shared/bank-account/bank-account.types';
 
 @Component({
     selector: 'customer-details',
@@ -37,9 +36,6 @@ export class CustomerDetailsComponent implements OnInit, OnDestroy {
     branches: Array<{ key: number, value: string }> = [];
     isLoading: boolean = false;
     _result: OpResult = new OpResult();
-    
-    // Bank accounts for this customer
-    bankAccounts: BankAccount[] = [];
     /**
      * Constructor
      */
@@ -110,9 +106,6 @@ export class CustomerDetailsComponent implements OnInit, OnDestroy {
 
                 // Patch values to the form
                 this.customerForm.patchValue(customer);
-                
-                // Load bank accounts from customer data
-                this.bankAccounts = customer.bankAccounts || [];
 
                 // Setup the emails form array
                 const emailFormGroups = [];
@@ -207,9 +200,6 @@ export class CustomerDetailsComponent implements OnInit, OnDestroy {
         }
     }
     private create(customer: any) {
-        // Include bank accounts in customer data
-        customer.bankAccounts = this.bankAccounts;
-        
         this._customerService.create(customer).subscribe(res => {
             this.isLoading = false;
             this._result.succeed = res.succeed;
@@ -226,9 +216,6 @@ export class CustomerDetailsComponent implements OnInit, OnDestroy {
     }
 
     private edit(customer: any) {
-        // Include bank accounts in customer data
-        customer.bankAccounts = this.bankAccounts;
-        
         this._customerService.edit(customer).subscribe(res => {
             this.isLoading = false;
             this._result.succeed = res.succeed;
@@ -252,13 +239,6 @@ export class CustomerDetailsComponent implements OnInit, OnDestroy {
 
     private dismissAlert(name: string): void {
         this._fuseAlertService.dismiss(name);
-    }
-    
-    /**
-     * Handle bank accounts change from child component
-     */
-    onBankAccountsChange(accounts: BankAccount[]): void {
-        this.bankAccounts = accounts;
     }
     
     /**
