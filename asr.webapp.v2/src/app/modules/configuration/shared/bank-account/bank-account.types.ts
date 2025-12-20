@@ -4,25 +4,23 @@
 export interface BankAccount {
     bankAccountId?: number;
     bankId: number;
-    bankName?: string;
-    bankLogoUrl?: string;
-    ownerId?: number;
-    ownerName?: string;
-    ownerTypeId?: number;
-    ownerTypeName?: string;
+    bankName?: string;              // Optional - for display (can be looked up from dropdown)
     branchCode: string;
     branchName: string;
     accountNumber: string;
     currencyId: number;
-    currencyName?: string;
-    currencyAbbreviation?: string;
+    currencyName?: string;          // Optional - for display (can be looked up from dropdown)
+    currencyAbbreviation?: string;  // Optional - for display
     swiftCode?: string;
     iban?: string;
-    status?: number;
-    statusDescription?: string;
-    statusColor?: string;
-    statusIdList?: number[];
+    statusId: number;               // 1000001 = Active, 1000000 = Inactive
 }
+
+/** Status constants */
+export const BANK_ACCOUNT_STATUS = {
+    INACTIVE: 1000000,
+    ACTIVE: 1000001
+};
 
 /**
  * Currency type interface

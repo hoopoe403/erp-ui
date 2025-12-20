@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetect
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { BankAccount, Currency } from './bank-account.types';
+import { BankAccount, Currency, BANK_ACCOUNT_STATUS } from './bank-account.types';
 import { BankAccountService } from './bank-account.service';
 import { Bank } from '../../../financial/shared/financial.types';
 import { FuseAlertService } from '@fuse/components/alert';
@@ -65,7 +65,8 @@ export class BankAccountComponent implements OnInit, OnDestroy {
             accountNumber: ['', Validators.required],
             swiftCode: [''],
             iban: [''],
-            currencyId: [null, Validators.required]
+            currencyId: [null, Validators.required],
+            isActive: [true] // Default to active
         });
     }
 
@@ -139,7 +140,8 @@ export class BankAccountComponent implements OnInit, OnDestroy {
             iban: formValue.iban || '',
             currencyId: formValue.currencyId,
             currencyName: currency?.currencyName || '',
-            currencyAbbreviation: currency?.currencyAbbreviation || ''
+            currencyAbbreviation: currency?.currencyAbbreviation || '',
+            statusId: formValue.isActive ? BANK_ACCOUNT_STATUS.ACTIVE : BANK_ACCOUNT_STATUS.INACTIVE
             // bankAccountId is omitted for new accounts - backend will assign ID
         };
 
@@ -178,7 +180,8 @@ export class BankAccountComponent implements OnInit, OnDestroy {
             accountNumber: account.accountNumber,
             swiftCode: account.swiftCode || '',
             iban: account.iban || '',
-            currencyId: account.currencyId
+            currencyId: account.currencyId,
+            isActive: account.statusId === BANK_ACCOUNT_STATUS.ACTIVE
         });
         
         // Scroll to form
@@ -240,17 +243,19 @@ export class BankAccountComponent implements OnInit, OnDestroy {
         this.editingIndex = null;
         
         // If there are existing accounts, pre-fill form with first account's data
-        // (except SWIFT Code and IBAN which are unique per account)
+        // Pre-fill: Bank, Branch Code, Branch Name, Account Number
+        // Don't pre-fill: Currency, SWIFT Code, IBAN (these vary per account)
         if (this.bankAccounts && this.bankAccounts.length > 0) {
             const firstAccount = this.bankAccounts[0];
             this.bankAccountForm.patchValue({
                 bankId: firstAccount.bankId,
                 branchCode: firstAccount.branchCode,
                 branchName: firstAccount.branchName,
-                accountNumber: '', // Clear - user needs to enter new account number
+                accountNumber: firstAccount.accountNumber, // Pre-fill from first account
+                currencyId: null, // Don't copy - may differ per account
                 swiftCode: '', // Don't copy - unique per account
                 iban: '', // Don't copy - unique per account
-                currencyId: firstAccount.currencyId
+                isActive: true // Default to active for new accounts
             });
         } else {
             // No existing accounts - clear everything
@@ -259,11 +264,19 @@ export class BankAccountComponent implements OnInit, OnDestroy {
                 branchCode: '',
                 branchName: '',
                 accountNumber: '',
+                currencyId: null,
                 swiftCode: '',
                 iban: '',
-                currencyId: null
+                isActive: true // Default to active
             });
         }
+    }
+
+    /**
+     * Check if bank account is active
+     */
+    isAccountActive(account: BankAccount): boolean {
+        return account.statusId === BANK_ACCOUNT_STATUS.ACTIVE;
     }
 
     /**

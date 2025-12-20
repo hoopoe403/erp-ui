@@ -22,9 +22,6 @@
                 <h4 class="text-lg font-medium">
                     {{ editingIndex !== null ? 'Edit Bank Account' : 'Add New Bank Account' }}
                 </h4>
-                <button *ngIf="editingIndex !== null" mat-button type="button" (click)="cancelEdit()">
-                    Cancel
-                </button>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -42,17 +39,13 @@
                     </mat-error>
                 </mat-form-field>
 
-                <!-- Currency -->
+                <!-- Account Number -->
                 <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Currency</mat-label>
-                    <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:credit_card"></mat-icon>
-                    <mat-select formControlName="currencyId" required>
-                        <mat-option *ngFor="let currency of currencies" [value]="currency.currencyId">
-                            {{ currency.currencyName }} ({{ currency.currencyAbbreviation }})
-                        </mat-option>
-                    </mat-select>
-                    <mat-error *ngIf="bankAccountForm.get('currencyId')?.hasError('required')">
-                        Currency is required
+                    <mat-label>Account Number</mat-label>
+                    <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:account_balance_wallet"></mat-icon>
+                    <input matInput formControlName="accountNumber" required maxlength="50">
+                    <mat-error *ngIf="bankAccountForm.get('accountNumber')?.hasError('required')">
+                        Account number is required
                     </mat-error>
                 </mat-form-field>
 
@@ -76,13 +69,17 @@
                     </mat-error>
                 </mat-form-field>
 
-                <!-- Account Number -->
+                <!-- Currency -->
                 <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Account Number</mat-label>
-                    <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:account_balance_wallet"></mat-icon>
-                    <input matInput formControlName="accountNumber" required maxlength="50">
-                    <mat-error *ngIf="bankAccountForm.get('accountNumber')?.hasError('required')">
-                        Account number is required
+                    <mat-label>Currency</mat-label>
+                    <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:credit_card"></mat-icon>
+                    <mat-select formControlName="currencyId" required>
+                        <mat-option *ngFor="let currency of currencies" [value]="currency.currencyId">
+                            {{ currency.currencyName }} ({{ currency.currencyAbbreviation }})
+                        </mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="bankAccountForm.get('currencyId')?.hasError('required')">
+                        Currency is required
                     </mat-error>
                 </mat-form-field>
 
@@ -95,16 +92,27 @@
                 </mat-form-field>
 
                 <!-- IBAN -->
-                <mat-form-field appearance="outline" class="w-full md:col-span-2">
+                <mat-form-field appearance="outline" class="w-full">
                     <mat-label>IBAN</mat-label>
                     <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:account_balance"></mat-icon>
                     <input matInput formControlName="iban" maxlength="34" 
                         placeholder="e.g., GB82WEST12345698765432">
                 </mat-form-field>
+
+                <!-- Active Status Checkbox -->
+                <div class="flex items-center">
+                    <mat-checkbox formControlName="isActive" color="primary">
+                        Active
+                    </mat-checkbox>
+                </div>
             </div>
 
-            <!-- Save/Add Button -->
-            <div class="flex justify-end mt-6">
+            <!-- Form Actions -->
+            <div class="flex justify-end gap-3 mt-6">
+                <button mat-stroked-button type="button" (click)="cancelEdit()">
+                    <mat-icon>close</mat-icon>
+                    <span class="ml-2">Cancel</span>
+                </button>
                 <button mat-flat-button color="primary" type="button" 
                     [disabled]="isLoading || bankAccountForm.invalid"
                     (click)="saveAccount()">
@@ -128,6 +136,7 @@
                             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Account Number</th>
                             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">SWIFT Code</th>
                             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">IBAN</th>
+                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
                             <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
                         </tr>
                     </thead>
@@ -141,6 +150,16 @@
                             <td class="px-4 py-3 text-sm font-medium">{{ account.accountNumber }}</td>
                             <td class="px-4 py-3 text-sm">{{ account.swiftCode || '-' }}</td>
                             <td class="px-4 py-3 text-sm">{{ account.iban || '-' }}</td>
+                            <td class="px-4 py-3 text-center">
+                                <span *ngIf="isAccountActive(account)" 
+                                      class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
+                                    Active
+                                </span>
+                                <span *ngIf="!isAccountActive(account)" 
+                                      class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100">
+                                    Inactive
+                                </span>
+                            </td>
                             <td class="px-4 py-3 text-center">
                                 <div class="flex items-center justify-center gap-2">
                                     <button mat-icon-button color="primary" type="button" 
