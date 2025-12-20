@@ -9,7 +9,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { FuseAlertModule } from '@fuse/components/alert';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { FuseConfirmationModule } from '@fuse/services/confirmation';
 import { BankAccountComponent } from './bank-account.component';
 
 @NgModule({
@@ -28,7 +29,8 @@ import { BankAccountComponent } from './bank-account.component';
         MatProgressBarModule,
         MatTooltipModule,
         MatCheckboxModule,
-        FuseAlertModule
+        MatSnackBarModule,
+        FuseConfirmationModule
     ],
     exports: [
         BankAccountComponent

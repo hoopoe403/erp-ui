@@ -5,8 +5,8 @@ import { takeUntil } from 'rxjs/operators';
 import { BankAccount, Currency, BANK_ACCOUNT_STATUS } from './bank-account.types';
 import { BankAccountService } from './bank-account.service';
 import { Bank } from '../../../financial/shared/financial.types';
-import { FuseAlertService } from '@fuse/components/alert';
-import { OpResult } from 'app/core/type/result/result.types';
+import { FuseConfirmationService } from '@fuse/services/confirmation';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
     selector: 'app-bank-account',
@@ -25,14 +25,14 @@ export class BankAccountComponent implements OnInit, OnDestroy {
     banks: Bank[] = [];
     currencies: Currency[] = [];
     isLoading: boolean = false;
-    _result: OpResult = new OpResult();
     editingIndex: number | null = null; // Track which account index is being edited
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
     constructor(
         private _formBuilder: FormBuilder,
         private _bankAccountService: BankAccountService,
-        private _fuseAlertService: FuseAlertService,
+        private _fuseConfirmationService: FuseConfirmationService,
+        private _snackBar: MatSnackBar,
         private _cdr: ChangeDetectorRef
     ) {
         this.createForm();
@@ -123,9 +123,6 @@ export class BankAccountComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.dismissAlert('successMessage');
-        this.dismissAlert('errorMessage');
-
         const formValue = this.bankAccountForm.value;
         const currency = this.getCurrency(formValue.currencyId);
         
@@ -145,22 +142,23 @@ export class BankAccountComponent implements OnInit, OnDestroy {
             // bankAccountId is omitted for new accounts - backend will assign ID
         };
 
+        let message: string;
         if (this.editingIndex !== null) {
             // Update existing account in list (preserve existing ID if any)
             bankAccount.bankAccountId = this.bankAccounts[this.editingIndex].bankAccountId;
             this.bankAccounts[this.editingIndex] = bankAccount;
-            this._result.message = 'Bank account updated successfully';
+            message = 'Bank account updated successfully';
         } else {
             // Add new account (ID is null, backend will assign)
             this.bankAccounts.push(bankAccount);
-            this._result.message = 'Bank account added successfully';
+            message = 'Bank account added successfully';
         }
 
         // Emit changes to parent
         this.bankAccountsChange.emit([...this.bankAccounts]);
 
-        this.showAlert('successMessage');
-        this._result.succeed = true;
+        // Show success notification
+        this._snackBar.open(message, null, { duration: 3000 });
         
         // Clear form and reset editing state
         this.resetForm();
@@ -199,31 +197,40 @@ export class BankAccountComponent implements OnInit, OnDestroy {
      * Delete bank account from local list
      */
     deleteAccount(index: number): void {
-        if (!confirm('Are you sure you want to delete this bank account?')) {
-            return;
-        }
+        // Open the confirmation dialog
+        const confirmation = this._fuseConfirmationService.open({
+            title: 'Delete Bank Account',
+            message: 'Are you sure you want to delete this bank account? This action cannot be undone!',
+            actions: {
+                confirm: {
+                    label: 'Delete'
+                }
+            }
+        });
 
-        this.dismissAlert('successMessage');
-        this.dismissAlert('errorMessage');
-
-        // Remove from local list
-        this.bankAccounts.splice(index, 1);
-        
-        // If we were editing this account, reset form
-        if (this.editingIndex === index) {
-            this.resetForm();
-        } else if (this.editingIndex !== null && this.editingIndex > index) {
-            // Adjust editing index if we deleted an item before the one being edited
-            this.editingIndex--;
-        }
-        
-        // Emit changes to parent
-        this.bankAccountsChange.emit([...this.bankAccounts]);
-        
-        this.showAlert('successMessage');
-        this._result.message = 'Bank account removed';
-        this._result.succeed = true;
-        this._cdr.detectChanges();
+        // Subscribe to the confirmation dialog closed action
+        confirmation.afterClosed().subscribe((result) => {
+            // If the confirm button pressed...
+            if (result === 'confirmed') {
+                // Remove from local list
+                this.bankAccounts.splice(index, 1);
+                
+                // If we were editing this account, reset form
+                if (this.editingIndex === index) {
+                    this.resetForm();
+                } else if (this.editingIndex !== null && this.editingIndex > index) {
+                    // Adjust editing index if we deleted an item before the one being edited
+                    this.editingIndex--;
+                }
+                
+                // Emit changes to parent
+                this.bankAccountsChange.emit([...this.bankAccounts]);
+                
+                // Show success notification
+                this._snackBar.open('Bank account deleted successfully', null, { duration: 3000 });
+                this._cdr.detectChanges();
+            }
+        });
     }
 
     /**
@@ -300,13 +307,5 @@ export class BankAccountComponent implements OnInit, OnDestroy {
     getCurrencyName(currencyId: number): string {
         const currency = this.getCurrency(currencyId);
         return currency ? `${currency.currencyName} (${currency.currencyAbbreviation})` : '';
-    }
-
-    private showAlert(name: string): void {
-        this._fuseAlertService.show(name);
-    }
-
-    private dismissAlert(name: string): void {
-        this._fuseAlertService.dismiss(name);
     }
 }

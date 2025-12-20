@@ -182,20 +182,6 @@
         <div *ngIf="bankAccounts.length === 0" class="text-center py-8 text-gray-500">
             No bank accounts added yet. Fill the form above and click "Add Account" to add one.
         </div>
-
-        <!-- Alerts -->
-        <div class="flex items-center flex-wrap content-center w-full py-2">
-            <div class="w-auto h-auto min-h-15 m-auto">
-                <fuse-alert *ngIf="_result.succeed" [appearance]="'soft'" [dismissible]="true"
-                    [dismissed]="true" [name]="'successMessage'" [type]="'success'">
-                    <b>Result: </b> {{ _result.message }}.
-                </fuse-alert>
-                <fuse-alert *ngIf="!_result.succeed && _result.message" [appearance]="'soft'" [dismissible]="true"
-                    [dismissed]="true" [name]="'errorMessage'" [type]="'error'">
-                    <b>Result: </b> {{ _result.message }}.
-                </fuse-alert>
-            </div>
-        </div>
     </form>
 </div>
 
