@@ -140,65 +140,15 @@
             </div>
         </div>
 
-        <!-- Saved Accounts Table List -->
-        <div *ngIf="bankAccounts.length > 0" class="mt-6">
-            <h4 class="text-lg font-medium mb-4">Bank Accounts List</h4>
-            <div class="overflow-x-auto">
-                <table class="w-full border-collapse">
-                    <thead>
-                        <tr class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Bank</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Currency</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Branch Code</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Branch Name</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Account Number</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">SWIFT Code</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">IBAN</th>
-                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
-                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let account of bankAccounts; let i = index" 
-                            class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            <td class="px-4 py-3 text-sm">{{ account.bankName || getBankName(account.bankId) }}</td>
-                            <td class="px-4 py-3 text-sm">{{ account.currencyAbbreviation || getCurrencyName(account.currencyId) }}</td>
-                            <td class="px-4 py-3 text-sm">{{ account.branchCode }}</td>
-                            <td class="px-4 py-3 text-sm">{{ account.branchName }}</td>
-                            <td class="px-4 py-3 text-sm font-medium">{{ account.accountNumber }}</td>
-                            <td class="px-4 py-3 text-sm">{{ account.swiftCode || '-' }}</td>
-                            <td class="px-4 py-3 text-sm">{{ account.iban || '-' }}</td>
-                            <td class="px-4 py-3 text-center">
-                                <span *ngIf="isAccountActive(account)" 
-                                      class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
-                                    Active
-                                </span>
-                                <span *ngIf="!isAccountActive(account)" 
-                                      class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100">
-                                    Inactive
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 text-center">
-                                <div class="flex items-center justify-center gap-2">
-                                    <button mat-icon-button color="primary" type="button" 
-                                            (click)="editAccount(i)" [matTooltip]="'Edit'">
-                                        <mat-icon>edit</mat-icon>
-                                    </button>
-                                    <button mat-icon-button color="warn" type="button" 
-                                            (click)="deleteAccount(i)" [matTooltip]="'Delete'">
-                                        <mat-icon>delete</mat-icon>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- No Accounts Message -->
-        <div *ngIf="bankAccounts.length === 0" class="text-center py-8 text-gray-500">
-            No bank accounts added yet. Fill the form above and click "Add Account" to add one.
+        <!-- Saved Accounts List (using shared component) -->
+        <div class="mt-6">
+            <app-item-list
+                [items]="bankAccounts"
+                [config]="listConfig"
+                [editingIndex]="editingIndex"
+                (edit)="editAccount($event)"
+                (delete)="deleteAccount($event)">
+            </app-item-list>
         </div>
     </form>
 </div>

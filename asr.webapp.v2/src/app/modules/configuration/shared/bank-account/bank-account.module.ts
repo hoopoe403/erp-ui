@@ -12,6 +12,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { FuseConfirmationModule } from '@fuse/services/confirmation';
 import { BankAccountComponent } from './bank-account.component';
+import { ItemListModule } from '../item-list/item-list.module';
 
 @NgModule({
     declarations: [
@@ -30,7 +31,8 @@ import { BankAccountComponent } from './bank-account.component';
         MatTooltipModule,
         MatCheckboxModule,
         MatSnackBarModule,
-        FuseConfirmationModule
+        FuseConfirmationModule,
+        ItemListModule
     ],
     exports: [
         BankAccountComponent

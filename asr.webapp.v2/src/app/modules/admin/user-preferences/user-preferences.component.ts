@@ -120,3 +120,4 @@ export class UserPreferencesComponent implements OnInit, OnDestroy {
         return currency ? `${currency.name} (${currency.symbol})` : '';
     }
 }
+

@@ -10,6 +10,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { CountryConfigService } from 'app/core/config/country-config.service';
 import { BankAccountValidationConfig } from 'app/core/config/country-config.types';
 import { DynamicValidatorFactory } from 'app/core/validators/dynamic-validator.factory';
+import { ItemListConfig } from '../item-list/item-list.types';
 
 @Component({
     selector: 'app-bank-account',
@@ -33,6 +34,36 @@ export class BankAccountComponent implements OnInit, OnDestroy {
     // Validation config from country settings
     validationConfig: BankAccountValidationConfig | null = null;
     
+    // Item list configuration
+    listConfig: ItemListConfig = {
+        title: 'Bank Accounts List',
+        emptyMessage: 'No bank accounts added yet. Fill the form above and click "Add Account" to add one.',
+        columns: [
+            { key: 'bankName', label: 'Bank' },
+            { key: 'currencyAbbreviation', label: 'Currency' },
+            { key: 'branchCode', label: 'Branch Code' },
+            { key: 'branchName', label: 'Branch Name' },
+            { key: 'accountNumber', label: 'Account Number' },
+            { key: 'swiftCode', label: 'SWIFT Code', fallback: '-' },
+            { key: 'iban', label: 'IBAN', fallback: '-' },
+            { 
+                key: 'statusId', 
+                label: 'Status', 
+                type: 'badge', 
+                align: 'center',
+                badgeConfig: { 
+                    activeValue: BANK_ACCOUNT_STATUS.ACTIVE, 
+                    activeLabel: 'Active', 
+                    inactiveLabel: 'Inactive' 
+                }
+            }
+        ],
+        actions: [
+            { icon: 'edit', tooltip: 'Edit', color: 'primary', action: 'edit' },
+            { icon: 'delete', tooltip: 'Delete', color: 'warn', action: 'delete' }
+        ]
+    };
+    
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
     constructor(
@@ -42,7 +73,10 @@ export class BankAccountComponent implements OnInit, OnDestroy {
         private _snackBar: MatSnackBar,
         private _cdr: ChangeDetectorRef,
         private _countryConfigService: CountryConfigService
-    ) {}
+    ) {
+        // Initialize form immediately in constructor to avoid undefined errors
+        this.createForm();
+    }
 
     ngOnInit(): void {
         // Initialize bankAccounts if null
@@ -56,12 +90,11 @@ export class BankAccountComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: () => {
                     this.loadCountryConfig();
-                    this.createForm();
+                    this.rebuildForm();
                     this._cdr.detectChanges();
                 },
                 error: () => {
-                    // Fallback: create form with default validation
-                    this.createForm();
+                    // Config failed to load, form is already created with defaults
                     this._cdr.detectChanges();
                 }
             });
@@ -112,15 +145,19 @@ export class BankAccountComponent implements OnInit, OnDestroy {
             ],
             swiftCode: ['', config?.swiftCode 
                 ? DynamicValidatorFactory.createValidator(config.swiftCode)
-                : null
+                : []
             ],
             iban: ['', config?.iban 
                 ? DynamicValidatorFactory.createValidator(config.iban)
-                : null
+                : []
             ],
             currencyId: [null, Validators.required],
             isActive: [true]
         });
+        
+        // Mark form as pristine and untouched to prevent showing errors on empty fields
+        this.bankAccountForm.markAsPristine();
+        this.bankAccountForm.markAsUntouched();
     }
 
     /**
@@ -130,8 +167,18 @@ export class BankAccountComponent implements OnInit, OnDestroy {
         const currentValues = this.bankAccountForm?.value;
         this.createForm();
         
+        // Only patch non-empty values to avoid triggering validation errors on empty fields
         if (currentValues) {
-            this.bankAccountForm.patchValue(currentValues);
+            const valuesToPatch: any = {};
+            Object.keys(currentValues).forEach(key => {
+                const value = currentValues[key];
+                if (value !== null && value !== undefined && value !== '') {
+                    valuesToPatch[key] = value;
+                }
+            });
+            if (Object.keys(valuesToPatch).length > 0) {
+                this.bankAccountForm.patchValue(valuesToPatch);
+            }
         }
         
         this._cdr.detectChanges();

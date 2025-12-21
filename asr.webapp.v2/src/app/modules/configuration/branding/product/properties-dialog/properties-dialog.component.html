@@ -1,0 +1,112 @@
+<div class="relative flex flex-col md:w-fit -m-6">
+    <!-- Header -->
+    <div class="w-full border border-slate-300 border-solid flex flex-col sm:flex-row items-center sm:items-start py-3 px-6">
+        <div class="absolute top-0 right-0 py-2 pr-4">
+            <button (click)="cancel()" mat-icon-button>
+                <mat-icon class="text-secondary" [svgIcon]="'heroicons_outline:x'"></mat-icon>
+            </button>
+        </div>
+        <div class="flex flex-col items-center justify-center sm:items-start mt-4 pt-2 sm:mt-0 sm:pr-8 space-y-1 text-center sm:text-left">
+            <span class="text-xl leading-6 font-medium">Product Properties</span>
+            <span class="text-sm text-secondary">{{ product.fullName || product.productName }}</span>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex flex-col p-6 max-h-[70vh] overflow-auto">
+        
+        <!-- Units Section -->
+        <div class="mb-6">
+            <!-- Add/Edit Unit Form (at top like bank account) -->
+            <div class="unit-form border-b pb-6 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="font-medium">
+                        {{ editingIndex !== null ? 'Edit Unit' : (hasPrimaryUnit ? 'Add Secondary Unit' : 'Add Primary Unit') }}
+                    </h4>
+                </div>
+
+                <!-- Info when no primary unit -->
+                <div *ngIf="!hasPrimaryUnit && units.length === 0" 
+                     class="p-4 mb-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                    <div class="flex items-start">
+                        <mat-icon class="text-blue-500 mr-3 mt-0.5">info</mat-icon>
+                        <div>
+                            <p class="text-sm text-blue-800 dark:text-blue-200">
+                                First, add a <strong>primary unit</strong> (the base unit for this product).
+                                Then you can add secondary units with conversion rates.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <form [formGroup]="unitForm" class="flex flex-col gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Unit Selection -->
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Select Unit</mat-label>
+                            <mat-icon matPrefix class="icon-size-5">straighten</mat-icon>
+                            <mat-select formControlName="unitId" required>
+                                <mat-option *ngFor="let unit of availableUnits" [value]="unit.unitId">
+                                    {{ unit.unitName }} ({{ unit.unitCode }})
+                                </mat-option>
+                            </mat-select>
+                            <mat-error *ngIf="unitForm.get('unitId')?.hasError('required')">
+                                Unit is required
+                            </mat-error>
+                        </mat-form-field>
+
+                        <!-- Conversion Rate (only for non-primary units) -->
+                        <mat-form-field appearance="outline" class="w-full" 
+                                        *ngIf="hasPrimaryUnit && !unitForm.get('isPrimary')?.value">
+                            <mat-label>Conversion Rate</mat-label>
+                            <mat-icon matPrefix class="icon-size-5">sync_alt</mat-icon>
+                            <input matInput type="number" formControlName="conversionRate" min="0.0001" step="0.01">
+                            <mat-hint>
+                                1 {{ getUnitName(unitForm.get('unitId')?.value) || 'unit' }} = {{ unitForm.get('conversionRate')?.value || 1 }} {{ primaryUnitName }}
+                            </mat-hint>
+                        </mat-form-field>
+                    </div>
+
+                    <!-- Set as Primary Checkbox (only when editing) -->
+                    <mat-checkbox *ngIf="editingIndex !== null && units[editingIndex] && !units[editingIndex].isPrimary"
+                                  formControlName="isPrimary">
+                        Set as primary unit
+                    </mat-checkbox>
+
+                    <!-- Form Actions -->
+                    <div class="flex justify-end gap-3 mt-2">
+                        <button mat-stroked-button type="button" (click)="cancelEdit()">
+                            <mat-icon>close</mat-icon>
+                            <span class="ml-2">Cancel</span>
+                        </button>
+                        <button mat-flat-button color="primary" type="button"
+                                [disabled]="unitForm.invalid"
+                                (click)="saveUnit()">
+                            <mat-icon>{{ editingIndex !== null ? 'save' : 'add' }}</mat-icon>
+                            <span class="ml-2">{{ editingIndex !== null ? 'Update' : 'Add' }} Unit</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Units List (using shared component) -->
+            <app-item-list
+                [items]="units"
+                [config]="listConfig"
+                [editingIndex]="editingIndex"
+                (edit)="editUnit($event)"
+                (delete)="deleteUnit($event)"
+                (setPrimary)="setPrimary($event)">
+            </app-item-list>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="w-full mb-6" style="display: flex; align-items: center; place-content: center;">
+        <button mat-flat-button [color]="'primary'" 
+                [disabled]="units.length === 0"
+                (click)="save()">
+            Register
+        </button>
+    </div>
+</div>
