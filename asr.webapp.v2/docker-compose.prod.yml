@@ -1,0 +1,31 @@
+# Production deployment with auto-update
+# Use this on your Windows server
+
+version: '3.8'
+
+services:
+  erp-ui:
+    image: ghcr.io/YOUR_GITHUB_USERNAME/erp-ui:latest  # Change YOUR_GITHUB_USERNAME
+    container_name: erp-ui
+    ports:
+      - "80:80"      # Or use 4200:80 if port 80 is busy
+    restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # Watchtower - automatically updates containers when new images are pushed
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # For Windows, mount the Docker credentials
+      - ~/.docker/config.json:/config.json:ro
+    environment:
+      - WATCHTOWER_CLEANUP=true                    # Remove old images
+      - WATCHTOWER_POLL_INTERVAL=300               # Check every 5 minutes
+      - WATCHTOWER_LABEL_ENABLE=true               # Only update labeled containers
+      - WATCHTOWER_NOTIFICATIONS=shoutrrr          # Optional: notifications
+      # - WATCHTOWER_NOTIFICATION_URL=discord://token@webhookid  # Optional
+    restart: unless-stopped
+    command: --interval 300
