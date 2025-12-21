@@ -7,6 +7,7 @@ import { FormGroup, FormBuilder, Validators } from "@angular/forms";
 import { Contractor } from "../contractor.type";
 import { forkJoin, Observable } from "rxjs";
 import { ContractorService } from "../contractor.service";
+import { BankAccount } from "../../shared/bank-account/bank-account.types";
 
 @Component({
   selector: "app-details",
@@ -21,6 +22,9 @@ export class ContractorsDetailsComponent implements OnInit {
   result = new OpResult();
   contractorTypes = [];
   settlementTypes = [];
+  
+  // Bank accounts for this contractor
+  bankAccounts: BankAccount[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -32,8 +36,6 @@ export class ContractorsDetailsComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-
-
     const id = Number(this.route.snapshot.paramMap.get("id"));
     this.getContractorTypes();
     this.getSettlementTypes();
@@ -46,6 +48,7 @@ export class ContractorsDetailsComponent implements OnInit {
       this.titleInfo = "Register New Contractor";
       this.pageType = "new";
       this.formContractor = this.createFormObj();
+      this.bankAccounts = []; // Initialize empty for new contractor
     }
   }
 
@@ -56,8 +59,6 @@ export class ContractorsDetailsComponent implements OnInit {
   private dismissAlert(name: string): void {
     this.fuseAlertService.dismiss(name);
   }
-
-  // private loadData(): void {}
 
   private getById(id: number): void {
     this.isLoading = true;
@@ -73,6 +74,8 @@ export class ContractorsDetailsComponent implements OnInit {
   private setForkJoinValuesInEditMode(values: any[]) {
     this.contractorInfo = values[0].data;
     this.titleInfo = this.contractorInfo.contractorName;
+    // Load bank accounts from contractor data
+    this.bankAccounts = this.contractorInfo.bankAccounts || [];
   }
 
   private getContractor(id: number): Observable<any> {
@@ -142,7 +145,6 @@ export class ContractorsDetailsComponent implements OnInit {
       this.result.message = res.message;
       if (this.result.succeed) {
         this.showAlert("successMessage");
-        // this.location.back();
       } else this.showAlert("errorMessage");
       this.cdr.detectChanges();
     });
@@ -167,11 +169,21 @@ export class ContractorsDetailsComponent implements OnInit {
       this.formContractor.controls["organization"].value;
     this.contractorInfo.settlementTypeId =
       this.formContractor.controls['settlementType'].value;
+    // Include bank accounts in the contractor info
+    this.contractorInfo.bankAccounts = this.bankAccounts;
+  }
+
+  /**
+   * Handle bank accounts change from child component
+   */
+  onBankAccountsChange(accounts: BankAccount[]): void {
+    this.bankAccounts = accounts;
   }
 
   public myError(controlName: string, errorName: string) {
     return this.formContractor.controls[controlName].hasError(errorName);
   }
+
   private getContractorTypes(): void {
     this.contractorService.getContractorTypes().subscribe((res) => {
       this.contractorTypes = res.data

@@ -14,6 +14,8 @@ import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree'
 import { FuseDataEntryDialogService } from '@fuse/services/data-entry-dialog/data-entry-dialog.service';
 import { FuseDataEntryDialogFormControls } from '@fuse/services/data-entry-dialog/data-entry-dialog.types';
 import { ProfitLossCategory } from '../../profitLossCategory/profitLossCategory.types';
+import { DropdownOptionsService } from 'app/core/services/dropdown-options/dropdown-options.service';
+import { takeUntil } from 'rxjs/operators';
 @Component({
     selector: 'category-details',
     templateUrl: './details.component.html',
@@ -89,6 +91,7 @@ export class CategroyDetailsComponent implements OnInit, OnDestroy {
         flatNode.status = node.status;
         flatNode.code = node.code;
         flatNode.id = node.id;
+        flatNode.nature = node.nature || 1; // Default to Debit (1) if not provided
         flatNode.levelId = level;
         flatNode.expandable = !!node.children?.length;
         flatNode.frameConformity = node.frameConformity;
@@ -104,7 +107,8 @@ export class CategroyDetailsComponent implements OnInit, OnDestroy {
         private _formBuilder: FormBuilder,
         private cdr: ChangeDetectorRef,
         private route: ActivatedRoute,
-        private _fuseAlertService: FuseAlertService
+        private _fuseAlertService: FuseAlertService,
+        private _dropdownOptionsService: DropdownOptionsService
     ) {
 
         this._unsubscribeAll = new Subject();
@@ -163,16 +167,16 @@ export class CategroyDetailsComponent implements OnInit, OnDestroy {
         return obj;
     }
     /** Select the category so we can insert the new item. */
-    private addNewItemToTree(parentId: number, item: string, id: number, status: number, code: string) {
+    private addNewItemToTree(parentId: number, item: string, id: number, status: number, code: string, nature: number) {
         const parentFlatNode = this.categories.filter(x => x.id === parentId)[0];
         this.categories.push({
             id: id, parentId: parentId, item: item, status: status,
-            code: code, panelConformity: 0, frameConformity: 0,
+            code: code, nature: nature, panelConformity: 0, frameConformity: 0,
             expandable: false, levelId: this.getLevel(parentFlatNode)
         });
 
         const parentNode = this.getMappedToDoItemNode(parentId);
-        this._database.insertItem(parentNode, item, id, status, code, 0, 0);
+        this._database.insertItem(parentNode, item, id, status, code, nature, 0, 0);
         // expand the subtree only if the parent has children (parent is not a leaf node)
 
         this.treeControl.expand(parentFlatNode);
@@ -180,7 +184,7 @@ export class CategroyDetailsComponent implements OnInit, OnDestroy {
     }
 
 
-    private editTreeItem(parentId: number, id: number, item: string, code: string, status: number) {
+    private editTreeItem(parentId: number, id: number, item: string, code: string, status: number, nature: number) {
         const parentFlatNode = this.categories.filter(x => x.id === parentId)[0];
         const indx = this.categories.findIndex(x => x.id === id);
         this.categories[indx].id = id;
@@ -188,12 +192,13 @@ export class CategroyDetailsComponent implements OnInit, OnDestroy {
         this.categories[indx].item = item;
         this.categories[indx].code = code;
         this.categories[indx].status = status;
+        this.categories[indx].nature = nature;
 
         const obj: TodoItemNode = this.getMappedToDoItemNode(id);
-        this._database.updateItem(obj, item, id, code, status);
+        this._database.updateItem(obj, item, id, code, status, nature);
         if (status === 1000000)
             this.treeControl.getDescendants(this.categories[indx]).forEach(element => {
-                this.editTreeItem(id, element.id, element.item, element.code, 1000000);
+                this.editTreeItem(id, element.id, element.item, element.code, 1000000, element.nature);
             });
         this.treeControl.expand(parentFlatNode);
     }
@@ -252,9 +257,13 @@ export class CategroyDetailsComponent implements OnInit, OnDestroy {
         return this.service.getCategoryTree();
 
     }
-    private initialDialogFormContorls(parentName: string, categoryCode: string, categoryName: string, status: number): FormGroup {
+    private initialDialogFormContorls(parentName: string, categoryCode: string, categoryName: string, status: number, nature: number = 1): FormGroup {
         let configForm: FormGroup;
         let formControls: Array<FuseDataEntryDialogFormControls> = [];
+        
+        // Get translated dropdown options for account nature
+        const natureOptions = this._dropdownOptionsService.getDropdownOptionsSync('accountNature');
+        
         formControls.push({
             formControlName: 'parent', index: 0, label: 'Parent', placeHolder: 'Parent',
             type: 'text', disabled: true, value: parentName
@@ -267,9 +276,13 @@ export class CategroyDetailsComponent implements OnInit, OnDestroy {
             formControlName: 'name', index: 2, label: 'Name', placeHolder: 'Name',
             type: 'text', disabled: false, value: categoryName
         });
-
         formControls.push({
-            formControlName: 'status', index: 3, label: 'Active', placeHolder: 'Status',
+            formControlName: 'nature', index: 3, label: 'Nature', placeHolder: 'Nature',
+            type: 'select', disabled: false, value: nature,
+            options: natureOptions
+        });
+        formControls.push({
+            formControlName: 'status', index: 4, label: 'Active', placeHolder: 'Status',
             type: 'checkbox', disabled: false, value: status === 1000001 ? true : false
         });
         configForm = this._formBuilder.group({
@@ -298,7 +311,7 @@ export class CategroyDetailsComponent implements OnInit, OnDestroy {
     }
     addNewRoot() {
 
-        let configForm: FormGroup = this.initialDialogFormContorls('root', '', '', 1000001);
+        let configForm: FormGroup = this.initialDialogFormContorls('root', '', '', 1000001, 1);
         const dialogRef = this._fuseDataEntryDialogService.open(configForm.value);
         dialogRef.afterClosed().subscribe((result) => {
             if (result !== 'cancelled')
@@ -308,7 +321,7 @@ export class CategroyDetailsComponent implements OnInit, OnDestroy {
 
     addItem(parentId: number) {
         let parentName: string = this.categories.filter(x => x.id === parentId)[0].item;
-        let configForm: FormGroup = this.initialDialogFormContorls(parentName, '', '', 1000001);
+        let configForm: FormGroup = this.initialDialogFormContorls(parentName, '', '', 1000001, 1);
         const dialogRef = this._fuseDataEntryDialogService.open(configForm.value);
         dialogRef.afterClosed().subscribe((result) => {
             if (result !== 'cancelled')
@@ -318,7 +331,7 @@ export class CategroyDetailsComponent implements OnInit, OnDestroy {
 
     editItem(node: TodoItemFlatNode) {
         let parent: TodoItemFlatNode = this.getParentNode(node)
-        let configForm: FormGroup = this.initialDialogFormContorls(parent ? parent.item : 'Root', node.code, node.item, node.status);
+        let configForm: FormGroup = this.initialDialogFormContorls(parent ? parent.item : 'Root', node.code, node.item, node.status, node.nature || 1);
         const dialogRef = this._fuseDataEntryDialogService.open(configForm.value);
         dialogRef.afterClosed().subscribe((result) => {
             if (result !== 'cancelled')
@@ -330,7 +343,8 @@ export class CategroyDetailsComponent implements OnInit, OnDestroy {
         parentId: number, actionType: string) {
         this.categoryInfo.financialCategoryCode = formInfo.filter(x => x.index === 1)[0].value;
         this.categoryInfo.financialCategoryName = formInfo.filter(x => x.index === 2)[0].value;
-        this.categoryInfo.status = formInfo.filter(x => x.index === 3)[0].value ? 1000001 : 1000000;
+        this.categoryInfo.nature = formInfo.filter(x => x.index === 3)[0].value || 1;
+        this.categoryInfo.status = formInfo.filter(x => x.index === 4)[0].value ? 1000001 : 1000000;
         this.categoryInfo.parentId = parentId;
         this.categoryInfo.financialCategoryId = nodeId;
         if (actionType === 'new')
@@ -384,7 +398,7 @@ export class CategroyDetailsComponent implements OnInit, OnDestroy {
             if (this._result.succeed) {
                 this.showAlert('successMessage');
                 this.addNewItemToTree(parentId, this.categoryInfo.financialCategoryName, res.data,
-                    this.categoryInfo.status, this.categoryInfo.financialCategoryCode);
+                    this.categoryInfo.status, this.categoryInfo.financialCategoryCode, this.categoryInfo.nature);
             }
             else
                 this.showAlert('errorMessage');
@@ -401,7 +415,7 @@ export class CategroyDetailsComponent implements OnInit, OnDestroy {
             if (this._result.succeed) {
                 this.showAlert('successMessage');
                 this.editTreeItem(this.categoryInfo.parentId, this.categoryInfo.financialCategoryId, this.categoryInfo.financialCategoryName,
-                    this.categoryInfo.financialCategoryCode, this.categoryInfo.status)
+                    this.categoryInfo.financialCategoryCode, this.categoryInfo.status, this.categoryInfo.nature)
             }
             else
                 this.showAlert('errorMessage');

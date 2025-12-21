@@ -1,0 +1,154 @@
+<div class="w-full">
+    <form [formGroup]="bankAccountForm" class="flex rounded-b-md rounded-tr-md flex-col px-8 py-4 bg-card shadow">
+        <div class="h-2">
+            <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+        </div>
+
+        <!-- Single Form for Adding/Editing -->
+        <div class="bank-account-form border-b pb-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h4 class="text-lg font-medium">
+                        {{ editingIndex !== null ? 'Edit Bank Account' : 'Add New Bank Account' }}
+                    </h4>
+                    <span class="text-sm text-gray-500">
+                        Validation rules for: {{ currentCountryName }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Bank Dropdown -->
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Bank</mat-label>
+                    <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:account_balance"></mat-icon>
+                    <mat-select formControlName="bankId" required>
+                        <mat-option *ngFor="let bank of banks" [value]="bank.bankId">
+                            {{ bank.bankName }} ({{ bank.bankCode }})
+                        </mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="bankAccountForm.get('bankId')?.hasError('required')">
+                        Bank is required
+                    </mat-error>
+                </mat-form-field>
+
+                <!-- Account Number -->
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Account Number</mat-label>
+                    <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:account_balance_wallet"></mat-icon>
+                    <input matInput formControlName="accountNumber" required 
+                        [maxlength]="getFieldConfig('accountNumber')?.maxLength || getFieldConfig('accountNumber')?.length || 50"
+                        [placeholder]="getFieldConfig('accountNumber')?.placeholder || ''">
+                    <mat-hint *ngIf="getFieldConfig('accountNumber')?.hint">
+                        {{ getFieldConfig('accountNumber')?.hint }}
+                    </mat-hint>
+                    <mat-error *ngIf="bankAccountForm.get('accountNumber')?.invalid">
+                        {{ getFieldError('accountNumber') }}
+                    </mat-error>
+                </mat-form-field>
+
+                <!-- Branch Code -->
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Branch Code</mat-label>
+                    <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:business"></mat-icon>
+                    <input matInput formControlName="branchCode" required 
+                        [maxlength]="getFieldConfig('branchCode')?.maxLength || getFieldConfig('branchCode')?.length || 50"
+                        [placeholder]="getFieldConfig('branchCode')?.placeholder || ''">
+                    <mat-hint *ngIf="getFieldConfig('branchCode')?.hint">
+                        {{ getFieldConfig('branchCode')?.hint }}
+                    </mat-hint>
+                    <mat-error *ngIf="bankAccountForm.get('branchCode')?.invalid">
+                        {{ getFieldError('branchCode') }}
+                    </mat-error>
+                </mat-form-field>
+
+                <!-- Branch Name -->
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Branch Name</mat-label>
+                    <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:business"></mat-icon>
+                    <input matInput formControlName="branchName" required maxlength="100">
+                    <mat-error *ngIf="bankAccountForm.get('branchName')?.hasError('required')">
+                        Branch name is required
+                    </mat-error>
+                </mat-form-field>
+
+                <!-- Currency -->
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Currency</mat-label>
+                    <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:credit_card"></mat-icon>
+                    <mat-select formControlName="currencyId" required>
+                        <mat-option *ngFor="let currency of currencies" [value]="currency.currencyId">
+                            {{ currency.currencyName }} ({{ currency.currencyAbbreviation }})
+                        </mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="bankAccountForm.get('currencyId')?.hasError('required')">
+                        Currency is required
+                    </mat-error>
+                </mat-form-field>
+
+                <!-- SWIFT Code -->
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>SWIFT Code</mat-label>
+                    <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:code"></mat-icon>
+                    <input matInput formControlName="swiftCode" maxlength="11" 
+                        [placeholder]="getFieldConfig('swiftCode')?.placeholder || 'e.g., AKBKTRIS'"
+                        style="text-transform: uppercase;">
+                    <mat-hint *ngIf="getFieldConfig('swiftCode')?.hint">
+                        {{ getFieldConfig('swiftCode')?.hint }}
+                    </mat-hint>
+                    <mat-error *ngIf="bankAccountForm.get('swiftCode')?.invalid">
+                        {{ getFieldError('swiftCode') }}
+                    </mat-error>
+                </mat-form-field>
+
+                <!-- IBAN -->
+                <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>IBAN</mat-label>
+                    <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:account_balance"></mat-icon>
+                    <input matInput formControlName="iban" 
+                        [maxlength]="getFieldConfig('iban')?.length || 34"
+                        [placeholder]="getFieldConfig('iban')?.placeholder || ''"
+                        style="text-transform: uppercase;">
+                    <mat-hint *ngIf="getFieldConfig('iban')?.hint">
+                        {{ getFieldConfig('iban')?.hint }}
+                    </mat-hint>
+                    <mat-error *ngIf="bankAccountForm.get('iban')?.invalid">
+                        {{ getFieldError('iban') }}
+                    </mat-error>
+                </mat-form-field>
+
+                <!-- Active Status Checkbox -->
+                <div class="flex items-center">
+                    <mat-checkbox formControlName="isActive" color="primary">
+                        Active
+                    </mat-checkbox>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex justify-end gap-3 mt-6">
+                <button mat-stroked-button type="button" (click)="cancelEdit()">
+                    <mat-icon>close</mat-icon>
+                    <span class="ml-2">Cancel</span>
+                </button>
+                <button mat-flat-button color="primary" type="button" 
+                    [disabled]="isLoading || bankAccountForm.invalid"
+                    (click)="saveAccount()">
+                    <mat-icon>{{ editingIndex !== null ? 'save' : 'add' }}</mat-icon>
+                    <span class="ml-2">{{ editingIndex !== null ? 'Update Account' : 'Add Account' }}</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Saved Accounts List (using shared component) -->
+        <div class="mt-6">
+            <app-item-list
+                [items]="bankAccounts"
+                [config]="listConfig"
+                [editingIndex]="editingIndex"
+                (edit)="editAccount($event)"
+                (delete)="deleteAccount($event)">
+            </app-item-list>
+        </div>
+    </form>
+</div>

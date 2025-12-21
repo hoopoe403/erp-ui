@@ -21,6 +21,9 @@ import { MatMenuTrigger } from "@angular/material/menu";
 import { Goods } from "app/modules/inventory/goods/goods/goods.types";
 import { MatTabGroup } from "@angular/material/tabs/tab-group";
 import { Units } from "app/modules/configuration/measurement/unit/unit.types";
+import { ProductPropertiesDialogComponent } from "../../product/properties-dialog/properties-dialog.component";
+import { ProductPropertiesDialogResult } from "../../product/properties-dialog/properties-dialog.types";
+import { MatSnackBar } from "@angular/material/snack-bar";
 
 let tableName: string;
 
@@ -171,7 +174,8 @@ export class BrandDetailsComponent implements OnInit {
         private route: ActivatedRoute,
         private _dialogService: MatDialog,
         private _fuseAlertService: FuseAlertService,
-        private _changeDetectorRef: ChangeDetectorRef
+        private _changeDetectorRef: ChangeDetectorRef,
+        private _snackBar: MatSnackBar
     ) {
         this._unsubscribeAll = new Subject();
         this.brand = new Brand();
@@ -729,6 +733,41 @@ export class BrandDetailsComponent implements OnInit {
                 this.service.getBrand(this.brand.brandId).subscribe(res => {
                     this.brand = res.data;
                 })
+            }
+        });
+    }
+
+    /**
+     * Open product properties dialog to manage units
+     */
+    openPropertiesDialog(node: TodoItemFlatNode): void {
+        const indx = this.products.findIndex(x => x.productId === node.id);
+        if (indx === -1) {
+            this._snackBar.open('Product not found', null, { duration: 2000 });
+            return;
+        }
+        
+        const product = this.products[indx];
+        
+        const dialogRef = this._dialogService.open(ProductPropertiesDialogComponent, {
+            width: '950px',
+            maxHeight: '90vh',
+            data: {
+                product: product,
+                title: 'Product Properties'
+            }
+        });
+
+        dialogRef.afterClosed().subscribe((result: ProductPropertiesDialogResult) => {
+            if (result && result.saved) {
+                // Update the product with the new units
+                product.units = result.units;
+                
+                // TODO: Call API to save units to backend
+                // this.service.updateProductUnits(product.productId, result.units).subscribe(...)
+                
+                this._snackBar.open('Product units updated successfully', null, { duration: 3000 });
+                this._changeDetectorRef.markForCheck();
             }
         });
     }

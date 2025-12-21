@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  erp-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: erp-ui
+    ports:
+      - "4200:80"
+    restart: unless-stopped
+    # Environment variables can be passed to nginx if needed
+    # environment:
+    #   - API_URL=http://your-api-url
+
+  # Development mode with hot reload (optional)
+  erp-ui-dev:
+    image: node:16-alpine
+    container_name: erp-ui-dev
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "4200:4200"
+    command: sh -c "npm install --legacy-peer-deps && npm start -- --host 0.0.0.0 --poll 2000"
+    profiles:
+      - dev

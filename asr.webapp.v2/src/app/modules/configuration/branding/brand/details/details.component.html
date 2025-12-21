@@ -515,12 +515,30 @@
 
 <mat-menu #contextMenu="matMenu">
     <ng-template matMenuContent>
-        <button mat-menu-item (click)="showAddProductDialog(selectedInfoRow)">Add Item</button>
-        <button mat-menu-item (click)="showEditProductDialog(selectedInfoRow)">Edit</button>
-        <button mat-menu-item>Remove</button>
-        <button mat-menu-item>{{selectedInfoRow.status == 1 ?
-            'Deactivate' : 'Activate'}}</button>
-        <button mat-menu-item [disabled]="hasNodeChildById()" (click)="showMixtureTab()">Mixture</button>
+        <button mat-menu-item (click)="showAddProductDialog(selectedInfoRow)">
+            <mat-icon>add</mat-icon>
+            <span>Add Item</span>
+        </button>
+        <button mat-menu-item (click)="showEditProductDialog(selectedInfoRow)">
+            <mat-icon>edit</mat-icon>
+            <span>Edit</span>
+        </button>
+        <button mat-menu-item (click)="openPropertiesDialog(selectedInfoRow)">
+            <mat-icon>settings</mat-icon>
+            <span>Properties</span>
+        </button>
+        <button mat-menu-item>
+            <mat-icon>delete</mat-icon>
+            <span>Remove</span>
+        </button>
+        <button mat-menu-item>
+            <mat-icon>{{ selectedInfoRow.status == 1 ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+            <span>{{selectedInfoRow.status == 1 ? 'Deactivate' : 'Activate'}}</span>
+        </button>
+        <button mat-menu-item [disabled]="hasNodeChildById()" (click)="showMixtureTab()">
+            <mat-icon>blender</mat-icon>
+            <span>Mixture</span>
+        </button>
     </ng-template>
 </mat-menu>
 <ng-template #noSelectedGoods>

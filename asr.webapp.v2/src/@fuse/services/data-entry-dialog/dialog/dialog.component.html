@@ -59,6 +59,15 @@
                     <mat-checkbox class="px-4 pb-4" *ngIf="getType(i) ==='checkbox'" [formControlName]="i">
                         {{getLabel(i)}}
                     </mat-checkbox>
+                    <mat-form-field *ngIf="getType(i) ==='select'" appearance="outline" class="w-full px-4">
+                        <mat-label>{{getLabel(i)}}</mat-label>
+                        <mat-select [formControlName]="i" [placeholder]="getPlaceHolder(i)">
+                            <mat-option *ngFor="let option of getOptions(i)" [value]="option.value">
+                                {{option.label}}
+                            </mat-option>
+                        </mat-select>
+                        <mat-error>{{getLabel(i)}} is required!</mat-error>
+                    </mat-form-field>
                 </ng-container>
             </div>
         </form>

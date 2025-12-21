@@ -61,7 +61,7 @@
                                             </mat-icon>
                                         </button>
                                         <mat-checkbox [disabled]="true" [checked]="descendantsAllSelected(node)">
-                                            {{node.item}}</mat-checkbox>
+                                            {{node.code}} - {{node.item}}</mat-checkbox>
                                         <button mat-icon-button [matMenuTriggerFor]="contextMenu"
                                             (click)="selectedCatNode=node">
                                             <mat-icon color="accent">more_vert</mat-icon>

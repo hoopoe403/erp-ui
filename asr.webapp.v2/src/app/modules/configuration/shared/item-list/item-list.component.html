@@ -1,0 +1,94 @@
+<!-- Title -->
+<h4 *ngIf="config?.title" class="text-lg font-medium mb-4">{{ config.title }}</h4>
+
+<!-- Table -->
+<div *ngIf="items && items.length > 0" class="overflow-x-auto">
+    <table class="item-list-table w-full border-collapse">
+        <thead>
+            <tr class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                <!-- Index Column -->
+                <th *ngIf="config?.showIndex" 
+                    class="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300 w-12">
+                    #
+                </th>
+                <!-- Dynamic Columns -->
+                <th *ngFor="let column of config?.columns" 
+                    class="px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300"
+                    [style.width]="column.width || 'auto'"
+                    [ngClass]="{
+                        'text-left': column.align === 'left' || !column.align,
+                        'text-center': column.align === 'center',
+                        'text-right': column.align === 'right'
+                    }">
+                    {{ column.label }}
+                </th>
+                <!-- Actions Column -->
+                <th *ngIf="config?.actions?.length > 0" 
+                    class="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300 w-32">
+                    Actions
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let item of items; let i = index; trackBy: trackByFn" 
+                class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                [class.bg-blue-50]="editingIndex === i"
+                [class.dark:bg-blue-900]="editingIndex === i">
+                <!-- Index -->
+                <td *ngIf="config?.showIndex" class="px-4 py-3 text-sm text-center text-gray-500">
+                    {{ i + 1 }}
+                </td>
+                <!-- Dynamic Columns -->
+                <td *ngFor="let column of config?.columns" 
+                    class="px-4 py-3 text-sm"
+                    [ngClass]="{
+                        'text-left': column.align === 'left' || !column.align,
+                        'text-center': column.align === 'center',
+                        'text-right': column.align === 'right'
+                    }">
+                    <!-- Text Type -->
+                    <ng-container *ngIf="column.type === 'text' || !column.type">
+                        {{ getValue(item, column) }}
+                    </ng-container>
+                    
+                    <!-- Badge Type (Active/Inactive) -->
+                    <ng-container *ngIf="column.type === 'badge'">
+                        <span [ngClass]="getBadgeClass(item, column)">
+                            {{ getBadgeLabel(item, column) }}
+                        </span>
+                    </ng-container>
+                    
+                    <!-- Primary Badge Type -->
+                    <ng-container *ngIf="column.type === 'primary-badge'">
+                        <span *ngIf="isPrimary(item, column)" class="primary-badge">
+                            Primary
+                        </span>
+                        <span *ngIf="!isPrimary(item, column)" class="text-gray-400">
+                            {{ getValue(item, column) }}
+                        </span>
+                    </ng-container>
+                </td>
+                <!-- Actions -->
+                <td *ngIf="config?.actions?.length > 0" class="px-4 py-3 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                        <ng-container *ngFor="let action of config?.actions">
+                            <button *ngIf="shouldShowAction(action, item, i)"
+                                    mat-icon-button 
+                                    [color]="action.color || 'primary'" 
+                                    type="button"
+                                    (click)="onActionClick(action, i, item)" 
+                                    [matTooltip]="action.tooltip">
+                                <mat-icon class="icon-size-5">{{ action.icon }}</mat-icon>
+                            </button>
+                        </ng-container>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Empty Message -->
+<div *ngIf="!items || items.length === 0" class="text-center py-8 text-gray-500">
+    {{ config?.emptyMessage || 'No items added yet.' }}
+</div>

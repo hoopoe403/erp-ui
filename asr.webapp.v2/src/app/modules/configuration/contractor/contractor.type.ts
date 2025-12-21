@@ -1,5 +1,7 @@
 import { Paging } from "app/core/type/paging/paging.type";
 import { BaseModel } from "app/core/type/base/BaseModel";
+import { BankAccount } from "../shared/bank-account/bank-account.types";
+
 export class Contractor extends BaseModel {
   contractorId: number;
   contractorCode: string;
@@ -19,6 +21,7 @@ export class Contractor extends BaseModel {
   statusIdList: Array<number>;
   contractorTypeIdList: Array<number>;
   settlementTypeIdList: Array<number>;
+  bankAccounts: BankAccount[]; // Bank accounts for this contractor
   page: Paging;
 }
 

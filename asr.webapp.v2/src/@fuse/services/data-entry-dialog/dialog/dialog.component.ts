@@ -25,11 +25,17 @@ export class FuseDataEntryDialogComponent implements OnInit {
         @Inject(MAT_DIALOG_DATA) public data: FuseDataEntryDialogConfig,
         public matDialogRef: MatDialogRef<FuseDataEntryDialogComponent>
     ) {
-        // this.frmDataEntry = new FormGroup({});
-        this.data.formControls.forEach(contorl => {
-            this.formControls.push(new FormControl(contorl.value, Validators.required));
-            if (contorl.disabled)
-                this.formControls.controls[contorl.index].disable();
+        // Sort form controls by index to ensure correct order
+        const sortedControls = [...this.data.formControls].sort((a, b) => a.index - b.index);
+        
+        sortedControls.forEach(contorl => {
+            // For select fields, value might be a number, so ensure it's properly set
+            const initialValue = contorl.value !== null && contorl.value !== undefined ? contorl.value : '';
+            const formControl = new FormControl(initialValue, Validators.required);
+            this.formControls.push(formControl);
+            if (contorl.disabled) {
+                formControl.disable();
+            }
         });
 
     }
@@ -51,6 +57,14 @@ export class FuseDataEntryDialogComponent implements OnInit {
     getLabel(index: number): string {
         const indx = this.data.formControls.findIndex(x => x.index === index);
         return this.data.formControls[indx].label;
+    }
+    getPlaceHolder(index: number): string {
+        const indx = this.data.formControls.findIndex(x => x.index === index);
+        return this.data.formControls[indx].placeHolder;
+    }
+    getOptions(index: number): Array<{ value: any, label: string }> {
+        const indx = this.data.formControls.findIndex(x => x.index === index);
+        return this.data.formControls[indx].options || [];
     }
     registerDialog() {
         this.data.formControls.forEach(element => {

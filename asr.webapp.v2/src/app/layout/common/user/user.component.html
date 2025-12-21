@@ -36,7 +36,7 @@
         <mat-icon [svgIcon]="'heroicons_outline:user-circle'"></mat-icon>
         <span>{{ t('user.profile') }}</span>
     </button>
-    <button mat-menu-item>
+    <button mat-menu-item [routerLink]="'/user-preferences'">
         <mat-icon [svgIcon]="'heroicons_outline:cog'"></mat-icon>
         <span>{{ t('user.settings') }}</span>
     </button>

@@ -200,7 +200,6 @@ export class CustomerDetailsComponent implements OnInit, OnDestroy {
         }
     }
     private create(customer: any) {
-
         this._customerService.create(customer).subscribe(res => {
             this.isLoading = false;
             this._result.succeed = res.succeed;
@@ -217,7 +216,6 @@ export class CustomerDetailsComponent implements OnInit, OnDestroy {
     }
 
     private edit(customer: any) {
-
         this._customerService.edit(customer).subscribe(res => {
             this.isLoading = false;
             this._result.succeed = res.succeed;
@@ -242,6 +240,7 @@ export class CustomerDetailsComponent implements OnInit, OnDestroy {
     private dismissAlert(name: string): void {
         this._fuseAlertService.dismiss(name);
     }
+    
     /**
      * Delete the customer
      */

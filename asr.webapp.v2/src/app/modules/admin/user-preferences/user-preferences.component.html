@@ -1,0 +1,130 @@
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between px-6 py-4 bg-card dark:bg-transparent border-b">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight">User Preferences</h1>
+            <p class="text-secondary mt-1">Configure your application settings</p>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="h-1" *ngIf="isLoading">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-auto p-6 overflow-auto" fuseScrollbar>
+        <div class="max-w-2xl mx-auto">
+            
+            <!-- Current Settings Card -->
+            <div class="bg-card shadow rounded-lg mb-6">
+                <div class="px-6 py-4 border-b bg-gray-50 dark:bg-gray-800">
+                    <h2 class="text-lg font-medium flex items-center">
+                        <mat-icon class="mr-2 text-primary" svgIcon="heroicons_outline:information-circle"></mat-icon>
+                        Current Settings
+                    </h2>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <span class="text-sm text-gray-500">Country</span>
+                            <p class="font-medium">{{ currentCountryName }}</p>
+                        </div>
+                        <div>
+                            <span class="text-sm text-gray-500">Default Currency</span>
+                            <p class="font-medium">{{ currentCurrency }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Regional Settings Card -->
+            <div class="bg-card shadow rounded-lg">
+                <div class="px-6 py-4 border-b">
+                    <h2 class="text-lg font-medium flex items-center">
+                        <mat-icon class="mr-2 text-primary" svgIcon="heroicons_outline:globe-alt"></mat-icon>
+                        Regional Settings
+                    </h2>
+                    <p class="text-sm text-gray-500 mt-1">
+                        Select your country to apply appropriate validation rules for bank accounts, phone numbers, and other fields.
+                    </p>
+                </div>
+                <div class="p-6">
+                    <form [formGroup]="preferencesForm">
+                        <!-- Country Selection -->
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Country Configuration</mat-label>
+                            <mat-icon matPrefix svgIcon="heroicons_outline:flag"></mat-icon>
+                            <mat-select formControlName="countryCode">
+                                <mat-option *ngFor="let country of countries" [value]="country.code">
+                                    <span class="flex items-center">
+                                        <span class="font-mono text-gray-400 mr-2">{{ country.code }}</span>
+                                        {{ country.name }}
+                                    </span>
+                                </mat-option>
+                            </mat-select>
+                            <mat-hint>
+                                This affects validation rules for IBAN, account numbers, phone numbers, etc.
+                            </mat-hint>
+                        </mat-form-field>
+
+                        <!-- Info Box -->
+                        <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                            <div class="flex">
+                                <mat-icon class="text-blue-500 mr-3" svgIcon="heroicons_outline:light-bulb"></mat-icon>
+                                <div>
+                                    <h4 class="font-medium text-blue-800 dark:text-blue-200">Note</h4>
+                                    <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                                        Country configuration is independent from language settings. 
+                                        You can use Turkish validation rules while having the interface in English.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex justify-between mt-6 pt-4 border-t">
+                            <button mat-stroked-button type="button" (click)="resetToDefault()">
+                                <mat-icon svgIcon="heroicons_outline:refresh"></mat-icon>
+                                <span class="ml-2">Reset to Default</span>
+                            </button>
+                            <button mat-flat-button color="primary" type="button" 
+                                    (click)="savePreferences()"
+                                    [disabled]="isLoading">
+                                <mat-icon svgIcon="heroicons_outline:save"></mat-icon>
+                                <span class="ml-2">Save Preferences</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Available Countries Info -->
+            <div class="mt-6 bg-card shadow rounded-lg">
+                <div class="px-6 py-4 border-b">
+                    <h2 class="text-lg font-medium">Available Countries</h2>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div *ngFor="let country of countries" 
+                             class="p-4 border rounded-lg"
+                             [class.border-primary]="country.code === currentCountryCode"
+                             [class.bg-primary-50]="country.code === currentCountryCode">
+                            <div class="flex items-center">
+                                <span class="text-2xl font-bold text-gray-300 mr-3">{{ country.code }}</span>
+                                <div>
+                                    <p class="font-medium">{{ country.name }}</p>
+                                    <p class="text-xs text-gray-500" *ngIf="country.code === currentCountryCode">
+                                        Currently selected
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+

@@ -25,7 +25,7 @@
   <ng-container>
     <div class="flex-auto px-6 py-3" fuseScrollbar #scrollContainer id="scrollDiv">
       <mat-tab-group #tabGroup fxLayout="column" fxFlex>
-        <!-- tab information, only one tab available -->
+        <!-- tab information -->
         <mat-tab label="Information">
           <form [formGroup]="formContractor" (ngSubmit)="save()"
             class="flex rounded-b-md rounded-tr-md flex-col px-8 py-4 bg-card shadow">
@@ -146,6 +146,16 @@
               </div>
             </div>
           </form>
+        </mat-tab>
+        
+        <!-- Bank Accounts Tab -->
+        <mat-tab label="Bank Accounts">
+          <div class="mt-4">
+            <app-bank-account 
+              [bankAccounts]="bankAccounts"
+              (bankAccountsChange)="onBankAccountsChange($event)">
+            </app-bank-account>
+          </div>
         </mat-tab>
       </mat-tab-group>
     </div>

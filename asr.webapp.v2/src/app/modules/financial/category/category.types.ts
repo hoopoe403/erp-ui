@@ -14,6 +14,7 @@ export class FinancialCategory extends BaseModel {
     levelId: number;
     status: number;
     statusDescription: string;
+    nature: number; // 1: Debit, 2: Credit, 3: Both
     statusColor: string;
     statusIdList: Array<number>;
     language: string;

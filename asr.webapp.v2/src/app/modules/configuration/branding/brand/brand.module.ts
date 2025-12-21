@@ -31,7 +31,11 @@ import { BrandListComponent } from "./list/list.component";
 import { BrandDetailsComponent } from "./details/details.component";
 import { BrandDialogComponent } from "./dialogDetail/dialog.component";
 import { MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MenuItemListComponent } from "./menu-item-list/menu-item-list.component";
+import { ProductPropertiesDialogComponent } from "../product/properties-dialog/properties-dialog.component";
+import { FuseConfirmationModule } from '@fuse/services/confirmation';
+import { ItemListModule } from "../../shared/item-list/item-list.module";
 
 @NgModule({
     declarations : [
@@ -39,7 +43,8 @@ import { MenuItemListComponent } from "./menu-item-list/menu-item-list.component
         BrandListComponent,
         BrandDialogComponent,
         BrandDetailsComponent,
-        MenuItemListComponent
+        MenuItemListComponent,
+        ProductPropertiesDialogComponent
     ],
     imports : [
         RouterModule.forChild(BrandRoutes),
@@ -68,7 +73,10 @@ import { MenuItemListComponent } from "./menu-item-list/menu-item-list.component
         FuseAlertModule,
         FuseScrollbarModule,
         FuseDrawerModule,
-        MatAutocompleteModule
+        MatAutocompleteModule,
+        MatSnackBarModule,
+        FuseConfirmationModule,
+        ItemListModule
     ]
 })
 
