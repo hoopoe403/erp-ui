@@ -7,6 +7,9 @@ import { BankAccountService } from './bank-account.service';
 import { Bank } from '../../../financial/shared/financial.types';
 import { FuseConfirmationService } from '@fuse/services/confirmation';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { CountryConfigService } from 'app/core/config/country-config.service';
+import { BankAccountValidationConfig } from 'app/core/config/country-config.types';
+import { DynamicValidatorFactory } from 'app/core/validators/dynamic-validator.factory';
 
 @Component({
     selector: 'app-bank-account',
@@ -25,7 +28,11 @@ export class BankAccountComponent implements OnInit, OnDestroy {
     banks: Bank[] = [];
     currencies: Currency[] = [];
     isLoading: boolean = false;
-    editingIndex: number | null = null; // Track which account index is being edited
+    editingIndex: number | null = null;
+    
+    // Validation config from country settings
+    validationConfig: BankAccountValidationConfig | null = null;
+    
     private _unsubscribeAll: Subject<any> = new Subject<any>();
 
     constructor(
@@ -33,20 +40,45 @@ export class BankAccountComponent implements OnInit, OnDestroy {
         private _bankAccountService: BankAccountService,
         private _fuseConfirmationService: FuseConfirmationService,
         private _snackBar: MatSnackBar,
-        private _cdr: ChangeDetectorRef
-    ) {
-        this.createForm();
-    }
+        private _cdr: ChangeDetectorRef,
+        private _countryConfigService: CountryConfigService
+    ) {}
 
     ngOnInit(): void {
-        // Load dropdowns
-        this.loadBanks();
-        this.loadCurrencies();
-        
         // Initialize bankAccounts if null
         if (!this.bankAccounts) {
             this.bankAccounts = [];
         }
+
+        // Load country config - if not loaded yet, load it first
+        this._countryConfigService.loadConfig()
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe({
+                next: () => {
+                    this.loadCountryConfig();
+                    this.createForm();
+                    this._cdr.detectChanges();
+                },
+                error: () => {
+                    // Fallback: create form with default validation
+                    this.createForm();
+                    this._cdr.detectChanges();
+                }
+            });
+        
+        // Load dropdowns
+        this.loadBanks();
+        this.loadCurrencies();
+
+        // Subscribe to country changes to rebuild form
+        this._countryConfigService.currentCountry$
+            .pipe(takeUntil(this._unsubscribeAll))
+            .subscribe((country) => {
+                if (country) {
+                    this.loadCountryConfig();
+                    this.rebuildForm();
+                }
+            });
     }
 
     ngOnDestroy(): void {
@@ -55,19 +87,83 @@ export class BankAccountComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Create the form
+     * Load validation config from country service
+     */
+    private loadCountryConfig(): void {
+        this.validationConfig = this._countryConfigService.bankAccountValidation;
+    }
+
+    /**
+     * Create the form with dynamic validators
      */
     private createForm(): void {
+        const config = this.validationConfig;
+        
         this.bankAccountForm = this._formBuilder.group({
             bankId: [null, Validators.required],
-            branchCode: ['', Validators.required],
+            branchCode: ['', config?.branchCode 
+                ? [Validators.required, DynamicValidatorFactory.createValidator(config.branchCode)]
+                : Validators.required
+            ],
             branchName: ['', Validators.required],
-            accountNumber: ['', Validators.required],
-            swiftCode: [''],
-            iban: [''],
+            accountNumber: ['', config?.accountNumber 
+                ? [Validators.required, DynamicValidatorFactory.createValidator(config.accountNumber)]
+                : Validators.required
+            ],
+            swiftCode: ['', config?.swiftCode 
+                ? DynamicValidatorFactory.createValidator(config.swiftCode)
+                : null
+            ],
+            iban: ['', config?.iban 
+                ? DynamicValidatorFactory.createValidator(config.iban)
+                : null
+            ],
             currencyId: [null, Validators.required],
-            isActive: [true] // Default to active
+            isActive: [true]
         });
+    }
+
+    /**
+     * Rebuild form when country changes
+     */
+    private rebuildForm(): void {
+        const currentValues = this.bankAccountForm?.value;
+        this.createForm();
+        
+        if (currentValues) {
+            this.bankAccountForm.patchValue(currentValues);
+        }
+        
+        this._cdr.detectChanges();
+    }
+
+    /**
+     * Get validation config for a field
+     */
+    getFieldConfig(fieldName: 'accountNumber' | 'iban' | 'swiftCode' | 'branchCode') {
+        return this.validationConfig?.[fieldName];
+    }
+
+    /**
+     * Get error message for a field
+     */
+    getFieldError(fieldName: string): string {
+        const control = this.bankAccountForm.get(fieldName);
+        if (!control || !control.errors) {
+            return '';
+        }
+
+        const config = this.getFieldConfig(fieldName as any);
+        if (config) {
+            return DynamicValidatorFactory.getErrorMessage(control, config);
+        }
+
+        // Fallback for fields without config
+        if (control.errors['required']) {
+            return 'This field is required';
+        }
+        
+        return 'Invalid value';
     }
 
     /**
@@ -104,7 +200,6 @@ export class BankAccountComponent implements OnInit, OnDestroy {
             },
             error: (error) => {
                 console.error('Error loading currencies:', error);
-                // Fallback to mock data if API fails
                 this._bankAccountService.getCurrenciesMock().subscribe(res => {
                     this.currencies = res.data || [];
                     this._cdr.detectChanges();
@@ -117,7 +212,6 @@ export class BankAccountComponent implements OnInit, OnDestroy {
      * Add or update bank account in local list
      */
     saveAccount(): void {
-        // Validate form
         if (this.bankAccountForm.invalid) {
             this.bankAccountForm.markAllAsTouched();
             return;
@@ -126,47 +220,38 @@ export class BankAccountComponent implements OnInit, OnDestroy {
         const formValue = this.bankAccountForm.value;
         const currency = this.getCurrency(formValue.currencyId);
         
-        // Create bank account object matching backend model
         const bankAccount: BankAccount = {
             bankId: formValue.bankId,
             bankName: this.getBankName(formValue.bankId),
             branchCode: formValue.branchCode,
             branchName: formValue.branchName,
             accountNumber: formValue.accountNumber,
-            swiftCode: formValue.swiftCode || '',
-            iban: formValue.iban || '',
+            swiftCode: formValue.swiftCode?.toUpperCase() || '',
+            iban: formValue.iban?.toUpperCase() || '',
             currencyId: formValue.currencyId,
             currencyName: currency?.currencyName || '',
             currencyAbbreviation: currency?.currencyAbbreviation || '',
             statusId: formValue.isActive ? BANK_ACCOUNT_STATUS.ACTIVE : BANK_ACCOUNT_STATUS.INACTIVE
-            // bankAccountId is omitted for new accounts - backend will assign ID
         };
 
         let message: string;
         if (this.editingIndex !== null) {
-            // Update existing account in list (preserve existing ID if any)
             bankAccount.bankAccountId = this.bankAccounts[this.editingIndex].bankAccountId;
             this.bankAccounts[this.editingIndex] = bankAccount;
             message = 'Bank account updated successfully';
         } else {
-            // Add new account (ID is null, backend will assign)
             this.bankAccounts.push(bankAccount);
             message = 'Bank account added successfully';
         }
 
-        // Emit changes to parent
         this.bankAccountsChange.emit([...this.bankAccounts]);
-
-        // Show success notification
         this._snackBar.open(message, null, { duration: 3000 });
-        
-        // Clear form and reset editing state
         this.resetForm();
         this._cdr.detectChanges();
     }
 
     /**
-     * Edit an existing account - load data into form
+     * Edit an existing account
      */
     editAccount(index: number): void {
         const account = this.bankAccounts[index];
@@ -182,7 +267,6 @@ export class BankAccountComponent implements OnInit, OnDestroy {
             isActive: account.statusId === BANK_ACCOUNT_STATUS.ACTIVE
         });
         
-        // Scroll to form
         setTimeout(() => {
             const formElement = document.querySelector('.bank-account-form');
             if (formElement) {
@@ -197,7 +281,6 @@ export class BankAccountComponent implements OnInit, OnDestroy {
      * Delete bank account from local list
      */
     deleteAccount(index: number): void {
-        // Open the confirmation dialog
         const confirmation = this._fuseConfirmationService.open({
             title: 'Delete Bank Account',
             message: 'Are you sure you want to delete this bank account? This action cannot be undone!',
@@ -208,25 +291,17 @@ export class BankAccountComponent implements OnInit, OnDestroy {
             }
         });
 
-        // Subscribe to the confirmation dialog closed action
         confirmation.afterClosed().subscribe((result) => {
-            // If the confirm button pressed...
             if (result === 'confirmed') {
-                // Remove from local list
                 this.bankAccounts.splice(index, 1);
                 
-                // If we were editing this account, reset form
                 if (this.editingIndex === index) {
                     this.resetForm();
                 } else if (this.editingIndex !== null && this.editingIndex > index) {
-                    // Adjust editing index if we deleted an item before the one being edited
                     this.editingIndex--;
                 }
                 
-                // Emit changes to parent
                 this.bankAccountsChange.emit([...this.bankAccounts]);
-                
-                // Show success notification
                 this._snackBar.open('Bank account deleted successfully', null, { duration: 3000 });
                 this._cdr.detectChanges();
             }
@@ -234,7 +309,7 @@ export class BankAccountComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Cancel editing - reset form
+     * Cancel editing
      */
     cancelEdit(): void {
         this.resetForm();
@@ -242,30 +317,24 @@ export class BankAccountComponent implements OnInit, OnDestroy {
 
     /**
      * Reset form to initial state
-     * If there are existing accounts, pre-fill with first account's data (except SWIFT & IBAN)
-     * to make it easier for users to add multiple accounts
      */
     private resetForm(): void {
         this.bankAccountForm.reset();
         this.editingIndex = null;
         
-        // If there are existing accounts, pre-fill form with first account's data
-        // Pre-fill: Bank, Branch Code, Branch Name, Account Number
-        // Don't pre-fill: Currency, SWIFT Code, IBAN (these vary per account)
         if (this.bankAccounts && this.bankAccounts.length > 0) {
             const firstAccount = this.bankAccounts[0];
             this.bankAccountForm.patchValue({
                 bankId: firstAccount.bankId,
                 branchCode: firstAccount.branchCode,
                 branchName: firstAccount.branchName,
-                accountNumber: firstAccount.accountNumber, // Pre-fill from first account
-                currencyId: null, // Don't copy - may differ per account
-                swiftCode: '', // Don't copy - unique per account
-                iban: '', // Don't copy - unique per account
-                isActive: true // Default to active for new accounts
+                accountNumber: firstAccount.accountNumber,
+                currencyId: null,
+                swiftCode: '',
+                iban: '',
+                isActive: true
             });
         } else {
-            // No existing accounts - clear everything
             this.bankAccountForm.patchValue({
                 bankId: null,
                 branchCode: '',
@@ -274,7 +343,7 @@ export class BankAccountComponent implements OnInit, OnDestroy {
                 currencyId: null,
                 swiftCode: '',
                 iban: '',
-                isActive: true // Default to active
+                isActive: true
             });
         }
     }
@@ -307,5 +376,12 @@ export class BankAccountComponent implements OnInit, OnDestroy {
     getCurrencyName(currencyId: number): string {
         const currency = this.getCurrency(currencyId);
         return currency ? `${currency.currencyName} (${currency.currencyAbbreviation})` : '';
+    }
+
+    /**
+     * Get current country name for display
+     */
+    get currentCountryName(): string {
+        return this._countryConfigService.currentCountry?.name || 'Turkey';
     }
 }

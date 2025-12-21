@@ -4,24 +4,17 @@
             <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
         </div>
 
-        <!-- Warning if no ownerId (TEMPORARILY DISABLED FOR TESTING) -->
-        <!--
-        <div *ngIf="!ownerId || !ownerTypeId" class="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg">
-            <div class="flex items-center">
-                <mat-icon class="text-yellow-600 dark:text-yellow-400 mr-2">info</mat-icon>
-                <span class="text-yellow-800 dark:text-yellow-200">
-                    Please save the customer/contractor information first. Bank accounts will be saved after the owner is saved.
-                </span>
-            </div>
-        </div>
-        -->
-
-        <!-- Single Form for Adding/Editing at the TOP -->
+        <!-- Single Form for Adding/Editing -->
         <div class="bank-account-form border-b pb-6 mb-6">
             <div class="flex items-center justify-between mb-4">
-                <h4 class="text-lg font-medium">
-                    {{ editingIndex !== null ? 'Edit Bank Account' : 'Add New Bank Account' }}
-                </h4>
+                <div>
+                    <h4 class="text-lg font-medium">
+                        {{ editingIndex !== null ? 'Edit Bank Account' : 'Add New Bank Account' }}
+                    </h4>
+                    <span class="text-sm text-gray-500">
+                        Validation rules for: {{ currentCountryName }}
+                    </span>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -43,9 +36,14 @@
                 <mat-form-field appearance="outline" class="w-full">
                     <mat-label>Account Number</mat-label>
                     <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:account_balance_wallet"></mat-icon>
-                    <input matInput formControlName="accountNumber" required maxlength="50">
-                    <mat-error *ngIf="bankAccountForm.get('accountNumber')?.hasError('required')">
-                        Account number is required
+                    <input matInput formControlName="accountNumber" required 
+                        [maxlength]="getFieldConfig('accountNumber')?.maxLength || getFieldConfig('accountNumber')?.length || 50"
+                        [placeholder]="getFieldConfig('accountNumber')?.placeholder || ''">
+                    <mat-hint *ngIf="getFieldConfig('accountNumber')?.hint">
+                        {{ getFieldConfig('accountNumber')?.hint }}
+                    </mat-hint>
+                    <mat-error *ngIf="bankAccountForm.get('accountNumber')?.invalid">
+                        {{ getFieldError('accountNumber') }}
                     </mat-error>
                 </mat-form-field>
 
@@ -53,9 +51,14 @@
                 <mat-form-field appearance="outline" class="w-full">
                     <mat-label>Branch Code</mat-label>
                     <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:business"></mat-icon>
-                    <input matInput formControlName="branchCode" required maxlength="50">
-                    <mat-error *ngIf="bankAccountForm.get('branchCode')?.hasError('required')">
-                        Branch code is required
+                    <input matInput formControlName="branchCode" required 
+                        [maxlength]="getFieldConfig('branchCode')?.maxLength || getFieldConfig('branchCode')?.length || 50"
+                        [placeholder]="getFieldConfig('branchCode')?.placeholder || ''">
+                    <mat-hint *ngIf="getFieldConfig('branchCode')?.hint">
+                        {{ getFieldConfig('branchCode')?.hint }}
+                    </mat-hint>
+                    <mat-error *ngIf="bankAccountForm.get('branchCode')?.invalid">
+                        {{ getFieldError('branchCode') }}
                     </mat-error>
                 </mat-form-field>
 
@@ -88,15 +91,30 @@
                     <mat-label>SWIFT Code</mat-label>
                     <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:code"></mat-icon>
                     <input matInput formControlName="swiftCode" maxlength="11" 
-                        placeholder="e.g., CHASUS33">
+                        [placeholder]="getFieldConfig('swiftCode')?.placeholder || 'e.g., AKBKTRIS'"
+                        style="text-transform: uppercase;">
+                    <mat-hint *ngIf="getFieldConfig('swiftCode')?.hint">
+                        {{ getFieldConfig('swiftCode')?.hint }}
+                    </mat-hint>
+                    <mat-error *ngIf="bankAccountForm.get('swiftCode')?.invalid">
+                        {{ getFieldError('swiftCode') }}
+                    </mat-error>
                 </mat-form-field>
 
                 <!-- IBAN -->
                 <mat-form-field appearance="outline" class="w-full">
                     <mat-label>IBAN</mat-label>
                     <mat-icon matPrefix class="icon-size-5" svgIcon="mat_outline:account_balance"></mat-icon>
-                    <input matInput formControlName="iban" maxlength="34" 
-                        placeholder="e.g., GB82WEST12345698765432">
+                    <input matInput formControlName="iban" 
+                        [maxlength]="getFieldConfig('iban')?.length || 34"
+                        [placeholder]="getFieldConfig('iban')?.placeholder || ''"
+                        style="text-transform: uppercase;">
+                    <mat-hint *ngIf="getFieldConfig('iban')?.hint">
+                        {{ getFieldConfig('iban')?.hint }}
+                    </mat-hint>
+                    <mat-error *ngIf="bankAccountForm.get('iban')?.invalid">
+                        {{ getFieldError('iban') }}
+                    </mat-error>
                 </mat-form-field>
 
                 <!-- Active Status Checkbox -->
@@ -184,4 +202,3 @@
         </div>
     </form>
 </div>
-
