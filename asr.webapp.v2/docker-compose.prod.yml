@@ -8,7 +8,7 @@ services:
     image: ghcr.io/YOUR_GITHUB_USERNAME/erp-ui:latest  # Change YOUR_GITHUB_USERNAME
     container_name: erp-ui
     ports:
-      - "80:80"      # Or use 4200:80 if port 80 is busy
+      - "4200:80"
     restart: unless-stopped
     labels:
       - "com.centurylinklabs.watchtower.enable=true"

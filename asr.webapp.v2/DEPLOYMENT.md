@@ -62,7 +62,7 @@ services:
     image: ghcr.io/YOUR_GITHUB_USERNAME/fe-erp-ui:latest
     container_name: erp-ui
     ports:
-      - "80:80"
+      - "4200:80"
     restart: unless-stopped
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
