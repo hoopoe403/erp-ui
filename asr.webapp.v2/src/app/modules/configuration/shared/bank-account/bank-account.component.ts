@@ -218,7 +218,7 @@ export class BankAccountComponent implements OnInit, OnDestroy {
      */
     private loadBanks(): void {
         this.isLoading = true;
-        this._bankAccountService.getBanks().pipe(
+        this._bankAccountService.getBanksFromApi().pipe(
             takeUntil(this._unsubscribeAll)
         ).subscribe({
             next: (response) => {
@@ -247,7 +247,7 @@ export class BankAccountComponent implements OnInit, OnDestroy {
             },
             error: (error) => {
                 console.error('Error loading currencies:', error);
-                this._bankAccountService.getCurrenciesMock().subscribe(res => {
+                this._bankAccountService.getCurrencies().subscribe(res => {
                     this.currencies = res.data || [];
                     this._cdr.detectChanges();
                 });

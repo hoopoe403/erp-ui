@@ -53,7 +53,7 @@ export class BankAccountService {
      * Get currencies dropdown list from API
      */
     getCurrencies(): Observable<any> {
-        return this._httpClient.get(ApiHelperService.BASE_URL + 'drp/currency').pipe(
+        return this._httpClient.get(ApiHelperService.BASE_URL + 'configuration/contractor/drp/currency').pipe(
             map((data) => data),
             switchMap((data) => {
                 if (!data) {
