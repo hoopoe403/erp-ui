@@ -22,7 +22,7 @@
     </div>
   </div>
 
-  <ng-container>
+  <ng-container *transloco="let t">
     <div class="flex-auto px-6 py-3" fuseScrollbar #scrollContainer id="scrollDiv">
       <mat-tab-group #tabGroup fxLayout="column" fxFlex>
         <!-- tab information -->
@@ -121,39 +121,39 @@
               </mat-form-field>
             </div>
 
-            <!-- Button -->
-            <div class="w-full mt-6" style="display: flex; align-items: center; place-content: center">
+            <!-- Buttons -->
+            <div class="w-full mt-6" style="display: flex; align-items: center; place-content: center; gap: 8px;">
               <button class="mr-1" mat-flat-button color="primary" [disabled]="!formContractor.valid" type="submit"
                 [title]="
                   formContractor.valid
                     ? 'Save your entered data'
                     : 'Disabled until the form data is valid'
-                " matStepperNext>
-                {{ pageType === "new" ? "Register" : "Update" }}
+                ">
+                {{ pageType === "new" ? t('common.register') : t('common.update') }}
               </button>
-            </div>
-
-            <div class="flex items-center flex-wrap content-center w-full py-2">
-              <div class="w-auto h-auto min-h-15 m-auto">
-                <fuse-alert *ngIf="result.succeed" [appearance]="'soft'" [dismissible]="true" [dismissed]="true"
-                  [name]="'successMessage'" [type]="'success'">
-                  <b>Result: </b> {{ result.message }}.
-                </fuse-alert>
-                <fuse-alert *ngIf="!result.succeed" [appearance]="'soft'" [dismissible]="true" [dismissed]="true"
-                  [name]="'errorMessage'" [type]="'error'">
-                  <b>Result: </b> {{ result.message }}.
-                </fuse-alert>
-              </div>
+              <button mat-stroked-button type="button" (click)="tabGroup.selectedIndex = 1">
+                {{ t('common.next') }}
+              </button>
             </div>
           </form>
         </mat-tab>
-        
+
         <!-- Bank Accounts Tab -->
         <mat-tab label="Bank Accounts">
           <div class="mt-4">
-            <app-bank-account 
+            <app-bank-account
               [bankAccounts]="bankAccounts"
               (bankAccountsChange)="onBankAccountsChange($event)">
+              <!-- Buttons (projected inside the bank account card) -->
+              <div class="w-full mt-6" style="display: flex; align-items: center; place-content: center; gap: 8px;">
+                <button mat-stroked-button type="button" (click)="tabGroup.selectedIndex = 0">
+                  {{ t('common.back') }}
+                </button>
+                <button mat-flat-button color="primary" type="button" [disabled]="!formContractor.valid"
+                  (click)="save()">
+                  {{ pageType === "new" ? t('common.register') : t('common.update') }}
+                </button>
+              </div>
             </app-bank-account>
           </div>
         </mat-tab>

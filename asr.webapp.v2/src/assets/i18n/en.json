@@ -26,6 +26,7 @@
     "upload": "Upload",
     "print": "Print",
     "refresh": "Refresh",
+    "register": "Register",
     "back": "Back",
     "next": "Next",
     "previous": "Previous",
@@ -472,7 +473,11 @@
     "contractor": {
       "title": "Contractors",
       "contractor": "Contractor",
-      "contractors": "Contractors"
+      "contractors": "Contractors",
+      "registerSuccess": "Contractor registered successfully",
+      "registerError": "Failed to register contractor. Please try again",
+      "updateSuccess": "Contractor updated successfully",
+      "updateError": "Failed to update contractor. Please try again"
     },
     "customer": {
       "title": "Customer Management",

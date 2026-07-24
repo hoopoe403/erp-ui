@@ -12,10 +12,11 @@ import { MatMenuModule } from "@angular/material/menu";
 import { MatPaginatorModule } from "@angular/material/paginator";
 import { MatSelectModule } from "@angular/material/select";
 import { FuseDrawerModule } from "@fuse/components/drawer";
-import { FuseAlertModule } from "@fuse/components/alert";
+import { FuseScrollbarModule } from "@fuse/directives/scrollbar/public-api";
 import { MatTabsModule } from "@angular/material/tabs";
 import { MatProgressBarModule } from "@angular/material/progress-bar";
 import { MatTooltipModule } from "@angular/material/tooltip";
+import { MatSnackBarModule } from "@angular/material/snack-bar";
 
 import { NgxPrintModule } from "ngx-print";
 import { MatFormFieldModule } from "@angular/material/form-field";
@@ -46,11 +47,12 @@ import { BankAccountModule } from '../shared/bank-account/bank-account.module';
     MatMenuModule,
     MatSelectModule,
     FuseDrawerModule,
-    FuseAlertModule,
+    FuseScrollbarModule,
     SharedModule,
     MatTabsModule,
     MatProgressBarModule,
     MatTooltipModule,
+    MatSnackBarModule,
   ],
 })
 export class ContractorModule {}

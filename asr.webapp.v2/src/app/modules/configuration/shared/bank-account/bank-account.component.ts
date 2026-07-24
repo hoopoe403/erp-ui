@@ -40,7 +40,6 @@ export class BankAccountComponent implements OnInit, OnDestroy {
         emptyMessage: 'No bank accounts added yet. Fill the form above and click "Add Account" to add one.',
         columns: [
             { key: 'bankName', label: 'Bank' },
-            { key: 'currencyAbbreviation', label: 'Currency' },
             { key: 'branchCode', label: 'Branch Code' },
             { key: 'branchName', label: 'Branch Name' },
             { key: 'accountNumber', label: 'Account Number' },

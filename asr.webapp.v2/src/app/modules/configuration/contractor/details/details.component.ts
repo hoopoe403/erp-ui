@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from "@angular/core";
-import { FuseAlertService } from "@fuse/components/alert";
-import { OpResult } from "app/core/type/result/result.types";
+import { MatSnackBar } from "@angular/material/snack-bar";
+import { TranslocoService } from "@ngneat/transloco";
 import { ActivatedRoute } from "@angular/router";
 import { Location } from "@angular/common";
 import { FormGroup, FormBuilder, Validators } from "@angular/forms";
@@ -19,10 +19,9 @@ export class ContractorsDetailsComponent implements OnInit {
   isLoading = false;
   contractorInfo = new Contractor();
   formContractor: FormGroup;
-  result = new OpResult();
   contractorTypes = [];
   settlementTypes = [];
-  
+
   // Bank accounts for this contractor
   bankAccounts: BankAccount[] = [];
 
@@ -32,7 +31,8 @@ export class ContractorsDetailsComponent implements OnInit {
     private formBuilder: FormBuilder,
     private contractorService: ContractorService,
     private cdr: ChangeDetectorRef,
-    private fuseAlertService: FuseAlertService
+    private snackBar: MatSnackBar,
+    private translocoService: TranslocoService
   ) { }
 
   ngOnInit(): void {
@@ -50,14 +50,6 @@ export class ContractorsDetailsComponent implements OnInit {
       this.formContractor = this.createFormObj();
       this.bankAccounts = []; // Initialize empty for new contractor
     }
-  }
-
-  private showAlert(name: string): void {
-    this.fuseAlertService.show(name);
-  }
-
-  private dismissAlert(name: string): void {
-    this.fuseAlertService.dismiss(name);
   }
 
   private getById(id: number): void {
@@ -123,30 +115,46 @@ export class ContractorsDetailsComponent implements OnInit {
   }
 
   private create() {
-    console.log(this.contractorInfo);
-    this.dismissAlert("successMessage");
-    this.dismissAlert("errorMessage");
-    this.contractorService.create(this.contractorInfo).subscribe((res) => {
-      this.isLoading = false;
-      this.result.succeed = res.succeed;
-      this.result.message = res.message;
-      if (this.result.succeed) {
-        this.showAlert("successMessage");
-      } else this.showAlert("errorMessage");
-      this.cdr.detectChanges();
+    this.isLoading = true;
+    this.contractorService.create(this.contractorInfo).subscribe({
+      next: (res) => {
+        this.isLoading = false;
+        this.notifyResult(res.succeed, res.message, "configuration.contractor.registerSuccess", "configuration.contractor.registerError");
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isLoading = false;
+        this.notifyResult(false, null, "configuration.contractor.registerSuccess", "configuration.contractor.registerError");
+        this.cdr.detectChanges();
+      },
     });
   }
 
   private edit() {
-    console.log(this.contractorInfo);
-    this.contractorService.edit(this.contractorInfo).subscribe((res) => {
-      this.isLoading = false;
-      this.result.succeed = res.succeed;
-      this.result.message = res.message;
-      if (this.result.succeed) {
-        this.showAlert("successMessage");
-      } else this.showAlert("errorMessage");
-      this.cdr.detectChanges();
+    this.isLoading = true;
+    this.contractorService.edit(this.contractorInfo).subscribe({
+      next: (res) => {
+        this.isLoading = false;
+        this.notifyResult(res.succeed, res.message, "configuration.contractor.updateSuccess", "configuration.contractor.updateError");
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isLoading = false;
+        this.notifyResult(false, null, "configuration.contractor.updateSuccess", "configuration.contractor.updateError");
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  /**
+   * Show a translated success/error snackbar for the register/update result.
+   * Falls back to a generic translated message when the backend doesn't provide one.
+   */
+  private notifyResult(succeed: boolean, backendMessage: string, successKey: string, errorKey: string): void {
+    const message = backendMessage || this.translocoService.translate(succeed ? successKey : errorKey);
+    this.snackBar.open(message, this.translocoService.translate("common.close"), {
+      duration: succeed ? 3000 : 5000,
+      panelClass: succeed ? "snackbar-success" : "snackbar-error",
     });
   }
 

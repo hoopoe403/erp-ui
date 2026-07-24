@@ -26,6 +26,7 @@
     "upload": "Yükle",
     "print": "Yazdır",
     "refresh": "Yenile",
+    "register": "Kaydet",
     "back": "Geri",
     "next": "İleri",
     "previous": "Önceki",
@@ -472,7 +473,11 @@
     "contractor": {
       "title": "Yükleniciler",
       "contractor": "Yüklenici",
-      "contractors": "Yükleniciler"
+      "contractors": "Yükleniciler",
+      "registerSuccess": "Yüklenici başarıyla kaydedildi",
+      "registerError": "Yüklenici kaydedilemedi. Lütfen tekrar deneyin",
+      "updateSuccess": "Yüklenici başarıyla güncellendi",
+      "updateError": "Yüklenici güncellenemedi. Lütfen tekrar deneyin"
     },
     "customer": {
       "title": "Müşteri Yönetimi",
