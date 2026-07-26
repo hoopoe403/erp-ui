@@ -39,6 +39,8 @@ import { BudgetDetailDialogComponent } from './dialog/dialog.component';
 import { DialogService } from './dialog/dialog.service';
 import { MatDialogModule } from '@angular/material/dialog';
 import { FuseAlertModule } from "@fuse/components/alert";
+import { MatTabsModule } from '@angular/material/tabs';
+import { BankAccountModule } from 'app/modules/configuration/shared/bank-account/bank-account.module';
 
 @NgModule({
     declarations: [BudgetDetailDialogComponent,
@@ -71,7 +73,9 @@ import { FuseAlertModule } from "@fuse/components/alert";
         MatTableModule,
         MatTooltipModule,
         FuseFindByKeyPipeModule,
-        SharedModule
+        SharedModule,
+        MatTabsModule,
+        BankAccountModule
     ],
     exports: [CdkStepperModule,
         CdkTableModule,

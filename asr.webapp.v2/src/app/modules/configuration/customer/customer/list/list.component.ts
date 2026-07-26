@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Inject, OnDestroy, OnInit, TemplateRef, ViewChild, ViewContainerRef, ViewEncapsulation, ɵɵpureFunction1 } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Inject, OnDestroy, OnInit, TemplateRef, ViewChild, ViewContainerRef, ViewEncapsulation, ɵɵpureFunction1 } from '@angular/core';
 import { DecimalPipe, DOCUMENT, formatDate } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
@@ -171,9 +171,9 @@ import { DialogService } from '../dialog/dialog.service';
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CustomerListComponent implements OnInit, OnDestroy {
-    @ViewChild('matDrawer', { static: true }) matDrawer: MatDrawer;
-    @ViewChild('filter', { static: true }) filter: ElementRef;
+export class CustomerListComponent implements OnInit, AfterViewInit, OnDestroy {
+    @ViewChild('matDrawer') matDrawer: MatDrawer;
+    @ViewChild('filter') filter: ElementRef;
     @ViewChild('userMenu') userMenu: TemplateRef<any>;
     sub: Subscription;
     overlayRef: OverlayRef | null;
@@ -277,48 +277,6 @@ export class CustomerListComponent implements OnInit, OnDestroy {
             });
 
 
-        // Subscribe to search input field value changes
-        fromEvent(this.filter.nativeElement, 'keyup')
-            .pipe(
-                takeUntil(this._unsubscribeAll),
-                debounceTime(150),
-                distinctUntilChanged()
-            )
-            .subscribe(() => {
-
-                if (!this.customers$)
-                    return;
-
-
-                this._customerService.customers$.pipe(map(items => items.filter(x =>
-                    x.customerName.toLowerCase().includes(this.filter.nativeElement.value) ||
-                    x.customerFamily.toLowerCase().includes(this.filter.nativeElement.value) ||
-                    x.companyName.toString().includes(this.filter.nativeElement.value) ||
-                    x.customerCode.toString().includes(this.filter.nativeElement.value) ||
-                    x.customerTypeName.toLowerCase().toString().includes(this.filter.nativeElement.value) ||
-                    x.statusDescription.toString().includes(this.filter.nativeElement.value) ||
-                    x.budgetBalance.toString().includes(this.filter.nativeElement.value) ||
-                    x.budgetCredit.toString().includes(this.filter.nativeElement.value) ||
-                    x.budgetTotal.toString().includes(this.filter.nativeElement.value)))).subscribe(elements => {
-                        this.customers$ = of(elements as Customer[]);
-                        this._changeDetectorRef.markForCheck();
-                        this._changeDetectorRef.detectChanges();
-                    });
-
-            });
-
-
-        // Subscribe to MatDrawer opened change
-        this.matDrawer.openedChange.subscribe((opened) => {
-            if (!opened) {
-                // Remove the selected customer when drawer closed
-                this.selectedCustomer = null;
-
-                // Mark for check
-                this._changeDetectorRef.markForCheck();
-            }
-        });
-
         // Subscribe to media changes
         this._fuseMediaWatcherService.onMediaChange$
             .pipe(takeUntil(this._unsubscribeAll))
@@ -352,6 +310,47 @@ export class CustomerListComponent implements OnInit, OnDestroy {
 
     }
     ngAfterViewInit(): void {
+        // Subscribe to search input field value changes
+        fromEvent(this.filter.nativeElement, 'keyup')
+            .pipe(
+                takeUntil(this._unsubscribeAll),
+                debounceTime(150),
+                distinctUntilChanged()
+            )
+            .subscribe(() => {
+
+                if (!this.customers$)
+                    return;
+
+
+                this._customerService.customers$.pipe(map(items => items.filter(x =>
+                    x.customerName.toLowerCase().includes(this.filter.nativeElement.value) ||
+                    x.customerFamily.toLowerCase().includes(this.filter.nativeElement.value) ||
+                    x.companyName.toString().includes(this.filter.nativeElement.value) ||
+                    x.customerCode.toString().includes(this.filter.nativeElement.value) ||
+                    x.customerTypeName.toLowerCase().toString().includes(this.filter.nativeElement.value) ||
+                    x.statusDescription.toString().includes(this.filter.nativeElement.value) ||
+                    x.budgetBalance.toString().includes(this.filter.nativeElement.value) ||
+                    x.budgetCredit.toString().includes(this.filter.nativeElement.value) ||
+                    x.budgetTotal.toString().includes(this.filter.nativeElement.value)))).subscribe(elements => {
+                        this.customers$ = of(elements as Customer[]);
+                        this._changeDetectorRef.markForCheck();
+                        this._changeDetectorRef.detectChanges();
+                    });
+
+            });
+
+        // Subscribe to MatDrawer opened change
+        this.matDrawer.openedChange.subscribe((opened) => {
+            if (!opened) {
+                // Remove the selected customer when drawer closed
+                this.selectedCustomer = null;
+
+                // Mark for check
+                this._changeDetectorRef.markForCheck();
+            }
+        });
+
         if (this._sort && this._paginator) {
             // Set the initial sort
             this._sort.sort({

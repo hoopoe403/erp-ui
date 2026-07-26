@@ -12,6 +12,7 @@ import { CustomerListComponent } from 'app/modules/configuration/customer/custom
 import { CustomerService } from 'app/modules/configuration/customer/customer/customer.service';
 import { FuseAlertService } from '@fuse/components/alert';
 import { OpResult } from 'app/core/type/result/result.types';
+import { BankAccount } from 'app/modules/configuration/shared/bank-account/bank-account.types';
 
 @Component({
     selector: 'customer-details',
@@ -36,6 +37,7 @@ export class CustomerDetailsComponent implements OnInit, OnDestroy {
     branches: Array<{ key: number, value: string }> = [];
     isLoading: boolean = false;
     _result: OpResult = new OpResult();
+    bankAccounts: BankAccount[] = [];
     /**
      * Constructor
      */
@@ -99,6 +101,9 @@ export class CustomerDetailsComponent implements OnInit, OnDestroy {
 
                 // Get the customer
                 this.customer = customer;
+
+                // Load bank accounts for this customer
+                this.bankAccounts = customer.bankAccounts || [];
 
                 // Clear the emails and phoneNumbers form arrays
                 //(this.customerForm.get('emails') as FormArray).clear();
@@ -187,6 +192,9 @@ export class CustomerDetailsComponent implements OnInit, OnDestroy {
 
         //customer.phoneNumbers = customer.phoneNumbers.filter(phoneNumber => phoneNumber.phoneNumber);
 
+        // Include bank accounts in the customer info
+        customer.bankAccounts = this.bankAccounts;
+
         // Update the customer on the server
         this.dismissAlert('successMessage');
         this.dismissAlert('errorMessage');
@@ -233,6 +241,13 @@ export class CustomerDetailsComponent implements OnInit, OnDestroy {
             this._changeDetectorRef.detectChanges();
         });
     }
+    /**
+     * Handle bank accounts change from child component
+     */
+    onBankAccountsChange(accounts: BankAccount[]): void {
+        this.bankAccounts = accounts;
+    }
+
     private showAlert(name: string): void {
         this._fuseAlertService.show(name);
     }

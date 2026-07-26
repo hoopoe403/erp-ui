@@ -186,6 +186,8 @@
 
                     <!-- Name -->
 
+                    <mat-tab-group #customerTabGroup class="mt-8">
+                    <mat-tab label="Information">
                     <div class="mt-8">
                         <mat-form-field class="fuse-mat-no-subscript w-full">
                             <mat-label>Company/Shop</mat-label>
@@ -327,6 +329,19 @@
                                 [spellcheck]="false" matTextareaAutosize></textarea>
                         </mat-form-field>
                     </div>
+                    </mat-tab>
+
+                    <!-- Bank Accounts Tab -->
+                    <mat-tab label="Bank Accounts">
+                        <div class="mt-4">
+                            <app-bank-account
+                                [bankAccounts]="bankAccounts"
+                                (bankAccountsChange)="onBankAccountsChange($event)">
+                            </app-bank-account>
+                        </div>
+                    </mat-tab>
+                    </mat-tab-group>
+
                     <div class="flex items-center flex-wrap content-center w-full py-2">
                         <div class="w-auto h-auto min-h-15 m-auto">
                             <fuse-alert *ngIf="_result.succeed" [appearance]="'soft'" [dismissible]="true"

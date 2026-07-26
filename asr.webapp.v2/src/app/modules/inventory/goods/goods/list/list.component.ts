@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { SelectionModel } from '@angular/cdk/collections';
@@ -45,7 +45,7 @@ import { MatMenuTrigger } from '@angular/material/menu';
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class GoodsListComponent implements OnInit, OnDestroy {
+export class GoodsListComponent implements OnInit, AfterViewInit, OnDestroy {
     selection = new SelectionModel<any>(true, []);
     goodsInfo: Goods;
     _paging: Paging;
@@ -67,7 +67,7 @@ export class GoodsListComponent implements OnInit, OnDestroy {
     @ViewChild(MatPaginator, { static: true })
     paginator: MatPaginator;
 
-    @ViewChild('filter', { static: true })
+    @ViewChild('filter')
     filter: ElementRef;
 
     @ViewChild(MatMenuTrigger) trigger: MatMenuTrigger;
@@ -106,7 +106,12 @@ export class GoodsListComponent implements OnInit, OnDestroy {
 
         this.getUnits();
         this.getGoodsCat();
+    }
 
+    /**
+     * After view init
+     */
+    ngAfterViewInit(): void {
         fromEvent(this.filter.nativeElement, 'keyup')
             .pipe(
                 takeUntil(this._unsubscribeAll),

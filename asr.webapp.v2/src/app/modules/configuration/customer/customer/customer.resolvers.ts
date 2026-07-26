@@ -5,7 +5,7 @@ import {
   Router,
   RouterStateSnapshot,
 } from "@angular/router";
-import { Observable, throwError } from "rxjs";
+import { Observable, of, throwError } from "rxjs";
 import { catchError } from "rxjs/operators";
 import { CustomerService } from "app/modules/configuration/customer/customer/customer.service";
 import { Customer } from "app/modules/configuration/customer/customer/customer.types";
@@ -44,7 +44,14 @@ export class CustomersResolver implements Resolve<any> {
     let obj: Customer = new Customer();
     obj.status = 1;
     obj.page = pagination;
-    return this._customersService.getCustomers(obj);
+    return this._customersService.getCustomers(obj).pipe(
+      // Don't let a failed pre-fetch block navigation to the list page;
+      // the component fetches its own data independently in ngOnInit.
+      catchError((error) => {
+        console.error(error);
+        return of(null);
+      })
+    );
   }
 }
 

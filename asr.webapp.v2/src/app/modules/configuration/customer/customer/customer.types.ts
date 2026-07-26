@@ -1,5 +1,6 @@
 import { BaseModel } from "app/core/type/base/BaseModel";
 import { Paging } from "app/core/type/paging/paging.type";
+import { BankAccount } from "app/modules/configuration/shared/bank-account/bank-account.types";
 
 export class Customer {
     customerId: number;
@@ -35,6 +36,7 @@ export class Customer {
     totalTo: number;
     customerTypeIdList: Array<number>;
     chaneDate: string; page: Paging;
+    bankAccounts?: BankAccount[];
 }
 export class BudgetDetail extends BaseModel {
     budgetDetailId: number;
