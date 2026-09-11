@@ -1,0 +1,46 @@
+<mat-form-field appearance="legacy" class="w-full">
+    <mat-label *ngIf="label">{{label}}</mat-label>
+    <input matInput [formControl]="searchCtrl" [placeholder]="placeholder" [matAutocomplete]="lookupPanel"
+        [required]="required" [autocomplete]="'off'" (blur)="onBlur()">
+    <mat-progress-spinner *ngIf="isLoading" matSuffix diameter="16" mode="indeterminate"></mat-progress-spinner>
+    <button *ngIf="searchCtrl.value && !isLoading" matSuffix mat-icon-button type="button"
+        matTooltip="Clear selection" (click)="clear($event)" tabindex="-1">
+        <mat-icon class="icon-size-4" svgIcon="heroicons_outline:x"></mat-icon>
+    </button>
+    <mat-autocomplete #lookupPanel="matAutocomplete" [displayWith]="displayFn"
+        (optionSelected)="onOptionSelected($event.option.value)">
+        <ng-container *ngIf="(filteredOptions$ | async) as filteredOptions">
+            <mat-option *ngFor="let option of filteredOptions" [value]="option"
+                (mousedown)="$event.preventDefault()">
+                <div class="lookup-option-row flex gap-2">
+                    <span *ngIf="codeKey" class="flex-shrink-0 text-secondary">{{option[codeKey]}}</span>
+                    <span>{{option[nameKey]}}</span>
+                    <span *ngIf="extraKey" class="flex-shrink-0 text-secondary">{{option[extraKey]}}</span>
+                </div>
+            </mat-option>
+            <mat-option *ngIf="isTruncated" disabled class="text-secondary text-sm">
+                Showing first {{defaultVisibleCount}} of {{options.length}} — type to search
+            </mat-option>
+            <mat-divider *ngIf="showAddOption && showDivider && filteredOptions.length > 0"></mat-divider>
+            <mat-option *ngIf="showAddOption" [value]="ADD_NEW" class="text-primary-500"
+                (mousedown)="$event.preventDefault()">
+                <mat-icon class="icon-size-4 mr-1" svgIcon="mat_outline:add_circle"></mat-icon>
+                {{addOptionLabel}}
+            </mat-option>
+        </ng-container>
+    </mat-autocomplete>
+</mat-form-field>
+
+<style>
+    /* Long code/name/extra combinations (e.g. GL Account, Vendor) stay on one
+       line - they scroll horizontally within the row instead of wrapping or
+       truncating with an ellipsis, so code and name are never split across
+       lines and nothing is ever permanently hidden on a narrow dropdown panel.
+       Safe now that (mousedown)="$event.preventDefault()" above stops clicking
+       an option from blurring the input mid-click (see the Vendor
+       search-then-select bug this used to cause before that fix existed). */
+    .lookup-option-row {
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+</style>

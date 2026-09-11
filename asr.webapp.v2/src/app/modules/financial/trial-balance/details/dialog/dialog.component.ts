@@ -8,7 +8,12 @@ import { CustomerOrder } from 'app/modules/sales/order/order.types';
 import { TrialBalanceService } from '../../trial-balance.service';
 import { Customer } from 'app/modules/configuration/customer/customer/customer.types';
 import { Cheque } from 'app/modules/financial/cheque/cheque.types';
-import { ManualInvoice } from 'app/modules/financial/invoices/manual/manual-invoice.types';
+// This dialog drills into a real Manual Invoice record (see manualInvoiceInfo
+// below) — unrelated to the Purchase Invoice feature despite the similar name.
+// It used to borrow PurchaseInvoice's type since the two were identical at the
+// time; Purchase Invoice has since diverged into its own module, so this uses
+// the same standalone ManualInvoice type the analytics report was moved to.
+import { ManualInvoice } from 'app/modules/financial/analytics/manual-invoice/manual-invoice.types';
 
 @Component({
     selector: 'fuse-confirmation-dialog',

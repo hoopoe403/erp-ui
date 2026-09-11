@@ -184,7 +184,13 @@ export const appRoutes: Route[] = [
                 ]},
                 { path: 'cash', loadChildren: () => import('./modules/financial/cheque/cheque.module').then(m => m.ChequeModule) },
                 { path: 'check', loadChildren: () => import('./modules/financial/cheque/cheque.module').then(m => m.ChequeModule) },
-                { path: 'invoice', loadChildren: () => import('./modules/financial/invoices/manual/manual-invoice.module').then(m => m.ManualInvoiceModule) },
+                { path: 'invoice', loadChildren: () => import('./modules/financial/invoices/purchase/purchase-invoice.module').then(m => m.PurchaseInvoiceModule) },
+                // Alias for the backend-stored menu link, which points at the old folder
+                // path ('financial/invoices/manual') rather than the registered route
+                // above ('invoice'). This predates the Purchase Invoice rename — the
+                // menu entry was never pointing at a real route. Redirect it here instead
+                // of touching the menu data in the backend.
+                { path: 'financial/invoices/manual', redirectTo: 'invoice', pathMatch: 'prefix' },
                 { path: 'cashFlow', loadChildren: () => import('./modules/financial/transactions/revenue/revenue.module').then(m => m.RevenueModule) },
                 { path: 'budgetPlan', loadChildren: () => import('./modules/financial/statement/statement.module').then(m => m.StatementModule) },
                 { path: 'bankStatement', loadChildren: () => import('./modules/financial/statement/statement.module').then(m => m.StatementModule) }    

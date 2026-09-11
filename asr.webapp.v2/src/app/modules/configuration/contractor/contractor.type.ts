@@ -23,6 +23,16 @@ export class Contractor extends BaseModel {
   settlementTypeIdList: Array<number>;
   bankAccounts: BankAccount[]; // Bank accounts for this contractor
   page: Paging;
+
+  // --- New fields (UI-only for now, no backend column yet — see CLAUDE.md / plan) ---
+  currencyId: number | null;
+  currencyName: string;
+  currencyAbbreviation: string;
+  vatGroupId: number | null;
+  vatGroupName: string;
+  paymentTypeId: number | null;
+  paymentTypeName: string;
+  paymentTermDays: number | null;
 }
 
 

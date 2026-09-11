@@ -7,7 +7,11 @@ import { FormGroup, FormBuilder, Validators } from "@angular/forms";
 import { Contractor } from "../contractor.type";
 import { forkJoin, Observable } from "rxjs";
 import { ContractorService } from "../contractor.service";
-import { BankAccount } from "../../shared/bank-account/bank-account.types";
+import { BankAccount, Currency } from "../../shared/bank-account/bank-account.types";
+import { BankAccountService } from "../../shared/bank-account/bank-account.service";
+import { VatLookupService } from "app/modules/financial/shared/lookup/vat-lookup.service";
+import { MockVatGroup } from "app/modules/financial/shared/mock-data";
+import { PaymentTypeLookupService, PaymentTypeOption } from "app/modules/financial/shared/lookup/payment-type-lookup.service";
 
 @Component({
   selector: "app-details",
@@ -21,6 +25,9 @@ export class ContractorsDetailsComponent implements OnInit {
   formContractor: FormGroup;
   contractorTypes = [];
   settlementTypes = [];
+  currencies: Currency[] = [];
+  vatGroups: MockVatGroup[] = [];
+  paymentTypes: PaymentTypeOption[] = [];
 
   // Bank accounts for this contractor
   bankAccounts: BankAccount[] = [];
@@ -30,6 +37,9 @@ export class ContractorsDetailsComponent implements OnInit {
     private location: Location,
     private formBuilder: FormBuilder,
     private contractorService: ContractorService,
+    private bankAccountService: BankAccountService,
+    private vatLookupService: VatLookupService,
+    private paymentTypeLookupService: PaymentTypeLookupService,
     private cdr: ChangeDetectorRef,
     private snackBar: MatSnackBar,
     private translocoService: TranslocoService
@@ -39,6 +49,9 @@ export class ContractorsDetailsComponent implements OnInit {
     const id = Number(this.route.snapshot.paramMap.get("id"));
     this.getContractorTypes();
     this.getSettlementTypes();
+    this.getCurrencies();
+    this.getVatGroups();
+    this.getPaymentTypes();
     if (id > 0) {
       this.pageType = "edit";
       this.formContractor = this.createFormObj();
@@ -87,7 +100,11 @@ export class ContractorsDetailsComponent implements OnInit {
       contractorEmail: ["", [Validators.email]],
       contractorAddress: ["", [Validators.required]],
       organization: [{ value: '', disabled: this.pageType == 'edit' ? true : false }, [Validators.required]],
-      settlementType: [null, [Validators.required]]
+      settlementType: [null, [Validators.required]],
+      currencyId: [null],
+      vatGroupId: [null],
+      paymentTypeId: [null],
+      paymentTermDays: [null]
     });
   }
 
@@ -102,6 +119,10 @@ export class ContractorsDetailsComponent implements OnInit {
       contractorAddress: this.contractorInfo.address,
       organization: this.contractorInfo.organizationId,
       settlementType: this.contractorInfo.settlementTypeId,
+      currencyId: this.contractorInfo.currencyId,
+      vatGroupId: this.contractorInfo.vatGroupId,
+      paymentTypeId: this.contractorInfo.paymentTypeId,
+      paymentTermDays: this.contractorInfo.paymentTermDays,
     });
   }
 
@@ -177,6 +198,21 @@ export class ContractorsDetailsComponent implements OnInit {
       this.formContractor.controls["organization"].value;
     this.contractorInfo.settlementTypeId =
       this.formContractor.controls['settlementType'].value;
+    this.contractorInfo.currencyId =
+      this.formContractor.controls['currencyId'].value;
+    const currency = this.currencies.find(c => c.currencyId === this.contractorInfo.currencyId);
+    this.contractorInfo.currencyName = currency?.currencyName || '';
+    this.contractorInfo.currencyAbbreviation = currency?.currencyAbbreviation || '';
+    this.contractorInfo.vatGroupId =
+      this.formContractor.controls['vatGroupId'].value;
+    const vatGroup = this.vatGroups.find(g => g.id === this.contractorInfo.vatGroupId);
+    this.contractorInfo.vatGroupName = vatGroup?.name || '';
+    this.contractorInfo.paymentTypeId =
+      this.formContractor.controls['paymentTypeId'].value;
+    const paymentType = this.paymentTypes.find(p => p.paymentTypeId === this.contractorInfo.paymentTypeId);
+    this.contractorInfo.paymentTypeName = paymentType?.paymentTypeName || '';
+    this.contractorInfo.paymentTermDays =
+      this.formContractor.controls['paymentTermDays'].value;
     // Include bank accounts in the contractor info
     this.contractorInfo.bankAccounts = this.bankAccounts;
   }
@@ -205,6 +241,30 @@ export class ContractorsDetailsComponent implements OnInit {
     this.contractorService.getSettlementType().subscribe((res) => {
       this.settlementTypes = res.data
       this.isLoading = false;
+      this.setFormValues();
+      this.cdr.detectChanges();
+    });
+  }
+
+  private getCurrencies(): void {
+    this.bankAccountService.getCurrencies().subscribe((res) => {
+      this.currencies = res.data || [];
+      this.setFormValues();
+      this.cdr.detectChanges();
+    });
+  }
+
+  private getVatGroups(): void {
+    this.vatLookupService.getVatPostingGroups().subscribe((groups) => {
+      this.vatGroups = groups;
+      this.setFormValues();
+      this.cdr.detectChanges();
+    });
+  }
+
+  private getPaymentTypes(): void {
+    this.paymentTypeLookupService.getPaymentTypes().subscribe((types) => {
+      this.paymentTypes = types;
       this.setFormValues();
       this.cdr.detectChanges();
     });

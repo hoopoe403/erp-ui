@@ -7,7 +7,7 @@ import { debounceTime, switchMap, map, startWith, filter, take, shareReplay } fr
 import { takeUntil } from 'rxjs/operators';
 import { fuseAnimations } from "../../../../../../@fuse/animations";
 import { ManualInvoiceService } from "../manual-invoice.service";
-import { ManualInvoiceAccumulative, ManualInvoiceProfitLossCategory, advancedSearchHistory } from "../manual-invoice.types";
+import { ManualInvoice, ManualInvoiceAccumulative, ManualInvoiceDetail, ManualInvoiceProfitLossCategory, advancedSearchHistory } from "../manual-invoice.types";
 import { Paging, SortItem } from 'app/core/type/paging/paging.type';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatMenuTrigger } from '@angular/material/menu';
@@ -16,7 +16,6 @@ import { DecimalPipe, formatDate } from '@angular/common';
 import { ExcelService } from 'app/shared/excel/excel.service';
 import { ExcelHeader } from 'app/shared/excel/excel.types';
 import { HierarchicalKeyValue } from 'app/core/type/key-value/key-value.type';
-import { ManualInvoice, ManualInvoiceDetail } from 'app/modules/financial/invoices/manual/manual-invoice.types';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';

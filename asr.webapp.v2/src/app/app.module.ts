@@ -4,7 +4,16 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ExtraOptions, PreloadAllModules, RouterModule } from '@angular/router';
 import { MarkdownModule, MarkedOptions } from 'ngx-markdown';
 import { HttpClientModule } from '@angular/common/http';
+import { registerLocaleData } from '@angular/common';
+import localeDe from '@angular/common/locales/de';
 import hljs from 'highlight.js';
+
+// EU-style amount formatting (period thousands separator, comma decimal -
+// e.g. "52.336,89") on the Purchase Invoice totals uses the `number` pipe
+// with an explicit 'de-DE' locale override - Angular requires that locale's
+// data registered globally before any `| number:...:'de-DE'` pipe usage
+// works, regardless of the app's own default locale (still en-US elsewhere).
+registerLocaleData(localeDe);
 import { FuseModule } from '@fuse';
 import { FuseConfigModule } from '@fuse/services/config';
 import { FuseMockApiModule } from '@fuse/lib/mock-api';
