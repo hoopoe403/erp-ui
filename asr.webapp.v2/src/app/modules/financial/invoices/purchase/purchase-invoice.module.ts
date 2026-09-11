@@ -14,42 +14,41 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FuseFindByKeyPipeModule } from '@fuse/pipes/find-by-key';
 import { SharedModule } from 'app/shared/shared.module';
-import { ManualInvoiceRoutes } from './manual-invoice.routing';
-import { ManualInvoiceComponent } from './manual-invoice.component';
-import { ManualInvoiceListComponent } from './list/list.component';
-import { ManualInvoiceDetailsComponent } from './details/details.component';
+import { PurchaseInvoiceRoutes } from './purchase-invoice.routing';
+import { PurchaseInvoiceComponent } from './purchase-invoice.component';
+import { PurchaseInvoiceListComponent } from './list/list.component';
+import { PurchaseInvoiceDetailsComponent } from './details/details.component';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatMenuModule } from "@angular/material/menu";
 import { FuseAlertModule } from '@fuse/components/alert';
 import { FuseScrollbarModule } from '@fuse/directives/scrollbar/public-api';
 import { FuseDrawerModule } from '@fuse/components/drawer';
 import { NgxPrintModule } from 'ngx-print';
-import { MatAutocompleteModule } from "@angular/material/autocomplete";
-import { NgxJDatePickerModule } from 'ngx-jdatepicker';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { MatTreeModule } from "@angular/material/tree";
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBarModule } from "@angular/material/snack-bar";
 import { DecimalPipe } from '@angular/common';
 import { ExcelService } from '../../../../shared/excel/excel.service';
-import { MenuItemListComponent } from './menu-item-list/menu-item-list.component';
-import { MenuBottonComponent } from '../manual/details/menu-botton/menu-botton.component';
+import { LookupSelectModule } from '../../shared/lookup-select/lookup-select.module';
+import { LineItemsTableModule } from '../../shared/line-items-table/line-items-table.module';
 @NgModule({
     declarations: [
-        ManualInvoiceComponent,
-        ManualInvoiceListComponent,
-        ManualInvoiceDetailsComponent,
-        MenuItemListComponent,
-        MenuBottonComponent
+        PurchaseInvoiceComponent,
+        PurchaseInvoiceListComponent,
+        PurchaseInvoiceDetailsComponent
     ],
     imports: [
         MatSnackBarModule,
         MatCheckboxModule,
         MatTreeModule,
         NgxMatSelectSearchModule,
-        NgxJDatePickerModule,
+        MatDatepickerModule,
+        MatNativeDateModule,
         NgxPrintModule,
-        RouterModule.forChild(ManualInvoiceRoutes),
+        RouterModule.forChild(PurchaseInvoiceRoutes),
         MatButtonModule,
         MatFormFieldModule,
         MatIconModule,
@@ -69,11 +68,12 @@ import { MenuBottonComponent } from '../manual/details/menu-botton/menu-botton.c
         FuseAlertModule,
         FuseScrollbarModule,
         FuseDrawerModule,
-        MatAutocompleteModule
+        LookupSelectModule,
+        LineItemsTableModule
     ],
     providers: [
         DecimalPipe, ExcelService
     ]
 })
-export class ManualInvoiceModule {
+export class PurchaseInvoiceModule {
 }

@@ -2,10 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
-import { ManualInvoiceAccumulative } from './manual-invoice.types';
+import { ManualInvoice, ManualInvoiceAccumulative, ManualInvoiceDetail } from './manual-invoice.types';
 import { ApiHelperService } from '../../../../../environments/api-helper.service';
 import { Paging } from 'app/core/type/paging/paging.type';
-import { ManualInvoice, ManualInvoiceDetail } from '../../invoices/manual/manual-invoice.types';
 
 @Injectable({
     providedIn: 'root'

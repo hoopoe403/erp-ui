@@ -6,39 +6,33 @@ import { Subject, merge, Observable, forkJoin } from 'rxjs';
 import { debounceTime, switchMap, map } from 'rxjs/operators';
 import { takeUntil } from 'rxjs/operators';
 import { fuseAnimations } from "../../../../../../@fuse/animations";
-import { ManualInvoiceService } from "../manual-invoice.service";
-import { ManualInvoice } from "../manual-invoice.types";
+import { PurchaseInvoiceService } from "../purchase-invoice.service";
+import { PurchaseInvoice } from "../purchase-invoice.types";
 import { Paging } from 'app/core/type/paging/paging.type';
 import { FormControl, FormGroup } from '@angular/forms';
-import { MatMenuTrigger } from '@angular/material/menu';
 import jsPDF from 'jspdf';
 import { DecimalPipe, formatDate } from '@angular/common';
 import { ExcelService } from 'app/shared/excel/excel.service';
 import { ExcelHeader } from 'app/shared/excel/excel.types';
-import { HierarchicalKeyValue } from 'app/core/type/key-value/key-value.type';
 
 @Component({
-    selector: 'invoices-list',
+    selector: 'purchase-invoices-list',
     templateUrl: './list.component.html',
     styles: [
         /* language=SCSS */
         `
             .invoices-grid {
-                grid-template-columns:100px auto 40px;
-
-                @screen sm {
-                    grid-template-columns:100px auto 100px 70px;
-                }
+                grid-template-columns: 100px 100px auto 70px;
 
                 @screen md {
-                    grid-template-columns: 100px auto 150px 370px 150px 70px;
+                    grid-template-columns: 100px 120px auto 120px 120px 120px 70px;
                 }
 
                 @screen lg {
-                    grid-template-columns: 100px auto 300px 200px 100px 70px;
+                    grid-template-columns: 100px 120px auto 120px 120px 130px 130px 100px 70px;
                 }
                 @screen print{
-                    grid-template-columns: 100px 370px 370px 70px;
+                    grid-template-columns: 100px 120px auto 120px 120px 130px 130px 100px;
                 }
             }
         `
@@ -47,64 +41,54 @@ import { HierarchicalKeyValue } from 'app/core/type/key-value/key-value.type';
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ManualInvoiceListComponent implements OnInit, OnDestroy {
+export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
     protected _onDestroy = new Subject<void>();
     @ViewChild(MatPaginator) private _paginator: MatPaginator;
     @ViewChild(MatSort) private _sort: MatSort;
     pagination: Paging;
     selection = new SelectionModel<any>(true, []);
-    invoiceInfo: ManualInvoice;
+    invoiceInfo: PurchaseInvoice;
     statuses = [];
-    menuArray = [];
-    selectedCat: number = 0;
     defaultStatuses = [];
     frmAdvancedSearch = new FormGroup({
         invoiceNumber: new FormControl(),
-        issuerType: new FormControl(),
         issuer: new FormControl(),
-        sourceCode: new FormControl(),
-        referenceNo: new FormControl(),
         totalFrom: new FormControl(),
         totalTo: new FormControl(),
         status: new FormControl(),
-        dateFrom: new FormControl(),
-        dateTo: new FormControl(),
     });
 
 
     searchInputControl: FormControl = new FormControl();
-
-    @ViewChild(MatMenuTrigger) trigger: MatMenuTrigger;
 
     // Private
     private _unsubscribeAll: Subject<any> = new Subject<any>();
     isLoading: boolean;
 
 
-    constructor(private service: ManualInvoiceService,
+    constructor(private service: PurchaseInvoiceService,
         private cdr: ChangeDetectorRef,
         private _decimalPipe: DecimalPipe,
         private excelService: ExcelService,
         private _changeDetectorRef: ChangeDetectorRef) {
         //this._unsubscribeAll = new Subject();
 
-        this.invoiceInfo = new ManualInvoice;
+        this.invoiceInfo = new PurchaseInvoice;
     }
 
     // -----------------------------------------------------------------------------------------------------
     // @ Lifecycle hooks
     // -----------------------------------------------------------------------------------------------------
     isOverlayOpen: boolean = true;
-    selectedInfoRow: ManualInvoice = new ManualInvoice();
+    selectedInfoRow: PurchaseInvoice = new PurchaseInvoice();
 
-    invoices$: Observable<ManualInvoice[]> = new Observable<ManualInvoice[]>();
-    invoices: Array<ManualInvoice> = [];
+    invoices$: Observable<PurchaseInvoice[]> = new Observable<PurchaseInvoice[]>();
+    invoices: Array<PurchaseInvoice> = [];
     /**
      * On init
      */
     ngOnInit(): void {
         this.isLoading = true;
-        this.getManualInvoiceCat();
         this.service.pagination$
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((pagination: Paging) => {
@@ -123,7 +107,7 @@ export class ManualInvoiceListComponent implements OnInit, OnDestroy {
                 debounceTime(300),
                 switchMap((query) => {
                     this.isLoading = true;
-                    return this.service.getManualInvoices(this.invoiceInfo);
+                    return this.service.getPurchaseInvoices(this.invoiceInfo);
                 }),
                 map(() => {
                     this.isLoading = false;
@@ -162,7 +146,7 @@ export class ManualInvoiceListComponent implements OnInit, OnDestroy {
                     this.pagination.order = this._sort.direction;
                     this.pagination.sort = this._sort.active;
                     this.invoiceInfo.page = this.pagination;
-                    return this.service.getManualInvoices(this.invoiceInfo);
+                    return this.service.getPurchaseInvoices(this.invoiceInfo);
                 }),
                 map(() => {
                     this.isLoading = false;
@@ -178,7 +162,7 @@ export class ManualInvoiceListComponent implements OnInit, OnDestroy {
         // Unsubscribe from all subscriptions
         this._unsubscribeAll.next();
         this._unsubscribeAll.complete();
-        this.service.disposeManualInvoices$();
+        this.service.disposePurchaseInvoices$();
         this.service.disponsePaginator$();
 
     }
@@ -192,7 +176,7 @@ export class ManualInvoiceListComponent implements OnInit, OnDestroy {
         this.frmAdvancedSearch.controls["status"].setValue(this.defaultStatuses);
         this.invoiceInfo.statusIdList = this.defaultStatuses;
         this.invoices = values[1].data.invoices;
-        this.invoices$ = this.service.manualInvoices$;
+        this.invoices$ = this.service.purchaseInvoices$;
         this._changeDetectorRef.markForCheck();
         this.cdr.detectChanges();
         this.setPaginatorAndSort();
@@ -234,59 +218,17 @@ export class ManualInvoiceListComponent implements OnInit, OnDestroy {
 
 
     }
-    private getInvoices(invoiceInfo: ManualInvoice) {
+    private getInvoices(invoiceInfo: PurchaseInvoice) {
         this.isLoading = true;
-        this.service.getManualInvoices(invoiceInfo)
+        this.service.getPurchaseInvoices(invoiceInfo)
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((invoices: any) => {
                 this.invoices = invoices.data.invoices;
-                this.invoices$ = this.service.manualInvoices$;
+                this.invoices$ = this.service.purchaseInvoices$;
                 this.isLoading = false;
                 this._changeDetectorRef.markForCheck();
                 this.cdr.detectChanges();
             });
-    }
-
-    private resetManualInvoiceCatBotton() {
-        let obj = new HierarchicalKeyValue();
-        obj.id = this.menuArray[0].id;
-        obj.item = this.menuArray[0].item;
-        obj.parentId = this.menuArray[0].parentId;
-        obj.children = [];
-        for (var i = 0; i < this.menuArray[0].children.length; i++) {
-            obj.children.push(this.menuArray[0].children[i]);
-        }
-        this.menuArray = [];
-        this.menuArray.push(obj);
-        this.selectedCat = 0;
-    }
-
-    private addSelectanItemToCatMenu() {
-        let obj = new HierarchicalKeyValue();
-        obj.id = 0;
-        obj.item = "Select a category";
-        obj.parentId = -1;
-        obj.children = [];
-        for (var i = 0; i < this.menuArray.length; i++) {
-            obj.children.push(this.menuArray[i]);
-        }
-        this.menuArray = [];
-        this.menuArray.push(obj);
-    }
-
-    private getManualInvoiceCat() {
-        return this.service.getFinancialCategories()
-            .subscribe(res => {
-                this.menuArray = res.data;
-                this.addSelectanItemToCatMenu();
-            })
-    }
-
-    public setSelectedCat(selectedId: number) {
-
-        this.selectedCat = selectedId;
-        if (selectedId > 0)
-            this.trigger.closeMenu();
     }
 
     private getInvoicesOnInit(): Observable<any> {
@@ -298,18 +240,14 @@ export class ManualInvoiceListComponent implements OnInit, OnDestroy {
         this.pagination.pageSize = 100;
         this.pagination.sort = '';
         this.invoiceInfo.page = this.pagination;
-        return this.service.getManualInvoiceInOnInit(this.invoiceInfo);
+        return this.service.getPurchaseInvoiceInOnInit(this.invoiceInfo);
     }
     public invoicesSearch() {
 
         this.invoiceInfo.invoiceNumber = this.frmAdvancedSearch.controls["invoiceNumber"].value;
-        this.invoiceInfo.creditorTypeIdList = this.frmAdvancedSearch.controls["issuerType"].value;
         this.invoiceInfo.creditorName = this.frmAdvancedSearch.controls["issuer"].value;
         this.invoiceInfo.totalFrom = this.frmAdvancedSearch.controls["totalFrom"].value;
         this.invoiceInfo.totalTo = this.frmAdvancedSearch.controls["totalTo"].value;
-        this.invoiceInfo.localDateFrom = this.frmAdvancedSearch.controls["dateFrom"].value;
-        this.invoiceInfo.localDateTo = this.frmAdvancedSearch.controls["dateTo"].value;
-        this.invoiceInfo.financialCategoryId = this.selectedCat;
         this.pagination.flag = true;
         this.pagination.pageNumber = 1;
         this.pagination.length = 0;
@@ -320,16 +258,10 @@ export class ManualInvoiceListComponent implements OnInit, OnDestroy {
 
     public resetAdvancedSearch() {
         this.frmAdvancedSearch.controls["invoiceNumber"].setValue("");
-        this.frmAdvancedSearch.controls["issuerType"].setValue([]);
         this.frmAdvancedSearch.controls["issuer"].setValue("");
-        this.frmAdvancedSearch.controls["sourceCode"].setValue("");
-        this.frmAdvancedSearch.controls["referenceNo"].setValue("");
         this.frmAdvancedSearch.controls["totalFrom"].setValue("");
         this.frmAdvancedSearch.controls["totalTo"].setValue("");
-        this.frmAdvancedSearch.controls["dateFrom"].setValue("");
-        this.frmAdvancedSearch.controls["dateTo"].setValue("");
         this.frmAdvancedSearch.controls["status"].setValue(this.defaultStatuses);
-        this.resetManualInvoiceCatBotton();
     }
 
     handlePageEvent(event: PageEvent) {
@@ -347,7 +279,7 @@ export class ManualInvoiceListComponent implements OnInit, OnDestroy {
         var pdf = new jsPDF("l");
 
         pdf.setFontSize(20);
-        pdf.text("ManualInvoice", 14, 8);
+        pdf.text("PurchaseInvoice", 14, 8);
         pdf.setFontSize(12);
         pdf.setTextColor(99);
         let header = [];
@@ -355,30 +287,36 @@ export class ManualInvoiceListComponent implements OnInit, OnDestroy {
         let footer = [];
         let qty: number = 0;
         let date = formatDate(new Date(), "yyyyMMdd_hhmmss", "en");
-        let fileName: string = "ManualInvoice_".concat(date.concat(".pdf"));
+        let fileName: string = "PurchaseInvoice_".concat(date.concat(".pdf"));
 
         header = [
             { header: "Number", dataKey: "invoiceNumber" },
-            { header: "Creditor", dataKey: "creditorName" },
-            { header: "Debtor", dataKey: "debtorName" },
-            { header: "Total", dataKey: "total" },
+            { header: "Vendor No", dataKey: "creditorCode" },
+            { header: "Vendor Name", dataKey: "creditorName" },
+            { header: "Posting Date", dataKey: "postingDate" },
+            { header: "Due Date", dataKey: "dueDate" },
+            { header: "Amount w/o VAT", dataKey: "totalNetAmount" },
+            { header: "Amount w/ VAT", dataKey: "totalGrossAmount" },
             { header: "Status", dataKey: "statusDescription" }
         ];
 
         this.invoices$.subscribe((items) =>
-            items.forEach((element) => {
+            items.forEach((element: any) => {
                 qty = qty + 1;
                 tableData.push([
                     element.invoiceNumber,
+                    element.creditorCode,
                     element.creditorName,
-                    element.debtorName,
-                    this.transformDecimal(element.total),
+                    element.postingDate,
+                    element.dueDate,
+                    this.transformDecimal(element.totalNetAmount),
+                    this.transformDecimal(element.totalGrossAmount),
                     element.statusDescription,
                 ]);
             })
         );
         footer = [
-            ["QTY", "", "", "", qty]
+            ["QTY", "", "", "", "", "", "", qty]
         ];
 
         (pdf as any).autoTable({
@@ -403,23 +341,35 @@ export class ManualInvoiceListComponent implements OnInit, OnDestroy {
 
     exportTable() {
         let columns: Array<ExcelHeader> = new Array<ExcelHeader>();
-        let obj: Array<ManualInvoice> = new Array<ManualInvoice>();
+        let obj: Array<PurchaseInvoice> = new Array<PurchaseInvoice>();
         let qty: number = 0;
         let date = formatDate(new Date(), "yyyyMMdd_hhmmss", "en");
-        let fileName: string = "ManualInvoice_".concat(date.toString());
+        let fileName: string = "PurchaseInvoice_".concat(date.toString());
 
         columns.push({ basedColumnName: "invoiceNumber", excelColumnName: "Number" });
         columns.push({
+            basedColumnName: "creditorCode",
+            excelColumnName: "Vendor No",
+        });
+        columns.push({
             basedColumnName: "creditorName",
-            excelColumnName: "Creditor",
+            excelColumnName: "Vendor Name",
         });
         columns.push({
-            basedColumnName: "debtorName",
-            excelColumnName: "Debtor",
+            basedColumnName: "postingDate",
+            excelColumnName: "Posting Date",
         });
         columns.push({
-            basedColumnName: "total",
-            excelColumnName: "Total",
+            basedColumnName: "dueDate",
+            excelColumnName: "Due Date",
+        });
+        columns.push({
+            basedColumnName: "totalNetAmount",
+            excelColumnName: "Amount w/o VAT",
+        });
+        columns.push({
+            basedColumnName: "totalGrossAmount",
+            excelColumnName: "Amount w/ VAT",
         });
         columns.push({
             basedColumnName: "statusDescription",
@@ -434,10 +384,10 @@ export class ManualInvoiceListComponent implements OnInit, OnDestroy {
         );
         let footerData = [];
 
-        footerData.push(["", "", "", "QTY", qty]);
+        footerData.push(["", "", "", "", "", "", "QTY", qty]);
 
         this.excelService.exportAsExcelFile(
-            "ManualInvoice",
+            "PurchaseInvoice",
             "",
             columns,
             obj,
@@ -451,9 +401,7 @@ export class ManualInvoiceListComponent implements OnInit, OnDestroy {
     }
 
     transformDecimal(num) {
-        return num === 0 ? 0 : this._decimalPipe.transform(num, "1.0-5");
+        return num === 0 || num === undefined || num === null ? 0 : this._decimalPipe.transform(num, "1.0-5");
     }
 
 }
-
-
