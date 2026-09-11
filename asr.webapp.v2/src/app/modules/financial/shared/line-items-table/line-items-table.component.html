@@ -1,0 +1,115 @@
+<div class="line-items-table-wrapper" #tableWrapper>
+    <table class="line-items-table">
+        <colgroup>
+            <col style="width: 70px;">
+            <col style="width: 160px;">
+            <col style="width: 120px;">
+            <col style="width: 150px;">
+            <col style="width: 90px;">
+            <col style="width: 100px;">
+            <col style="width: 90px;">
+            <col style="width: 55px;">
+            <col style="width: 90px;">
+            <col style="width: 95px;">
+            <col style="width: 95px;">
+            <col style="width: 36px;">
+        </colgroup>
+        <thead>
+            <tr>
+                <th class="bg-card">Type</th>
+                <th class="bg-card">Account / Item</th>
+                <th class="bg-card">Cost Center</th>
+                <th class="bg-card">Description</th>
+                <th class="bg-card">VAT Group</th>
+                <th class="bg-card">VAT Product Group</th>
+                <th class="bg-card">Unit</th>
+                <th class="bg-card text-right">Qty</th>
+                <th class="bg-card text-right">Unit Price</th>
+                <th class="bg-card text-right">Net Amount</th>
+                <th class="bg-card text-right">Gross Amount</th>
+                <th class="bg-card"></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let lineGroup of linesFormArray.controls; let i = index" [formGroup]="lineGroup">
+                <td>
+                    <mat-form-field appearance="legacy">
+                        <mat-select formControlName="lineType">
+                            <mat-option value="GL">G/L Account</mat-option>
+                            <mat-option value="FA">Fixed Asset</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </td>
+                <td>
+                    <app-lookup-select formControlName="accountId" [options]="getAccountOptions(lineGroup)"
+                        idKey="id" codeKey="code" nameKey="name" placeholder="Select account / asset...">
+                    </app-lookup-select>
+                </td>
+                <td>
+                    <app-lookup-select formControlName="costCenterId" [options]="costCenters" idKey="costCenterId"
+                        codeKey="costCenterCode" nameKey="costCenterName" placeholder="Cost center..."
+                        [showAddOption]="true" addOptionLabel="+ Add new cost center"
+                        (addRequested)="onAddCostCenter($event, i)">
+                    </app-lookup-select>
+                </td>
+                <td>
+                    <mat-form-field appearance="legacy">
+                        <input matInput [autocomplete]="'off'" formControlName="itemDesc"
+                            placeholder="Description..." maxlength="200">
+                    </mat-form-field>
+                </td>
+                <td>
+                    <app-lookup-select formControlName="vatPostingGroupId" [options]="vatPostingGroups" idKey="id"
+                        codeKey="code" nameKey="name" placeholder="VAT group...">
+                    </app-lookup-select>
+                </td>
+                <td>
+                    <app-lookup-select formControlName="vatProductPostingGroupId" [options]="vatProductPostingGroups"
+                        idKey="id" codeKey="code" nameKey="name" placeholder="Product group...">
+                    </app-lookup-select>
+                </td>
+                <td>
+                    <app-lookup-select formControlName="unitId" [options]="unitOptions" idKey="id" codeKey="code"
+                        nameKey="name" placeholder="Unit..." [showAddOption]="true" addOptionLabel="+ Add new unit"
+                        (addRequested)="onAddUnit($event, i)">
+                    </app-lookup-select>
+                </td>
+                <td>
+                    <mat-form-field appearance="legacy">
+                        <input matInput type="number" [autocomplete]="'off'" class="text-right"
+                            formControlName="quantity">
+                    </mat-form-field>
+                </td>
+                <td>
+                    <mat-form-field appearance="legacy">
+                        <input matInput type="number" [autocomplete]="'off'" class="text-right"
+                            formControlName="unitPrice">
+                        <span matSuffix class="text-xs text-secondary pl-1">{{currencyAbbreviation}}</span>
+                    </mat-form-field>
+                </td>
+                <td>
+                    <mat-form-field appearance="legacy">
+                        <input matInput type="number" [autocomplete]="'off'" class="text-right"
+                            formControlName="netAmount">
+                        <span matSuffix class="text-xs text-secondary pl-1">{{currencyAbbreviation}}</span>
+                    </mat-form-field>
+                </td>
+                <td>
+                    <mat-form-field appearance="legacy">
+                        <input matInput type="number" [autocomplete]="'off'" class="text-right"
+                            formControlName="grossAmount">
+                        <span matSuffix class="text-xs text-secondary pl-1">{{currencyAbbreviation}}</span>
+                    </mat-form-field>
+                </td>
+                <td class="text-center">
+                    <button mat-icon-button (click)="onRemove(i)"
+                        [disabled]="linesFormArray.controls.length <= 1"
+                        [matTooltip]="linesFormArray.controls.length <= 1 ? 'At least one line is required' : 'Remove line'"
+                        type="button">
+                        <mat-icon svgIcon="mat_solid:delete"></mat-icon>
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

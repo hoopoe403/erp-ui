@@ -10,7 +10,7 @@ import { Customer } from 'app/modules/configuration/customer/customer/customer.t
 import { FinancialDocumentDetail } from '../../document.types';
 import { FuseAlertService } from '@fuse/components/alert';
 import { OpResult } from 'app/core/type/result/result.types';
-import { ManualInvoice } from 'app/modules/financial/invoices/manual/manual-invoice.types';
+import { PurchaseInvoice } from 'app/modules/financial/invoices/purchase/purchase-invoice.types';
 import { Cheque } from 'app/modules/financial/cheque/cheque.types';
 
 @Component({
@@ -28,7 +28,7 @@ export class FinancialDocumentDetailDialogComponent implements OnInit {
     expenseInfo: Expense;
     invoiceInfo: Invoice;
     chequeInfo: Cheque;
-    manualInvoiceInfo: ManualInvoice;
+    manualInvoiceInfo: PurchaseInvoice;
     customerOrderInfo: CustomerOrder;
     customerInfo: Customer
     financialDocumentDetailInfo: FinancialDocumentDetail;

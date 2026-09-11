@@ -7,7 +7,10 @@ import { FormGroup, FormBuilder, Validators } from "@angular/forms";
 import { Contractor } from "../contractor.type";
 import { forkJoin, Observable } from "rxjs";
 import { ContractorService } from "../contractor.service";
-import { BankAccount } from "../../shared/bank-account/bank-account.types";
+import { BankAccount, Currency } from "../../shared/bank-account/bank-account.types";
+import { BankAccountService } from "../../shared/bank-account/bank-account.service";
+import { VatLookupService } from "app/modules/financial/shared/lookup/vat-lookup.service";
+import { MockVatGroup } from "app/modules/financial/shared/mock-data";
 
 @Component({
   selector: "app-details",
@@ -21,6 +24,8 @@ export class ContractorsDetailsComponent implements OnInit {
   formContractor: FormGroup;
   contractorTypes = [];
   settlementTypes = [];
+  currencies: Currency[] = [];
+  vatGroups: MockVatGroup[] = [];
 
   // Bank accounts for this contractor
   bankAccounts: BankAccount[] = [];
@@ -30,6 +35,8 @@ export class ContractorsDetailsComponent implements OnInit {
     private location: Location,
     private formBuilder: FormBuilder,
     private contractorService: ContractorService,
+    private bankAccountService: BankAccountService,
+    private vatLookupService: VatLookupService,
     private cdr: ChangeDetectorRef,
     private snackBar: MatSnackBar,
     private translocoService: TranslocoService
@@ -39,6 +46,8 @@ export class ContractorsDetailsComponent implements OnInit {
     const id = Number(this.route.snapshot.paramMap.get("id"));
     this.getContractorTypes();
     this.getSettlementTypes();
+    this.getCurrencies();
+    this.getVatGroups();
     if (id > 0) {
       this.pageType = "edit";
       this.formContractor = this.createFormObj();
@@ -87,7 +96,9 @@ export class ContractorsDetailsComponent implements OnInit {
       contractorEmail: ["", [Validators.email]],
       contractorAddress: ["", [Validators.required]],
       organization: [{ value: '', disabled: this.pageType == 'edit' ? true : false }, [Validators.required]],
-      settlementType: [null, [Validators.required]]
+      settlementType: [null, [Validators.required]],
+      currencyId: [null],
+      vatGroupId: [null]
     });
   }
 
@@ -102,6 +113,8 @@ export class ContractorsDetailsComponent implements OnInit {
       contractorAddress: this.contractorInfo.address,
       organization: this.contractorInfo.organizationId,
       settlementType: this.contractorInfo.settlementTypeId,
+      currencyId: this.contractorInfo.currencyId,
+      vatGroupId: this.contractorInfo.vatGroupId,
     });
   }
 
@@ -177,6 +190,15 @@ export class ContractorsDetailsComponent implements OnInit {
       this.formContractor.controls["organization"].value;
     this.contractorInfo.settlementTypeId =
       this.formContractor.controls['settlementType'].value;
+    this.contractorInfo.currencyId =
+      this.formContractor.controls['currencyId'].value;
+    const currency = this.currencies.find(c => c.currencyId === this.contractorInfo.currencyId);
+    this.contractorInfo.currencyName = currency?.currencyName || '';
+    this.contractorInfo.currencyAbbreviation = currency?.currencyAbbreviation || '';
+    this.contractorInfo.vatGroupId =
+      this.formContractor.controls['vatGroupId'].value;
+    const vatGroup = this.vatGroups.find(g => g.id === this.contractorInfo.vatGroupId);
+    this.contractorInfo.vatGroupName = vatGroup?.name || '';
     // Include bank accounts in the contractor info
     this.contractorInfo.bankAccounts = this.bankAccounts;
   }
@@ -205,6 +227,22 @@ export class ContractorsDetailsComponent implements OnInit {
     this.contractorService.getSettlementType().subscribe((res) => {
       this.settlementTypes = res.data
       this.isLoading = false;
+      this.setFormValues();
+      this.cdr.detectChanges();
+    });
+  }
+
+  private getCurrencies(): void {
+    this.bankAccountService.getCurrencies().subscribe((res) => {
+      this.currencies = res.data || [];
+      this.setFormValues();
+      this.cdr.detectChanges();
+    });
+  }
+
+  private getVatGroups(): void {
+    this.vatLookupService.getVatPostingGroups().subscribe((groups) => {
+      this.vatGroups = groups;
       this.setFormValues();
       this.cdr.detectChanges();
     });

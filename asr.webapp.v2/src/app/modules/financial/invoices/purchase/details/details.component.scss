@@ -1,0 +1,48 @@
+// Intentionally no fixed-height/scroll-containment rules here. Earlier versions
+// tried to pin the header/footer and only let the line-items list scroll, but that
+// required this app's layout shell to give the page a definite, viewport-bound
+// height — it doesn't (see app/layout/layouts/vertical/*/*.component.html: routed
+// pages sit in plain flex-auto containers with no cap), and neither CSS tricks nor
+// a JS-measured height held up reliably across window sizes. The whole form now
+// scrolls as one normal page, like every other screen in this app — simpler and
+// provably correct, at the cost of the header/totals no longer staying pinned
+// on screen while scrolling through a long line-item list.
+
+// Lighter/flatter field look for the header grid, closer to the minimal reference
+// the user shared (a Dynamics 365 Business Central voucher page) - muted, smaller
+// labels and a subtler underline instead of Material's default heavier styling.
+// Deliberately scoped to .purchase-invoice-fields (this component has
+// ViewEncapsulation.None, so nothing scopes these rules automatically) rather than
+// touching app-lookup-select's own template/styles, which are shared by several
+// other unrelated pages - this only affects the two lookup-select fields (Vendor,
+// Reviewed By) when they happen to render inside this specific page's grid.
+.purchase-invoice-fields {
+    .mat-form-field-appearance-legacy .mat-form-field-label {
+        font-size: 12px;
+        color: rgba(0, 0, 0, 0.5);
+    }
+
+    .dark & .mat-form-field-appearance-legacy .mat-form-field-label {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .mat-form-field-appearance-legacy .mat-form-field-underline {
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .dark & .mat-form-field-appearance-legacy .mat-form-field-underline {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    // Extra breathing room between the input text and the underline below it -
+    // without this the underline (especially the thicker, colored focus/active
+    // ripple) sits right against the text's descenders and reads as a strike
+    // through the value rather than an underline.
+    .mat-form-field-appearance-legacy .mat-form-field-infix {
+        padding-bottom: 10px;
+    }
+
+    .mat-form-field-wrapper {
+        padding-bottom: 0.5em;
+    }
+}
