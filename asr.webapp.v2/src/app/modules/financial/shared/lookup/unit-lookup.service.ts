@@ -28,14 +28,15 @@ export class UnitLookupService {
 
     getUnits(): Observable<UnitOption[]> {
         return this._purchaseInvoiceService.getUnits().pipe(
-            map((res: any) => (res && res.data ? res.data : []) as UnitOption[]),
+            map((res: any) => (res || []) as UnitOption[]),
             catchError(() => of([] as UnitOption[]))
         );
     }
 
     addQuickUnit(code: string, name: string): Observable<UnitOption> {
         return this._purchaseInvoiceService.addUnit({ unitCode: code, unitName: name }).pipe(
-            map((res: any) => res && res.data ? res.data as UnitOption : null)
+            map((res: any) => (res || null) as UnitOption),
+            catchError(() => of(null as UnitOption))
         );
     }
 }

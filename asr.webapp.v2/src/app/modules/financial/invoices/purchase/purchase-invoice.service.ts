@@ -2,10 +2,18 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
-import { PurchaseInvoice } from './purchase-invoice.types';
+import { PurchaseInvoice, PurchaseInvoiceList } from './purchase-invoice.types';
 import { ApiHelperService } from '../../../../../environments/api-helper.service';
 import { Paging } from 'app/core/type/paging/paging.type';
 
+/**
+ * The Purchase Invoice endpoints use plain HTTP semantics (no `{succeed, message, data}`
+ * envelope): a successful call's body IS the resource - the invoice, the list page, the
+ * lookup array - and any failure is an HTTP error (400 invalid request, 404 not found,
+ * 409 duplicate vendor invoice number) whose RFC 7807 `detail` holds the readable text.
+ * Callers handle failures in `error`, not by checking a flag on the response.
+ * The `legacyUrl` calls further down still hit the old Result-envelope controller.
+ */
 @Injectable({
     providedIn: 'root'
 })
@@ -52,75 +60,47 @@ export class PurchaseInvoiceService {
     // @ Public methods
     // -----------------------------------------------------------------------------------------------------
 
-    getPurchaseInvoices(purchaseInvoiceInfo: any):
-        Observable<any> {
-        return this._httpClient.post<{ pagination: Paging; purchaseInvoices: PurchaseInvoice[] }>(ApiHelperService.BASE_URL + this.url + 'findByObj', purchaseInvoiceInfo).pipe(
+    getPurchaseInvoices(purchaseInvoiceInfo: any): Observable<PurchaseInvoiceList> {
+        return this._httpClient.post<PurchaseInvoiceList>(ApiHelperService.BASE_URL + this.url + 'findByObj', purchaseInvoiceInfo).pipe(
             tap((response) => {
-                this._pagination.next(response.data.page);
-                this._purchaseInvoices.next(response.data.purchaseInvoices);
+                this._pagination.next(response.page);
+                this._purchaseInvoices.next(response.purchaseInvoices);
             })
         );
     }
 
-    getPurchaseInvoice(id: number): any {
-        return this._httpClient.get(ApiHelperService.BASE_URL + this.url + id).pipe(
-            map((purchaseInvoice) => {
-                return purchaseInvoice;
-            }),
-            switchMap((purchaseInvoice) => {
-
-                if (!purchaseInvoice) {
-                    return throwError('Could not found course with id of ' + id + '!');
-                }
-                return of(purchaseInvoice);
-            })
-        );
+    /** 404 (no such invoice) arrives as an HTTP error. */
+    getPurchaseInvoice(id: number): Observable<PurchaseInvoice> {
+        return this._httpClient.get<PurchaseInvoice>(ApiHelperService.BASE_URL + this.url + id);
     }
-    getPurchaseInvoiceInOnInit(purchaseInvoiceInfo: any):
-        Observable<any> {
-        return this._httpClient.post<{ pagination: Paging; purchaseInvoices: PurchaseInvoice[] }>(ApiHelperService.BASE_URL + this.url + 'findByObjInOnInit', purchaseInvoiceInfo).pipe(
+
+    getPurchaseInvoiceInOnInit(purchaseInvoiceInfo: any): Observable<PurchaseInvoiceList> {
+        return this._httpClient.post<PurchaseInvoiceList>(ApiHelperService.BASE_URL + this.url + 'findByObjInOnInit', purchaseInvoiceInfo).pipe(
             tap((response) => {
-                this._pagination.next(response.data.page);
-                this._purchaseInvoices.next(response.data.purchaseInvoices);
+                this._pagination.next(response.page);
+                this._purchaseInvoices.next(response.purchaseInvoices);
             })
         );
     }
 
-    confirm(purchaseInvoice: PurchaseInvoice): any {
-        return this._httpClient.post(ApiHelperService.BASE_URL + this.url + 'confirm', purchaseInvoice).pipe(
-            tap((response: any) => {
-                return response;
-            })
-        );
+    /** Posts the invoice; emits the stored invoice. 404 if it doesn't exist. */
+    confirm(purchaseInvoice: PurchaseInvoice): Observable<PurchaseInvoice> {
+        return this._httpClient.post<PurchaseInvoice>(ApiHelperService.BASE_URL + this.url + 'confirm', purchaseInvoice);
     }
-    create(purchaseInvoice: PurchaseInvoice): any {
-        return this._httpClient.post(ApiHelperService.BASE_URL + this.url + 'create', purchaseInvoice).pipe(
-            tap((response: any) => {
-                return response;
-            })
-        );
-    }
-    edit(purchaseInvoice: PurchaseInvoice): any {
-        return this._httpClient.post(ApiHelperService.BASE_URL + this.url + 'edit', purchaseInvoice).pipe(
-            tap((response: any) => {
-                return response;
-            })
-        );
-    }
-    getStatuses(): any {
-        return this._httpClient.get(ApiHelperService.BASE_URL + this.url + 'drp/statuses').pipe(
-            map((data) => {
-                return data;
-            }),
-            switchMap((data) => {
 
-                if (!data) {
-                    return throwError('Could not found course with id of ' + '!');
-                }
+    /** 201 - emits the stored invoice with its server-assigned id, number and status. 409 for a duplicate. */
+    create(purchaseInvoice: PurchaseInvoice): Observable<PurchaseInvoice> {
+        return this._httpClient.post<PurchaseInvoice>(ApiHelperService.BASE_URL + this.url + 'create', purchaseInvoice);
+    }
 
-                return of(data);
-            })
-        );
+    /** Emits the stored invoice. 404 if it doesn't exist, 409 for a duplicate. */
+    edit(purchaseInvoice: PurchaseInvoice): Observable<PurchaseInvoice> {
+        return this._httpClient.post<PurchaseInvoice>(ApiHelperService.BASE_URL + this.url + 'edit', purchaseInvoice);
+    }
+
+    /** A plain array of statuses ({statusId, statusDescription, color, isDefault...}). */
+    getStatuses(): Observable<any[]> {
+        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'drp/statuses');
     }
 
 
@@ -188,31 +168,32 @@ export class PurchaseInvoiceService {
     // -----------------------------------------------------------------------------------------------------
     // Local-mock-data lookups (Cost Center, Fixed Asset, VAT groups) — none of these
     // have a real DB table yet; erp-be serves them from a local JSON file instead
-    // (see PurchaseInvoiceMasterDataService / application.local-mock-data.enabled).
+    // (see InvoiceMasterDataService / application.local-mock-data.enabled).
     // -----------------------------------------------------------------------------------------------------
 
-    getMockCostCenters(): Observable<any> {
-        return this._httpClient.get(ApiHelperService.BASE_URL + this.url + 'mock/cost-centers');
+    getMockCostCenters(): Observable<any[]> {
+        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'mock/cost-centers');
     }
 
+    /** 201 - emits the created cost center. 501 when local mock data is off. */
     addMockCostCenter(costCenter: { costCenterCode: string; costCenterName: string }): Observable<any> {
-        return this._httpClient.post(ApiHelperService.BASE_URL + this.url + 'mock/cost-centers', costCenter);
+        return this._httpClient.post<any>(ApiHelperService.BASE_URL + this.url + 'mock/cost-centers', costCenter);
     }
 
-    getMockFixedAssets(): Observable<any> {
-        return this._httpClient.get(ApiHelperService.BASE_URL + this.url + 'mock/fixed-assets');
+    getMockFixedAssets(): Observable<any[]> {
+        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'mock/fixed-assets');
     }
 
-    getMockVatPostingGroups(): Observable<any> {
-        return this._httpClient.get(ApiHelperService.BASE_URL + this.url + 'mock/vat-posting-groups');
+    getMockVatPostingGroups(): Observable<any[]> {
+        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'mock/vat-posting-groups');
     }
 
-    getMockVatProductPostingGroups(): Observable<any> {
-        return this._httpClient.get(ApiHelperService.BASE_URL + this.url + 'mock/vat-product-posting-groups');
+    getMockVatProductPostingGroups(): Observable<any[]> {
+        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'mock/vat-product-posting-groups');
     }
 
-    getMockVatPostingSetup(): Observable<any> {
-        return this._httpClient.get(ApiHelperService.BASE_URL + this.url + 'mock/vat-posting-setup');
+    getMockVatPostingSetup(): Observable<any[]> {
+        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'mock/vat-posting-setup');
     }
 
     /**
@@ -222,11 +203,12 @@ export class PurchaseInvoiceService {
      * application.local-mock-data.enabled, so this service never needs to know
      * which one is active.
      */
-    getUnits(): Observable<any> {
-        return this._httpClient.get(ApiHelperService.BASE_URL + this.url + 'drp/units');
+    getUnits(): Observable<any[]> {
+        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'drp/units');
     }
 
+    /** 201 - emits the created unit. */
     addUnit(unit: { unitCode: string; unitName: string }): Observable<any> {
-        return this._httpClient.post(ApiHelperService.BASE_URL + this.url + 'drp/units', unit);
+        return this._httpClient.post<any>(ApiHelperService.BASE_URL + this.url + 'drp/units', unit);
     }
 }

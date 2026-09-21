@@ -19,14 +19,16 @@ export class CostCenterLookupService {
 
     getCostCenters(): Observable<MockCostCenter[]> {
         return this._purchaseInvoiceService.getMockCostCenters().pipe(
-            map((res: any) => (res && res.data ? res.data : []) as MockCostCenter[]),
+            map((res: any) => (res || []) as MockCostCenter[]),
             catchError(() => of([] as MockCostCenter[]))
         );
     }
 
     addQuickCostCenter(code: string, name: string): Observable<MockCostCenter> {
         return this._purchaseInvoiceService.addMockCostCenter({ costCenterCode: code, costCenterName: name }).pipe(
-            map((res: any) => res && res.data ? res.data as MockCostCenter : null)
+            map((res: any) => (res || null) as MockCostCenter),
+            // e.g. 501 when local mock data is off - same outcome as before: nothing gets added
+            catchError(() => of(null as MockCostCenter))
         );
     }
 }

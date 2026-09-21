@@ -65,21 +65,21 @@ export class VatLookupService {
 
     private _fetchVatPostingGroups(): Observable<MockVatGroup[]> {
         return this._purchaseInvoiceService.getMockVatPostingGroups().pipe(
-            map((res: any) => (res && res.data ? res.data : []) as MockVatGroup[]),
+            map((res: any) => (res || []) as MockVatGroup[]),
             catchError(() => of([] as MockVatGroup[]))
         );
     }
 
     private _fetchVatProductPostingGroups(): Observable<MockVatGroup[]> {
         return this._purchaseInvoiceService.getMockVatProductPostingGroups().pipe(
-            map((res: any) => (res && res.data ? res.data : []) as MockVatGroup[]),
+            map((res: any) => (res || []) as MockVatGroup[]),
             catchError(() => of([] as MockVatGroup[]))
         );
     }
 
     private _fetchVatPostingSetup(): Observable<VatPostingSetupEntry[]> {
         return this._purchaseInvoiceService.getMockVatPostingSetup().pipe(
-            map((res: any) => (res && res.data ? res.data : []) as VatPostingSetupEntry[]),
+            map((res: any) => (res || []) as VatPostingSetupEntry[]),
             catchError(() => of([] as VatPostingSetupEntry[]))
         );
     }

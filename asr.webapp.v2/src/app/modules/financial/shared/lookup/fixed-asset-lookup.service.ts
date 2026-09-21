@@ -19,7 +19,7 @@ export class FixedAssetLookupService {
 
     getFixedAssets(): Observable<MockFixedAsset[]> {
         return this._purchaseInvoiceService.getMockFixedAssets().pipe(
-            map((res: any) => (res && res.data ? res.data : []) as MockFixedAsset[]),
+            map((res: any) => (res || []) as MockFixedAsset[]),
             catchError(() => of([] as MockFixedAsset[]))
         );
     }

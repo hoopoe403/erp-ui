@@ -93,3 +93,9 @@ export class PurchaseInvoiceDetail extends BaseModel {
     vatProductPostingGroupId: number | null;
     grossAmount: number;
 }
+
+/** One page of the list, as erp-be returns it from findByObj / findByObjInOnInit. */
+export interface PurchaseInvoiceList {
+    purchaseInvoices: PurchaseInvoice[];
+    page: Paging;
+}

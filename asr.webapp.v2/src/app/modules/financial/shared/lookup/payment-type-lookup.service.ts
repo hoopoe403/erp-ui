@@ -37,7 +37,7 @@ export class PaymentTypeLookupService {
 
     getPaymentTypes(): Observable<PaymentTypeOption[]> {
         return this._httpClient.get(this._url).pipe(
-            map((res: any) => ((res && res.data ? res.data : []) as { key: string; value: string }[])
+            map((res: any) => ((res || []) as { key: string; value: string }[])
                 .map((kv) => ({ paymentTypeId: Number(kv.key), paymentTypeName: kv.value }))),
             catchError(() => of([] as PaymentTypeOption[]))
         );

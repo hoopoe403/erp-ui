@@ -31,6 +31,9 @@ import {
 } from '../../../shared/financial-constants';
 import { LookupOption } from '../../../shared/lookup-option.type';
 
+/** Shown in the success alert - the same text erp-be's envelope used to send. */
+const SAVE_SUCCEEDED_MESSAGE = 'Execute Operation Successfully';
+
 @Component({
     selector: 'purchase-invoice-details',
     templateUrl: './details.component.html',
@@ -222,19 +225,23 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
 
     private getById(id: number) {
         this.isLoading = true;
-        this.service.getPurchaseInvoice(id).subscribe((res) => {
-            this.invoiceInfo = res.data;
-            if (!this.invoiceInfo.purchaseInvoiceDetailList) {
-                this.invoiceInfo.purchaseInvoiceDetailList = [];
-            }
-            if (!this.invoiceInfo.currencyAbbreviation) {
-                this.invoiceInfo.currencyAbbreviation = DEFAULT_CURRENCY_ABBREVIATION;
-                this.invoiceInfo.currencyName = DEFAULT_CURRENCY_NAME;
-            }
-            this.titleInfo = this.invoiceInfo.creditorName || 'Purchase Invoice';
-            this.setFormValues();
-            this.isLoading = false;
-            this.cdr.detectChanges();
+        this.service.getPurchaseInvoice(id).subscribe({
+            next: (invoice) => {
+                this.invoiceInfo = invoice;
+                if (!this.invoiceInfo.purchaseInvoiceDetailList) {
+                    this.invoiceInfo.purchaseInvoiceDetailList = [];
+                }
+                if (!this.invoiceInfo.currencyAbbreviation) {
+                    this.invoiceInfo.currencyAbbreviation = DEFAULT_CURRENCY_ABBREVIATION;
+                    this.invoiceInfo.currencyName = DEFAULT_CURRENCY_NAME;
+                }
+                this.titleInfo = this.invoiceInfo.creditorName || 'Purchase Invoice';
+                this.setFormValues();
+                this.isLoading = false;
+                this.cdr.detectChanges();
+            },
+            // e.g. a 404 for an invoice that doesn't exist (any more)
+            error: (err) => this._onRequestError(err)
         });
     }
 
@@ -759,7 +766,7 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
 
     /**
      * The whole invoice (header + lines) round-trips through the local-mock-data
-     * store on the erp-be side (see LocalMockPurchaseInvoiceRepository) — only
+     * store on the erp-be side (see PurchaseInvoiceRepositoryMock) — only
      * the trailing always-blank placeholder row is dropped before saving.
      */
     private toBackendPayload(): PurchaseInvoice {
@@ -825,18 +832,16 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         this.dismissAlert('errorMessage');
         this.isLoading = true;
         this.actionDisable = true;
-        this._createInvoice().subscribe(res => {
-            this.isLoading = false;
-            this._result.succeed = res.succeed;
-            this._result.message = res.message;
-            if (this._result.succeed) {
+        this._createInvoice().subscribe({
+            next: () => {
+                this.isLoading = false;
+                this._result.succeed = true;
+                this._result.message = SAVE_SUCCEEDED_MESSAGE;
                 this.frmInvoice.markAsPristine();
                 this.showAlert('successMessage');
-            } else {
-                this.actionDisable = false;
-                this.showAlert('errorMessage');
-            }
-            this.cdr.detectChanges();
+                this.cdr.detectChanges();
+            },
+            error: (err) => this._onRequestError(err)
         });
     }
 
@@ -845,18 +850,50 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         this.dismissAlert('errorMessage');
         this.isLoading = true;
         this.actionDisable = true;
-        this.service.edit(this.toBackendPayload()).subscribe(res => {
-            this.isLoading = false;
-            this.actionDisable = false;
-            this._result.succeed = res.succeed;
-            this._result.message = res.message;
-            if (this._result.succeed) {
+        this.service.edit(this.toBackendPayload()).subscribe({
+            next: () => {
+                this.isLoading = false;
+                this.actionDisable = false;
+                this._result.succeed = true;
+                this._result.message = SAVE_SUCCEEDED_MESSAGE;
                 this.frmInvoice.markAsPristine();
                 this.showAlert('successMessage');
-            } else
-                this.showAlert('errorMessage');
-            this.cdr.detectChanges();
+                this.cdr.detectChanges();
+            },
+            error: (err) => this._onRequestError(err)
         });
+    }
+
+    /**
+     * Any failed request lands here instead of a `next` callback: erp-be answers
+     * with real HTTP statuses - 400 for an invalid request, 404 for an invoice that
+     * doesn't exist, 409 for a duplicate vendor invoice number, 5xx/no connection
+     * otherwise. Without this the form stayed stuck on "loading" with its buttons
+     * disabled. Shown through the same alert as the client-side validation messages.
+     */
+    private _onRequestError(error: any): void {
+        this.isLoading = false;
+        this.actionDisable = false;
+        this._result.succeed = false;
+        this._result.message = this._errorMessage(error);
+        this.showAlert('errorMessage');
+        this.cdr.detectChanges();
+    }
+
+    /**
+     * erp-be reports every failure as an RFC 7807 problem - the readable text is
+     * in `detail` (e.g. "Please select a vendor", "Purchase invoice not found").
+     * Anything without one gets a generic message rather than a raw HTTP error.
+     */
+    private _errorMessage(error: any): string {
+        const detail = error && error.error && error.error.detail;
+        if (typeof detail === 'string' && detail) {
+            return detail;
+        }
+        if (error && error.status === 0) {
+            return 'Could not reach the server. Please check your connection and try again.';
+        }
+        return 'Something went wrong. Please try again.';
     }
 
     // -----------------------------------------------------------------------------------------------------
@@ -908,11 +945,20 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
             return;
         }
         this._applyMinimumDraftFields();
-        this._createInvoice().subscribe((res) => {
-            if (res.succeed) {
+        this._createInvoice().subscribe({
+            next: () => {
                 this.frmInvoice.markAsPristine();
+                this.cdr.detectChanges();
+            },
+            error: (err) => {
+                // A 409 - another invoice from this vendor already has this vendor
+                // invoice number - is worth showing right away, not only once the user
+                // eventually clicks Save. Any other failure stays silent: this is a
+                // best-effort background draft, the explicit Save/Edit paths report those.
+                if (err && err.status === 409) {
+                    this._onRequestError(err);
+                }
             }
-            this.cdr.detectChanges();
         });
     }
 
@@ -932,11 +978,7 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         if (this.invoiceInfo.purchaseInvoiceId) {
             return (this.service.edit(this.toBackendPayload()) as Observable<any>).pipe(
                 take(1),
-                tap((res: any) => {
-                    if (res.succeed) {
-                        this.frmInvoice.markAsPristine();
-                    }
-                }),
+                tap(() => this.frmInvoice.markAsPristine()),
                 map(() => true),
                 catchError(() => of(true))
             );
@@ -945,11 +987,7 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
             this._applyMinimumDraftFields();
             return this._createInvoice().pipe(
                 take(1),
-                tap((res) => {
-                    if (res.succeed) {
-                        this.frmInvoice.markAsPristine();
-                    }
-                }),
+                tap(() => this.frmInvoice.markAsPristine()),
                 map(() => true),
                 catchError(() => of(true))
             );
@@ -965,50 +1003,44 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
      * reload), so a page refresh - or a second save before the user notices -
      * can never create a second invoice.
      */
-    private _createInvoice(): Observable<any> {
+    private _createInvoice(): Observable<PurchaseInvoice> {
         return this.service.create(this.toBackendPayload()).pipe(
-            tap((res: any) => {
-                if (res.succeed && res.data) {
-                    this._applyCreatedId(res.data);
-                }
-            })
+            tap((created: PurchaseInvoice) => this._applyCreated(created))
         );
     }
 
-    private _applyCreatedId(newId: number): void {
-        this.invoiceInfo.purchaseInvoiceId = newId;
+    /**
+     * The create response is the stored invoice, so the fields the server assigns
+     * (id, invoiceNumber, status...) come straight from it - no second request -
+     * and only those are copied, so nothing the user might still be editing is touched.
+     */
+    private _applyCreated(created: PurchaseInvoice): void {
+        this.invoiceInfo.purchaseInvoiceId = created.purchaseInvoiceId;
         this.pageType = 'edit';
-        this.id = newId;
+        this.id = created.purchaseInvoiceId;
 
-        const urlTree = this._router.createUrlTree(['details', newId], { relativeTo: this.route.parent });
+        const urlTree = this._router.createUrlTree(['details', created.purchaseInvoiceId], { relativeTo: this.route.parent });
         this._location.replaceState(this._router.serializeUrl(urlTree));
 
-        // The create response only carries the new id - refetch just the fields
-        // the server assigns (invoiceNumber, status...) so the title/stepper
-        // update, without touching anything the user might still be editing.
-        this.service.getPurchaseInvoice(newId).subscribe((full: any) => {
-            if (full && full.data) {
-                this.invoiceInfo.invoiceNumber = full.data.invoiceNumber;
-                this.invoiceInfo.status = full.data.status;
-                this.invoiceInfo.statusDescription = full.data.statusDescription;
-                this.invoiceInfo.statusColor = full.data.statusColor;
-                this.cdr.detectChanges();
-            }
-        });
+        this.invoiceInfo.invoiceNumber = created.invoiceNumber;
+        this.invoiceInfo.status = created.status;
+        this.invoiceInfo.statusDescription = created.statusDescription;
+        this.invoiceInfo.statusColor = created.statusColor;
+        this.cdr.detectChanges();
     }
 
     confirm() {
         this.dismissAlert('successMessage');
         this.dismissAlert('errorMessage');
-        this.service.confirm(this.toBackendPayload()).subscribe(res => {
-            this.isLoading = false;
-            this._result.succeed = res.succeed;
-            this._result.message = res.message;
-            if (this._result.succeed)
+        this.service.confirm(this.toBackendPayload()).subscribe({
+            next: () => {
+                this.isLoading = false;
+                this._result.succeed = true;
+                this._result.message = SAVE_SUCCEEDED_MESSAGE;
                 this.showAlert('successMessage');
-            else
-                this.showAlert('errorMessage');
-            this.cdr.detectChanges();
+                this.cdr.detectChanges();
+            },
+            error: (err) => this._onRequestError(err)
         });
     }
 

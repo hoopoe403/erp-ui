@@ -167,7 +167,7 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
 
     }
     private setForkJoinValues(values: Array<any>): void {
-        this.statuses = values[0].data;
+        this.statuses = values[0];
         this.defaultStatuses = [];
         this.statuses.forEach(element => {
             if (element.isDefault === 1)
@@ -175,7 +175,7 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
         });
         this.frmAdvancedSearch.controls["status"].setValue(this.defaultStatuses);
         this.invoiceInfo.statusIdList = this.defaultStatuses;
-        this.invoices = values[1].data.invoices;
+        this.invoices = values[1].purchaseInvoices;
         this.invoices$ = this.service.purchaseInvoices$;
         this._changeDetectorRef.markForCheck();
         this.cdr.detectChanges();
@@ -223,7 +223,7 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
         this.service.getPurchaseInvoices(invoiceInfo)
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe((invoices: any) => {
-                this.invoices = invoices.data.invoices;
+                this.invoices = invoices.purchaseInvoices;
                 this.invoices$ = this.service.purchaseInvoices$;
                 this.isLoading = false;
                 this._changeDetectorRef.markForCheck();
