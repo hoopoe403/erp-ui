@@ -167,7 +167,15 @@ export const appRoutes: Route[] = [
                     { path: 'resource', loadChildren: () => import('app/modules/financial/resource/resource.module').then(m => m.ResourceModule) },
                     { path: 'category', loadChildren: () => import('app/modules/financial/category/category.module').then(m => m.CategoryModule) },
                     {
-                        path: 'transactions', children: [{ path: 'revenue', loadChildren: () => import('app/modules/financial/transactions/revenue/revenue.module').then(m => m.RevenueModule) },
+                        // Repurposed for local testing: 'financial/transactions/revenue' is the
+                        // sidebar link that actually resolves for this account, but RevenueModule
+                        // is just a generic placeholder reused verbatim by several other menu
+                        // entries below (cashFlow, registers/*) - no dedicated Revenue feature is
+                        // built yet. Reused the same way Purchase Invoice repurposed the old
+                        // "Manual Invoice" link, so Sales Invoice is reachable from the sidebar
+                        // without a DB change. Revert this to RevenueModule once a real menu row
+                        // for Sales Invoice exists.
+                        path: 'transactions', children: [{ path: 'revenue', loadChildren: () => import('./modules/financial/invoices/sales/sales-invoice.module').then(m => m.SalesInvoiceModule) },
                         { path: 'expense', loadChildren: () => import('app/modules/financial/transactions/expense/expense.module').then(m => m.ExpenseModule) }]
                     },
                     {
@@ -191,6 +199,10 @@ export const appRoutes: Route[] = [
                 // menu entry was never pointing at a real route. Redirect it here instead
                 // of touching the menu data in the backend.
                 { path: 'financial/invoices/manual', redirectTo: 'invoice', pathMatch: 'prefix' },
+                // Sales Invoice — no backend menu row exists for this yet (unlike Purchase
+                // Invoice, which inherited a repurposable old link); reach it directly at
+                // /sales-invoice/list until one is added. See the sales-invoice plan.
+                { path: 'sales-invoice', loadChildren: () => import('./modules/financial/invoices/sales/sales-invoice.module').then(m => m.SalesInvoiceModule) },
                 { path: 'cashFlow', loadChildren: () => import('./modules/financial/transactions/revenue/revenue.module').then(m => m.RevenueModule) },
                 { path: 'budgetPlan', loadChildren: () => import('./modules/financial/statement/statement.module').then(m => m.StatementModule) },
                 { path: 'bankStatement', loadChildren: () => import('./modules/financial/statement/statement.module').then(m => m.StatementModule) }    

@@ -24,7 +24,7 @@ export class Contractor extends BaseModel {
   bankAccounts: BankAccount[]; // Bank accounts for this contractor
   page: Paging;
 
-  // --- New fields (UI-only for now, no backend column yet — see CLAUDE.md / plan) ---
+  // --- New fields (UI-only for now, no backend column yet ) ---
   currencyId: number | null;
   currencyName: string;
   currencyAbbreviation: string;

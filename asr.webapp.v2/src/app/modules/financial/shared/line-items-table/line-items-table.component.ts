@@ -26,13 +26,27 @@ export interface AddUnitRequest {
     lineIndex: number;
 }
 
+export interface LineTypeOption {
+    value: string;
+    label: string;
+}
+
+/** Purchase Invoice's line types (the default, unless a caller overrides
+ *  `lineTypes`) - a purchase invoice line posts to a G/L account or
+ *  capitalizes a Fixed Asset. */
+const DEFAULT_LINE_TYPES: LineTypeOption[] = [
+    { value: 'GL', label: 'G/L Account' },
+    { value: 'FA', label: 'Fixed Asset' },
+];
+
 /**
- * Reusable accounting line-items table (G/L Account or Fixed Asset, Cost Center,
- * Description, VAT Posting Group / VAT Product Posting Group, Qty, Unit, Unit
- * Price, Net Amount, Gross Amount). Built for Purchase Invoice first; designed
- * to be dropped into Sales Invoice / Expense screens later — it only needs a
- * `FormArray` of row `FormGroup`s (each with the fields above) and the lookup
- * option lists.
+ * Reusable accounting line-items table (an "Account/Item" column whose picker
+ * swaps by line type, Cost Center, Description, VAT Posting Group / VAT
+ * Product Posting Group, Qty, Unit, Unit Price, Net Amount, Gross Amount).
+ * Built for Purchase Invoice first (G/L Account or Fixed Asset), now also used
+ * by Sales Invoice (G/L Account or Item - see `lineTypes`/`itemOptions`
+ * below) - it only needs a `FormArray` of row `FormGroup`s (each with the
+ * fields above) and the lookup option lists.
  *
  * Owns one piece of UX on its own: it always keeps a trailing blank row ready —
  * as soon as the last row gets any data, it asks the parent (via
@@ -48,8 +62,16 @@ export interface AddUnitRequest {
 })
 export class LineItemsTableComponent implements OnInit, OnDestroy {
     @Input() linesFormArray: FormArray;
+    /** The "Type" column's options, and which options list (see
+     *  getAccountOptions()) each value's "Account/Item" picker uses. Defaults
+     *  to Purchase Invoice's G/L Account / Fixed Asset pair; Sales Invoice
+     *  passes G/L Account / Item instead - see sales details.component.html. */
+    @Input() lineTypes: LineTypeOption[] = DEFAULT_LINE_TYPES;
     @Input() glAccountOptions: LookupOption[] = [];
     @Input() fixedAssetOptions: LookupOption[] = [];
+    /** Sales Invoice's Item (inventory Goods) picker options - see
+     *  getAccountOptions(). Empty/unused for Purchase Invoice. */
+    @Input() itemOptions: LookupOption[] = [];
     @Input() costCenters: MockCostCenter[] = [];
     @Input() vatPostingGroups: MockVatGroup[] = [];
     @Input() vatProductPostingGroups: MockVatGroup[] = [];
@@ -82,7 +104,14 @@ export class LineItemsTableComponent implements OnInit, OnDestroy {
     }
 
     getAccountOptions(lineGroup: FormGroup): LookupOption[] {
-        return lineGroup.get('lineType').value === 'FA' ? this.fixedAssetOptions : this.glAccountOptions;
+        const type = lineGroup.get('lineType').value;
+        if (type === 'FA') {
+            return this.fixedAssetOptions;
+        }
+        if (type === 'IT') {
+            return this.itemOptions;
+        }
+        return this.glAccountOptions;
     }
 
     onRemove(index: number): void {

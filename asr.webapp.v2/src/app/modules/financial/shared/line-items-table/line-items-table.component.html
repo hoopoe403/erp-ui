@@ -35,8 +35,7 @@
                 <td>
                     <mat-form-field appearance="legacy">
                         <mat-select formControlName="lineType">
-                            <mat-option value="GL">G/L Account</mat-option>
-                            <mat-option value="FA">Fixed Asset</mat-option>
+                            <mat-option *ngFor="let lt of lineTypes" [value]="lt.value">{{lt.label}}</mat-option>
                         </mat-select>
                     </mat-form-field>
                 </td>

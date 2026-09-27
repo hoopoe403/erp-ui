@@ -1,4 +1,6 @@
 export * from './vendor-lookup.service';
+export * from './customer-lookup.service';
+export * from './item-lookup.service';
 export * from './gl-account-lookup.service';
 export * from './cost-center-lookup.service';
 export * from './fixed-asset-lookup.service';

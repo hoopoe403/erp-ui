@@ -15,3 +15,10 @@ export const DEFAULT_CURRENCY_NAME = 'Euro';
 export const PURCHASE_INVOICE_STATUS_DRAFT = 1000001;
 export const PURCHASE_INVOICE_STATUS_PENDING_REVIEW = 1000002;
 export const PURCHASE_INVOICE_STATUS_POSTED = 1000003;
+
+// Sales Invoice workflow statuses — must match erp-be's SalesInvoiceStatus
+// constants exactly. Deliberately a different range from the Purchase Invoice
+// ids above so the two invented status sets can never collide.
+export const SALES_INVOICE_STATUS_DRAFT = 2000001;
+export const SALES_INVOICE_STATUS_PENDING_REVIEW = 2000002;
+export const SALES_INVOICE_STATUS_POSTED = 2000003;
