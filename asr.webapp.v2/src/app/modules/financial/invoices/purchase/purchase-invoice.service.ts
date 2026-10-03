@@ -98,6 +98,11 @@ export class PurchaseInvoiceService {
         return this._httpClient.post<PurchaseInvoice>(ApiHelperService.BASE_URL + this.url + 'edit', purchaseInvoice);
     }
 
+    /** The invoice's documents endpoints, for `<app-file-attachments [filesPath]>`. */
+    filesPath(purchaseInvoiceId: number): string {
+        return this.url + purchaseInvoiceId + '/files';
+    }
+
     /** A plain array of statuses ({statusId, statusDescription, color, isDefault...}). */
     getStatuses(): Observable<any[]> {
         return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'drp/statuses');

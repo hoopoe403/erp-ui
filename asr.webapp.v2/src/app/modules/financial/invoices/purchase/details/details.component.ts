@@ -91,6 +91,11 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         return 0;
     }
 
+    /** Documents can be attached once the invoice has an id (first draft save). */
+    get attachmentsPath(): string | null {
+        return this.invoiceInfo.purchaseInvoiceId ? this.service.filesPath(this.invoiceInfo.purchaseInvoiceId) : null;
+    }
+
     private _selectedVendorVatGroupId: number | null = null;
 
     constructor(

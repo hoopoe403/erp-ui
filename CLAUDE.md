@@ -34,6 +34,10 @@ Other established patterns to reuse rather than reinvent:
   Contractor and Customer detail forms. Before building a new UI piece, check whether
   an existing shared component already does it, and reuse it instead of duplicating.
 - Angular Material components for UI, matching the Fuse theme.
+- Documents attached to a record: `<app-file-attachments [filesPath] [readonly]>`
+  (`modules/financial/shared/file-attachments/`) — upload/open/download/delete against
+  erp-be's `<record>/{id}/files` endpoints. The feature's service only builds the path
+  (see `PurchaseInvoiceService.filesPath()`); don't write per-feature upload code.
 
 General bar: clean code, Angular 13+ best practices, DRY. Don't repeat logic that
 already exists in a service/component elsewhere — extend or reuse it. Keep components

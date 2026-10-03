@@ -212,15 +212,12 @@
                     </div>
                 </div>
 
-                <!-- Right: reserved for the future document-upload panel (not built yet).
-                     Fixed width so it always stays beside the voucher, never below it. -->
+                <!-- Right: the invoice's documents (scanned invoice, delivery notes...).
+                     Fixed width so it always stays beside the voucher, never below it.
+                     Read-only once posted - erp-be refuses changes then anyway. -->
                 <div class="w-40 lg:w-48 flex-shrink-0">
-                    <div
-                        class="p-4 lg:p-6 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center text-center min-h-[160px] lg:min-h-[200px] text-secondary">
-                        <mat-icon class="icon-size-10 mb-2" svgIcon="heroicons_outline:paper-clip"></mat-icon>
-                        <div class="font-medium">Voucher document upload</div>
-                        <div class="text-sm">Coming soon</div>
-                    </div>
+                    <app-file-attachments [filesPath]="attachmentsPath" [readonly]="statusStageIndex === 2">
+                    </app-file-attachments>
                 </div>
 
             </div>
