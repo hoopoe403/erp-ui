@@ -7,3 +7,5 @@ export * from './fixed-asset-lookup.service';
 export * from './vat-lookup.service';
 export * from './reviewed-by-lookup.service';
 export * from './unit-lookup.service';
+export * from './currency-lookup.service';
+export * from './payment-type-lookup.service';

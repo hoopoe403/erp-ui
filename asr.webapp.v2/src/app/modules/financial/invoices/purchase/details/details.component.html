@@ -114,11 +114,10 @@
                          file (this component has ViewEncapsulation.None, so the selector
                          itself provides the scoping rather than Angular's own). -->
                     <div class="purchase-invoice-fields grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-0 pb-3 border-b">
-                        <app-lookup-select formControlName="vendorId" [options]="vendors" idKey="ownerId"
-                            codeKey="ownerCode" nameKey="ownerName" extraKey="currencyAbbreviation" label="Vendor"
-                            placeholder="Search vendor..."
-                            [showAddOption]="true" addOptionLabel="+ Add new vendor" [required]="true"
-                            (optionSelected)="onVendorSelected($event)" (addRequested)="openContractorRegisterTab()">
+                        <app-lookup-select formControlName="vendorId" [options]="vendors" idKey="vendorId"
+                            codeKey="vendorCode" nameKey="vendorName" extraKey="currencyCode" label="Vendor"
+                            placeholder="Search vendor..." [required]="true"
+                            (optionSelected)="onVendorSelected($event)">
                         </app-lookup-select>
 
                         <mat-form-field appearance="legacy" class="fuse-mat-dense w-full">
@@ -126,10 +125,10 @@
                             <input matInput formControlName="creditorCode">
                         </mat-form-field>
 
-                        <!-- Defaults from the selected vendor's Contractor.currencyId
+                        <!-- Defaults from the selected vendor's currency
                              (see onVendorSelected()) but stays fully editable. -->
                         <app-lookup-select formControlName="currencyId" [options]="currencies" idKey="currencyId"
-                            codeKey="currencyAbbreviation" nameKey="currencyName" label="Currency"
+                            codeKey="currencyCode" nameKey="currencyName" label="Currency"
                             placeholder="Search currency..." (optionSelected)="onCurrencySelected($event)">
                         </app-lookup-select>
 
@@ -156,10 +155,11 @@
                         </mat-form-field>
 
                         <app-lookup-select formControlName="reviewedByUserId" [options]="reviewers" idKey="userId"
-                            [codeKey]="null" nameKey="name" label="Reviewed By" placeholder="Search reviewer...">
+                            [codeKey]="null" nameKey="name" label="Reviewed By" placeholder="Search reviewer..."
+                            (optionSelected)="onReviewerSelected($event)">
                         </app-lookup-select>
 
-                        <!-- Defaults from the selected vendor's Contractor.paymentTypeId
+                        <!-- Defaults from the selected vendor's payment type
                              (see onVendorSelected()) but stays fully editable. -->
                         <app-lookup-select formControlName="paymentTypeId" [options]="paymentTypes"
                             idKey="paymentTypeId" [codeKey]="null" nameKey="paymentTypeName" label="Payment Type"

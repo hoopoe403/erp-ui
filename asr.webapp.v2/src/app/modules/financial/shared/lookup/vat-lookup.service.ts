@@ -1,86 +1,92 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
-import { PurchaseInvoiceService } from '../../invoices/purchase/purchase-invoice.service';
-import { MockVatGroup, VatPostingSetupEntry } from '../mock-data';
+import { catchError, map, tap } from 'rxjs/operators';
+import { ApiHelperService } from '../../../../../environments/api-helper.service';
+import { VatGroupOption, VatRateEntry } from '../master-data.types';
+
+/** The VAT product group new lines start with, matched by name (erp-be has no flag for it). */
+const DEFAULT_VAT_PRODUCT_GROUP_NAME = 'standard';
 
 /**
- * VAT Posting Group / VAT Product Posting Group / VAT Posting Setup have no
- * real DB table yet — erp-be serves them from local JSON files instead (see
- * PurchaseInvoiceMasterDataService), gated by application.local-mock-data.enabled.
- * <p>
- * getRate()/getDefaultVatProductPostingGroupId() are used synchronously while
- * calculating line amounts, so this service eagerly fetches and caches all
- * three lists once on construction (in addition to exposing them as
- * Observables for components that want to render the dropdowns directly).
+ * VAT groups, VAT product groups and the VAT setup (the rate of every group x product
+ * group pair) from erp-be.
+ *
+ * The setup is fetched **once** - one call returns the whole current rate matrix - and
+ * kept in memory, so `getRate()` answers every combination a user picks on a line
+ * instantly, without a request per change. Only a successful load is kept: if it fails,
+ * the next caller tries again instead of being stuck with an empty setup.
  */
 @Injectable({
     providedIn: 'root'
 })
 export class VatLookupService {
 
-    private _vatPostingGroups: MockVatGroup[] = [];
-    private _vatProductPostingGroups: MockVatGroup[] = [];
-    private _vatPostingSetup: VatPostingSetupEntry[] = [];
+    private readonly _baseUrl = ApiHelperService.BASE_URL + 'financial/';
 
-    constructor(private _purchaseInvoiceService: PurchaseInvoiceService) {
-        this._fetchVatPostingGroups().subscribe((list) => (this._vatPostingGroups = list));
-        this._fetchVatProductPostingGroups().subscribe((list) => (this._vatProductPostingGroups = list));
-        this._fetchVatPostingSetup().subscribe((list) => (this._vatPostingSetup = list));
+    private _rates = new Map<string, number>();
+    private _ratesLoaded = false;
+    private _defaultVatProductGroupId: number | null = null;
+
+    constructor(private _httpClient: HttpClient) {
     }
 
-    getVatPostingGroups(): Observable<MockVatGroup[]> {
-        return this._fetchVatPostingGroups();
+    getVatPostingGroups(): Observable<VatGroupOption[]> {
+        return this._httpClient.get<any[]>(this._baseUrl + 'vatGroup/drp/active').pipe(
+            map((list) => (list || []).map((g): VatGroupOption => ({ id: g.vatGroupId, code: g.vatGroupCode, name: g.vatGroupName }))),
+            catchError(() => of([] as VatGroupOption[]))
+        );
     }
 
-    getVatProductPostingGroups(): Observable<MockVatGroup[]> {
-        return this._fetchVatProductPostingGroups();
+    getVatProductPostingGroups(): Observable<VatGroupOption[]> {
+        return this._httpClient.get<any[]>(this._baseUrl + 'vatProductGroup/drp/active').pipe(
+            map((list) => (list || []).map((g): VatGroupOption => ({ id: g.vatProductGroupId, code: g.vatProductGroupCode, name: g.vatProductGroupName }))),
+            tap((groups) => {
+                const standard = groups.find((g) => (g.name || '').trim().toLowerCase() === DEFAULT_VAT_PRODUCT_GROUP_NAME);
+                this._defaultVatProductGroupId = standard ? standard.id : null;
+            }),
+            catchError(() => of([] as VatGroupOption[]))
+        );
     }
 
-    /**
-     * "Standard" (19%) is the most common VAT product posting group for EU goods/
-     * services, so new invoice lines default to it rather than starting blank —
-     * the accountant can still change it per line. Looked up by code rather than a
-     * hardcoded id so it keeps working if the backend's ids ever change.
-     */
+    /** Loads the VAT setup once; later calls return the copy already in memory. */
+    loadVatRates(): Observable<VatRateEntry[]> {
+        if (this._ratesLoaded) {
+            return of(this._entries());
+        }
+        return this._httpClient.get<any[]>(this._baseUrl + 'vatRate/drp/current').pipe(
+            map((list) => (list || []).map((r): VatRateEntry => ({
+                vatGroupId: r.vatGroupId, vatProductGroupId: r.vatProductGroupId, ratePercent: Number(r.ratePercent) || 0
+            }))),
+            tap((entries) => {
+                this._rates = new Map(entries.map((e) => [this._key(e.vatGroupId, e.vatProductGroupId), e.ratePercent]));
+                this._ratesLoaded = true;
+            }),
+            catchError(() => of([] as VatRateEntry[]))
+        );
+    }
+
+    /** "Standard" - null until the product groups have been loaded (or if there is none). */
     getDefaultVatProductPostingGroupId(): number | null {
-        return this._vatProductPostingGroups.find((g) => g.code === 'STANDARD')?.id ?? null;
+        return this._defaultVatProductGroupId;
     }
 
-    /**
-     * Looks up the VAT rate% for a posting group / product posting group combination
-     * (mirrors MS365 Business Central's VAT Posting Setup). Returns 0 if the
-     * combination isn't in the matrix (either group not yet selected, a combination
-     * genuinely not covered by this dataset, or the lookup hasn't loaded yet).
-     */
-    getRate(vatPostingGroupId: number | null, vatProductPostingGroupId: number | null): number {
-        if (!vatPostingGroupId || !vatProductPostingGroupId) {
+    /** The rate for a VAT group x VAT product group pair from the loaded setup; 0 if unset. */
+    getRate(vatGroupId: number | null, vatProductGroupId: number | null): number {
+        if (!vatGroupId || !vatProductGroupId) {
             return 0;
         }
-        const entry = this._vatPostingSetup.find(
-            (e) => e.vatPostingGroupId === vatPostingGroupId && e.vatProductPostingGroupId === vatProductPostingGroupId
-        );
-        return entry ? entry.ratePercent : 0;
+        return this._rates.get(this._key(vatGroupId, vatProductGroupId)) ?? 0;
     }
 
-    private _fetchVatPostingGroups(): Observable<MockVatGroup[]> {
-        return this._purchaseInvoiceService.getMockVatPostingGroups().pipe(
-            map((res: any) => (res || []) as MockVatGroup[]),
-            catchError(() => of([] as MockVatGroup[]))
-        );
+    private _key(vatGroupId: number, vatProductGroupId: number): string {
+        return vatGroupId + ':' + vatProductGroupId;
     }
 
-    private _fetchVatProductPostingGroups(): Observable<MockVatGroup[]> {
-        return this._purchaseInvoiceService.getMockVatProductPostingGroups().pipe(
-            map((res: any) => (res || []) as MockVatGroup[]),
-            catchError(() => of([] as MockVatGroup[]))
-        );
-    }
-
-    private _fetchVatPostingSetup(): Observable<VatPostingSetupEntry[]> {
-        return this._purchaseInvoiceService.getMockVatPostingSetup().pipe(
-            map((res: any) => (res || []) as VatPostingSetupEntry[]),
-            catchError(() => of([] as VatPostingSetupEntry[]))
-        );
+    private _entries(): VatRateEntry[] {
+        return Array.from(this._rates.entries()).map(([key, ratePercent]) => {
+            const [vatGroupId, vatProductGroupId] = key.split(':').map(Number);
+            return { vatGroupId, vatProductGroupId, ratePercent };
+        });
     }
 }

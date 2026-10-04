@@ -53,8 +53,8 @@ export class PurchaseInvoice extends BaseModel {
  * - unitPrice: the price of one unitId of this line.
  * - unitPrice x quantity = netAmount: the line amount before VAT (and before
  *   discount, once a per-line discount field exists).
- * - grossAmount = netAmount + VAT, looked up from vatPostingGroupId x
- *   vatProductPostingGroupId — the final amount owed for this line.
+ * - grossAmount = netAmount + VAT, looked up from vatGroupId x
+ *   vatProductGroupId (erp-be's names) — the final amount owed for this line.
  */
 export class PurchaseInvoiceDetail extends BaseModel {
     purchaseInvoiceDetailId: number;
@@ -89,8 +89,8 @@ export class PurchaseInvoiceDetail extends BaseModel {
     costCenterId: number | null;
     costCenterCode: string;
     costCenterName: string;
-    vatPostingGroupId: number | null;
-    vatProductPostingGroupId: number | null;
+    vatGroupId: number | null;
+    vatProductGroupId: number | null;
     grossAmount: number;
 }
 

@@ -21,9 +21,9 @@ import { ItemLookupService, ItemOption } from '../../../shared/lookup/item-looku
 import { CostCenterLookupService } from '../../../shared/lookup/cost-center-lookup.service';
 import { VatLookupService } from '../../../shared/lookup/vat-lookup.service';
 import { ReviewedByLookupService, ReviewerOption } from '../../../shared/lookup/reviewed-by-lookup.service';
-import { UnitLookupService, UnitOption } from '../../../shared/lookup/unit-lookup.service';
+import { toUnitLookupOption, UnitLookupService, UnitOption } from '../../../shared/lookup/unit-lookup.service';
 import { PaymentTypeLookupService, PaymentTypeOption } from '../../../shared/lookup/payment-type-lookup.service';
-import { MockCostCenter, MockGlAccount, MockVatGroup } from '../../../shared/mock-data';
+import { AccountOption, CostCenterOption, VatGroupOption } from '../../../shared/master-data.types';
 import {
     DEFAULT_CURRENCY_ABBREVIATION, DEFAULT_CURRENCY_NAME,
     SALES_INVOICE_STATUS_DRAFT, SALES_INVOICE_STATUS_PENDING_REVIEW, SALES_INVOICE_STATUS_POSTED
@@ -70,7 +70,7 @@ export class SalesInvoiceDetailsComponent implements OnInit, OnDestroy {
     reviewValidationAttempted: boolean = false;
     frmInvoice: FormGroup;
     customers: Customer[] = [];
-    glAccounts: MockGlAccount[] = [];
+    glAccounts: AccountOption[] = [];
     items: ItemOption[] = [];
     glAccountOptions: LookupOption[] = [];
     itemOptions: LookupOption[] = [];
@@ -80,9 +80,9 @@ export class SalesInvoiceDetailsComponent implements OnInit, OnDestroy {
         { value: 'GL', label: 'G/L Account' },
         { value: 'IT', label: 'Item' },
     ];
-    costCenters: MockCostCenter[] = [];
-    vatPostingGroups: MockVatGroup[] = [];
-    vatProductPostingGroups: MockVatGroup[] = [];
+    costCenters: CostCenterOption[] = [];
+    vatPostingGroups: VatGroupOption[] = [];
+    vatProductPostingGroups: VatGroupOption[] = [];
     reviewers: ReviewerOption[] = [];
     units: UnitOption[] = [];
     unitOptions: LookupOption[] = [];
@@ -185,7 +185,7 @@ export class SalesInvoiceDetailsComponent implements OnInit, OnDestroy {
         });
         this._glAccountLookupService.getGlAccounts().subscribe((v) => {
             this.glAccounts = v;
-            this.glAccountOptions = v.map((a) => ({ id: a.financialCategoryId, code: a.financialCategoryCode, name: a.financialCategoryName }));
+            this.glAccountOptions = v.map((a) => ({ id: a.accountId, code: a.accountCode, name: a.accountName }));
             this.cdr.detectChanges();
         });
         this._itemLookupService.getItems().subscribe((v) => {
@@ -224,7 +224,7 @@ export class SalesInvoiceDetailsComponent implements OnInit, OnDestroy {
         });
         this._unitLookupService.getUnits().subscribe((v) => {
             this.units = v;
-            this.unitOptions = v.map((u) => ({ id: u.unitId, code: u.unitCode, name: u.unitName }));
+            this.unitOptions = v.map(toUnitLookupOption);
             this.cdr.detectChanges();
         });
         this._paymentTypeLookupService.getPaymentTypes().subscribe((v) => {
@@ -447,7 +447,7 @@ export class SalesInvoiceDetailsComponent implements OnInit, OnDestroy {
                     return;
                 }
                 this.units = [...this.units, unit];
-                this.unitOptions = [...this.unitOptions, { id: unit.unitId, code: unit.unitCode, name: unit.unitName }];
+                this.unitOptions = [...this.unitOptions, toUnitLookupOption(unit)];
                 (this.lines.at(lineIndex) as FormGroup).controls['unitId'].setValue(unit.unitId);
                 this.cdr.detectChanges();
             });
@@ -483,10 +483,10 @@ export class SalesInvoiceDetailsComponent implements OnInit, OnDestroy {
             line.accountCode = '';
             line.accountName = '';
         } else {
-            const acc = this.glAccounts.find((a) => a.financialCategoryId === value.accountId);
+            const acc = this.glAccounts.find((a) => a.accountId === value.accountId);
             line.accountId = value.accountId;
-            line.accountCode = acc ? acc.financialCategoryCode : '';
-            line.accountName = acc ? acc.financialCategoryName : '';
+            line.accountCode = acc ? acc.accountCode : '';
+            line.accountName = acc ? acc.accountName : '';
             line.itemId = null;
             line.itemCode = '';
             line.itemName = '';

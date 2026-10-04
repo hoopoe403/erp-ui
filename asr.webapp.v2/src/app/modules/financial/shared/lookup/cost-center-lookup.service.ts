@@ -1,34 +1,37 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { PurchaseInvoiceService } from '../../invoices/purchase/purchase-invoice.service';
-import { MockCostCenter } from '../mock-data';
+import { ApiHelperService } from '../../../../../environments/api-helper.service';
+import { CostCenterOption } from '../master-data.types';
 
-/**
- * Cost Center has no real DB table yet — erp-be serves this from a local JSON
- * file instead (see PurchaseInvoiceMasterDataService), gated by
- * application.local-mock-data.enabled. Returns an empty list when that's off.
- */
+/** Active cost centers (erp-be `costCenter`), plus the line-items table's quick add. */
 @Injectable({
     providedIn: 'root'
 })
 export class CostCenterLookupService {
 
-    constructor(private _purchaseInvoiceService: PurchaseInvoiceService) {
+    private readonly _url = ApiHelperService.BASE_URL + 'financial/costCenter/';
+
+    constructor(private _httpClient: HttpClient) {
     }
 
-    getCostCenters(): Observable<MockCostCenter[]> {
-        return this._purchaseInvoiceService.getMockCostCenters().pipe(
-            map((res: any) => (res || []) as MockCostCenter[]),
-            catchError(() => of([] as MockCostCenter[]))
+    getCostCenters(): Observable<CostCenterOption[]> {
+        return this._httpClient.get<any[]>(this._url + 'drp/active').pipe(
+            map((list) => (list || []).map((c) => this._toOption(c))),
+            catchError(() => of([] as CostCenterOption[]))
         );
     }
 
-    addQuickCostCenter(code: string, name: string): Observable<MockCostCenter> {
-        return this._purchaseInvoiceService.addMockCostCenter({ costCenterCode: code, costCenterName: name }).pipe(
-            map((res: any) => (res || null) as MockCostCenter),
-            // e.g. 501 when local mock data is off - same outcome as before: nothing gets added
-            catchError(() => of(null as MockCostCenter))
+    /** 201 - emits the created cost center; null if erp-be refused it. */
+    addQuickCostCenter(code: string, name: string): Observable<CostCenterOption> {
+        return this._httpClient.post<any>(this._url + 'create', { costCenterCode: code || null, costCenterName: name }).pipe(
+            map((created) => (created ? this._toOption(created) : null)),
+            catchError(() => of(null as CostCenterOption))
         );
+    }
+
+    private _toOption(c: any): CostCenterOption {
+        return { costCenterId: c.costCenterId, costCenterCode: c.costCenterCode, costCenterName: c.costCenterName };
     }
 }

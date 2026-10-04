@@ -10,11 +10,10 @@ export const PERSONNEL_OWNER_TYPE_ID = 1000614; // Personnel
 export const DEFAULT_CURRENCY_ABBREVIATION = 'EUR';
 export const DEFAULT_CURRENCY_NAME = 'Euro';
 
-// Purchase Invoice workflow statuses — must match erp-be's
-// LocalMockPurchaseInvoiceRepository.STATUS_* constants exactly.
-export const PURCHASE_INVOICE_STATUS_DRAFT = 1000001;
-export const PURCHASE_INVOICE_STATUS_PENDING_REVIEW = 1000002;
-export const PURCHASE_INVOICE_STATUS_POSTED = 1000003;
+// Purchase Invoice statuses — must match erp-be's PurchaseInvoiceStatus (the
+// TBL_TABLE_STATUS rows for TBL_PURCHASE_INVOICE). erp-be allows only these two.
+export const PURCHASE_INVOICE_STATUS_DRAFT = 1000007;
+export const PURCHASE_INVOICE_STATUS_POSTED = 1000092;
 
 // Sales Invoice workflow statuses — must match erp-be's SalesInvoiceStatus
 // constants exactly. Deliberately a different range from the Purchase Invoice

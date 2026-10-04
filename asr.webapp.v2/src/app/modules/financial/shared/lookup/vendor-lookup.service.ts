@@ -1,81 +1,47 @@
 import { Injectable } from '@angular/core';
-import { forkJoin, Observable, of } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { Owner } from 'app/modules/configuration/owner/owner.types';
-import { PurchaseInvoiceService } from '../../invoices/purchase/purchase-invoice.service';
-import { VENDOR_OWNER_TYPE_ID } from '../financial-constants';
-import { ContractorService } from 'app/modules/configuration/contractor/contractor.service';
-import { Contractor } from 'app/modules/configuration/contractor/contractor.type';
-import { Paging } from 'app/core/type/paging/paging.type';
+import { ApiHelperService } from '../../../../../environments/api-helper.service';
+import { VendorOption } from '../master-data.types';
+
+/** erp-be's Active status for master data (vendors, banks...). */
+const ACTIVE_STATUS = 1000001;
 
 /**
- * Vendor = Contractor (this system's Supplier entity, see CLAUDE.md). Always loads
- * real data — vendors are never mocked, unlike the other lookups in this folder.
+ * Active vendors from erp-be's vendor module (`/shared/vendor`), each with the defaults a
+ * purchase invoice takes from it (currency, VAT group, payment type, due days) - so picking
+ * a vendor needs no second request.
  */
 @Injectable({
     providedIn: 'root'
 })
 export class VendorLookupService {
 
-    constructor(
-        private _purchaseInvoiceService: PurchaseInvoiceService,
-        private _contractorService: ContractorService
-    ) {
+    private readonly _url = ApiHelperService.BASE_URL + 'shared/vendor/findByObj';
+
+    constructor(private _httpClient: HttpClient) {
     }
 
-    /**
-     * The invoice's vendor picker needs a real, human-recognizable code, but the
-     * lightweight owners list (obj/owners/{typeId} — the endpoint that actually
-     * supplies the id sent as the invoice's creditorId) doesn't return one, only
-     * ownerId/ownerName. The full Contractor list has the real contractorCode, so
-     * fetch both and merge the code in by matching id.
-     *
-     * ASSUMPTION: Owner.ownerId equals Contractor.contractorId (unverified — see the
-     * purchase-invoice plan). If a given owner's id doesn't resolve to a contractor,
-     * its code is just left unset (the picker falls back to showing the name alone);
-     * this merge never changes which id is actually used as creditorId, so it can't
-     * make invoice submission any less correct than before, only less complete.
-     */
-    getVendors(): Observable<Owner[]> {
-        return forkJoin([
-            this._purchaseInvoiceService.getCreditors(VENDOR_OWNER_TYPE_ID).pipe(
-                map((res: any) => (res && res.data ? res.data : []) as Owner[])
-            ),
-            this._getAllContractors()
-        ]).pipe(
-            map(([owners, contractors]: [Owner[], Contractor[]]) => {
-                const contractorById = new Map<number, Contractor>(
-                    contractors.map((c) => [c.contractorId, c])
-                );
-                return owners.map((owner) => {
-                    const contractor = contractorById.get(owner.ownerId);
-                    return {
-                        ...owner,
-                        // Falls back to the raw owner id (always present, and unique)
-                        // rather than an empty string, so duplicate vendor names are
-                        // always distinguishable even when the id match above misses.
-                        ownerCode: contractor?.contractorCode || (owner as any).ownerCode || String(owner.ownerId),
-                        currencyAbbreviation: contractor?.currencyAbbreviation ?? null
-                    };
-                });
-            })
-        );
-    }
-
-    private _getAllContractors(): Observable<Contractor[]> {
-        const contractorInfo = new Contractor();
-        const paging = new Paging();
-        paging.flag = true;
-        paging.length = 0;
-        paging.order = 'asc';
-        paging.pageNumber = 1;
-        paging.pageSize = 1000;
-        paging.sort = '';
-        contractorInfo.page = paging;
-        contractorInfo.status = 1000001; // Active
-        return this._contractorService.getContractorsOnInit(contractorInfo).pipe(
-            map((res: any) => (res && res.data && res.data.contractors ? res.data.contractors : []) as Contractor[]),
-            catchError(() => of([] as Contractor[]))
+    getVendors(): Observable<VendorOption[]> {
+        const search = {
+            statusIdList: [ACTIVE_STATUS],
+            page: { pageNumber: 1, pageSize: 1000, flag: true }
+        };
+        return this._httpClient.post<any>(this._url, search).pipe(
+            map((res) => ((res && res.vendors) || []).map((v: any): VendorOption => ({
+                vendorId: v.vendorId,
+                vendorCode: v.vendorCode,
+                vendorName: v.vendorName,
+                currencyId: v.currencyId ?? null,
+                currencyCode: v.currencyAbbreviation ?? null,
+                currencyName: v.currencyName ?? null,
+                vatGroupId: v.vatGroupId ?? null,
+                paymentTypeId: v.paymentTypeId ?? null,
+                paymentTypeName: v.paymentTypeName ?? null,
+                dueDays: v.dueDate ?? null
+            }))),
+            catchError(() => of([] as VendorOption[]))
         );
     }
 }

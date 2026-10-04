@@ -10,7 +10,7 @@ import { ContractorService } from "../contractor.service";
 import { BankAccount, Currency } from "../../shared/bank-account/bank-account.types";
 import { BankAccountService } from "../../shared/bank-account/bank-account.service";
 import { VatLookupService } from "app/modules/financial/shared/lookup/vat-lookup.service";
-import { MockVatGroup } from "app/modules/financial/shared/mock-data";
+import { VatGroupOption } from "app/modules/financial/shared/master-data.types";
 import { PaymentTypeLookupService, PaymentTypeOption } from "app/modules/financial/shared/lookup/payment-type-lookup.service";
 
 @Component({
@@ -26,7 +26,7 @@ export class ContractorsDetailsComponent implements OnInit {
   contractorTypes = [];
   settlementTypes = [];
   currencies: Currency[] = [];
-  vatGroups: MockVatGroup[] = [];
+  vatGroups: VatGroupOption[] = [];
   paymentTypes: PaymentTypeOption[] = [];
 
   // Bank accounts for this contractor

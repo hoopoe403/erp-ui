@@ -1,51 +1,39 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { environment } from '../../../../../environments/environment';
-import { FinancialCategoryService } from '../../category/category.service';
-import { MOCK_GL_ACCOUNTS, MockGlAccount } from '../mock-data';
+import { catchError, map } from 'rxjs/operators';
+import { ApiHelperService } from '../../../../../environments/api-helper.service';
+import { AccountOption } from '../master-data.types';
 
+/**
+ * The postable accounts of the chart of accounts (erp-be `accountChart`). The chart is a
+ * tree; only its leaves can carry an invoice line, so parent accounts are left out. Each
+ * account shows its full code (parent codes included) so similar child codes stay apart.
+ */
 @Injectable({
     providedIn: 'root'
 })
 export class GlAccountLookupService {
 
-    constructor(private _categoryService: FinancialCategoryService) {
+    private readonly _url = ApiHelperService.BASE_URL + 'financial/accountChart/drp/active';
+
+    constructor(private _httpClient: HttpClient) {
     }
 
-    getGlAccounts(): Observable<MockGlAccount[]> {
-        if (environment.useMockMasterData) {
-            return of(MOCK_GL_ACCOUNTS);
-        }
-        return this._categoryService.getCategoryTree().pipe(
-            map((res: any) => this._flattenLeafNodes(res && res.data ? res.data : []))
+    getGlAccounts(): Observable<AccountOption[]> {
+        return this._httpClient.get<any[]>(this._url).pipe(
+            map((accounts) => {
+                const list = accounts || [];
+                const parentIds = new Set(list.map((a) => a.parentId).filter((id) => id != null));
+                return list
+                    .filter((a) => !parentIds.has(a.accountChartId))
+                    .map((a): AccountOption => ({
+                        accountId: a.accountChartId,
+                        accountCode: a.fullCode || a.accountChartCode,
+                        accountName: a.accountChartName
+                    }));
+            }),
+            catchError(() => of([] as AccountOption[]))
         );
-    }
-
-    /**
-     * Flattens the chart-of-accounts tree (financial/category) down to leaf accounts
-     * only — line items can only post to a leaf, not a rollup/parent node. Defensive
-     * about field-name variants since the tree node shape is the generic
-     * id/item/code/nature/children hierarchy used across this app's category menus.
-     */
-    private _flattenLeafNodes(nodes: any[]): MockGlAccount[] {
-        const leaves: MockGlAccount[] = [];
-        const walk = (list: any[]) => {
-            (list || []).forEach((node) => {
-                const children = node.children || [];
-                if (children.length > 0) {
-                    walk(children);
-                } else {
-                    leaves.push({
-                        financialCategoryId: node.financialCategoryId ?? node.id,
-                        financialCategoryCode: node.financialCategoryCode ?? node.code,
-                        financialCategoryName: node.financialCategoryName ?? node.item ?? node.name,
-                        nature: node.nature ?? 1
-                    });
-                }
-            });
-        };
-        walk(nodes);
-        return leaves;
     }
 }

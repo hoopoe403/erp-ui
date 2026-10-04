@@ -14,7 +14,7 @@ import { FormArray, FormGroup } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { LookupOption } from '../lookup-option.type';
-import { MockCostCenter, MockVatGroup } from '../mock-data';
+import { CostCenterOption, VatGroupOption } from '../master-data.types';
 
 export interface AddCostCenterRequest {
     searchText: string;
@@ -72,9 +72,9 @@ export class LineItemsTableComponent implements OnInit, OnDestroy {
     /** Sales Invoice's Item (inventory Goods) picker options - see
      *  getAccountOptions(). Empty/unused for Purchase Invoice. */
     @Input() itemOptions: LookupOption[] = [];
-    @Input() costCenters: MockCostCenter[] = [];
-    @Input() vatPostingGroups: MockVatGroup[] = [];
-    @Input() vatProductPostingGroups: MockVatGroup[] = [];
+    @Input() costCenters: CostCenterOption[] = [];
+    @Input() vatPostingGroups: VatGroupOption[] = [];
+    @Input() vatProductPostingGroups: VatGroupOption[] = [];
     @Input() unitOptions: LookupOption[] = [];
     @Input() currencyAbbreviation = '';
     /** Set once the parent's Send for Review validation has been attempted -
