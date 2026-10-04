@@ -4,9 +4,10 @@ import { FormArray, FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { PurchaseInvoiceService } from "../purchase-invoice.service";
 import { FuseAlertService } from '@fuse/components/alert';
+import { FuseConfirmationService } from '@fuse/services/confirmation';
 import { Observable, Subject, of } from 'rxjs';
-import { catchError, map, take, takeUntil, tap } from 'rxjs/operators';
-import { PurchaseInvoice, PurchaseInvoiceDetail } from '../purchase-invoice.types';
+import { catchError, map, switchMap, take, takeUntil, tap } from 'rxjs/operators';
+import { PurchaseInvoice, PurchaseInvoiceAction, PurchaseInvoiceDetail, PurchaseInvoiceReviewer } from '../purchase-invoice.types';
 import { OpResult } from 'app/core/type/result/result.types';
 import { ActivatedRoute, Router } from '@angular/router';
 import { formatDate, Location } from '@angular/common';
@@ -17,7 +18,6 @@ import { GlAccountLookupService } from '../../../shared/lookup/gl-account-lookup
 import { FixedAssetLookupService } from '../../../shared/lookup/fixed-asset-lookup.service';
 import { CostCenterLookupService } from '../../../shared/lookup/cost-center-lookup.service';
 import { VatLookupService } from '../../../shared/lookup/vat-lookup.service';
-import { ReviewedByLookupService, ReviewerOption } from '../../../shared/lookup/reviewed-by-lookup.service';
 import { toUnitLookupOption, UnitLookupService, UnitOption } from '../../../shared/lookup/unit-lookup.service';
 import { PaymentTypeLookupService, PaymentTypeOption } from '../../../shared/lookup/payment-type-lookup.service';
 import { CurrencyLookupService } from '../../../shared/lookup/currency-lookup.service';
@@ -64,7 +64,7 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
     costCenters: CostCenterOption[] = [];
     vatPostingGroups: VatGroupOption[] = [];
     vatProductPostingGroups: VatGroupOption[] = [];
-    reviewers: ReviewerOption[] = [];
+    reviewers: PurchaseInvoiceReviewer[] = [];
     units: UnitOption[] = [];
     unitOptions: LookupOption[] = [];
     paymentTypes: PaymentTypeOption[] = [];
@@ -73,11 +73,21 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
     readonly STATUS_DRAFT = PURCHASE_INVOICE_STATUS_DRAFT;
     readonly STATUS_POSTED = PURCHASE_INVOICE_STATUS_POSTED;
 
-    /** Draft (0) / Posted (2) - drives which action buttons are enabled. erp-be has
-     *  no Pending Review status (only Draft and Posted), so stage 1 never occurs. A
-     *  brand-new, not-yet-saved invoice reads as stage 0 - it becomes a Draft on save. */
-    get statusStageIndex(): number {
-        return this.invoiceInfo.status === this.STATUS_POSTED ? 2 : 0;
+    /**
+     * Whether the current user may take a workflow step now. erp-be decides it for every
+     * invoice it returns (allowedActions: status + who you are - e.g. only the assigned
+     * approver gets APPROVE/REJECT); a brand-new, unsaved invoice can be edited, sent or posted.
+     */
+    can(action: PurchaseInvoiceAction): boolean {
+        if (!this.invoiceInfo.purchaseInvoiceId) {
+            return action === 'EDIT' || action === 'SEND_FOR_APPROVAL' || action === 'POST';
+        }
+        return (this.invoiceInfo.allowedActions || []).includes(action);
+    }
+
+    /** Draft or Rejected: the content can change. Pending Approval, Approved and Posted are locked. */
+    get isEditable(): boolean {
+        return this.can('EDIT');
     }
 
     /** Documents can be attached once the invoice has an id (first draft save). */
@@ -101,10 +111,10 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         private _fixedAssetLookupService: FixedAssetLookupService,
         private _costCenterLookupService: CostCenterLookupService,
         private _vatLookupService: VatLookupService,
-        private _reviewedByLookupService: ReviewedByLookupService,
         private _unitLookupService: UnitLookupService,
         private _paymentTypeLookupService: PaymentTypeLookupService,
-        private _currencyLookupService: CurrencyLookupService
+        private _currencyLookupService: CurrencyLookupService,
+        private _fuseConfirmationService: FuseConfirmationService
     ) {
         this._unsubscribeAll = new Subject();
         this.invoiceInfo.purchaseInvoiceDetailList = [];
@@ -195,7 +205,8 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
             }
             this.cdr.detectChanges();
         });
-        this._reviewedByLookupService.getReviewers().subscribe((v) => {
+        // Only users with the PI_REVIEWER role (erp-be filters by role).
+        this.service.getReviewers().pipe(catchError(() => of([] as PurchaseInvoiceReviewer[]))).subscribe((v) => {
             this.reviewers = v;
             this.cdr.detectChanges();
         });
@@ -214,10 +225,10 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         });
         // The whole VAT setup in one request, kept in memory by VatLookupService - every
         // group x product group change on a line is then looked up locally (getRate()).
-        // Lines entered before it arrived are recalculated once it does - not on a
-        // posted invoice, whose amounts are final.
+        // Lines entered before it arrived are recalculated once it does - only while the
+        // invoice is editable: what was sent, approved or posted keeps its amounts.
         this._vatLookupService.loadVatRates().subscribe(() => {
-            if (this.statusStageIndex !== 2) {
+            if (this.isEditable) {
                 this.lines.controls.forEach((group: FormGroup, index) => {
                     const line = this.invoiceInfo.purchaseInvoiceDetailList[index];
                     if (line) {
@@ -238,6 +249,7 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
                 }
                 this.titleInfo = this.invoiceInfo.creditorName || 'Purchase Invoice';
                 this.setFormValues();
+                this._applyLock();
                 this._rememberLoadedVendorDefaults();
                 this.isLoading = false;
                 this.cdr.detectChanges();
@@ -287,8 +299,11 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
             }
             this.lines.push(this.createLineGroup(line), { emitEvent: false });
         });
-        // Always keep exactly one blank row ready at the end, Excel/Business-Central style.
-        this.addNewItem();
+        // Keep exactly one blank row ready at the end, Excel/Business-Central style - only
+        // while the invoice can still be changed.
+        if (this.isEditable) {
+            this.addNewItem();
+        }
         this.recomputeHeaderTotals();
     }
 
@@ -425,9 +440,9 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
     // @ Reviewed by
     // -----------------------------------------------------------------------------------------------------
 
-    onReviewerSelected(reviewer: ReviewerOption | null): void {
+    onReviewerSelected(reviewer: PurchaseInvoiceReviewer | null): void {
         this.invoiceInfo.reviewedByUserId = reviewer ? reviewer.userId : null;
-        this.invoiceInfo.reviewedByUserName = reviewer ? reviewer.name : null;
+        this.invoiceInfo.reviewedByUserName = reviewer ? reviewer.fullName : null;
     }
 
     // -----------------------------------------------------------------------------------------------------
@@ -464,6 +479,9 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
     }
 
     removeItem(index: number): void {
+        if (!this.isEditable) {
+            return;
+        }
         // The invoice always needs at least one line to submit — keep the last
         // remaining row in place rather than letting the table go empty.
         if (this.invoiceInfo.purchaseInvoiceDetailList.length <= 1) {
@@ -799,17 +817,18 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Requires a reviewer to be picked (in the "Reviewed By" field above),
+     * Requires an approver to be picked (in the "Approver" field above),
      * at least one line item, and - stricter than a plain Save/Draft - every
      * non-blank line filled in except Cost Center (see
-     * _hasValidLinesForReview()), then saves it with that reviewer. erp-be knows
-     * only Draft and Posted (no Pending Review status), so the invoice stays a
-     * Draft; there's no workflow yet to route it to the reviewer or notify them.
+     * _hasValidLinesForReview()), then saves the invoice and sends it for approval:
+     * it becomes Pending Approval and is locked until the reviewer approves or
+     * rejects it, or the sender withdraws it. erp-be re-checks the rules (a reviewer
+     * from the reviewer role, not yourself, at least one line).
      */
     sendForReview() {
         if (!this.invoiceInfo.reviewedByUserId) {
             this._result.succeed = false;
-            this._result.message = 'Please select a reviewer first';
+            this._result.message = 'Please select an approver first';
             this.showAlert('errorMessage');
             return;
         }
@@ -828,7 +847,23 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
             this.cdr.detectChanges();
             return;
         }
-        this.save();
+        if (!this.getFormInfo()) {
+            return;
+        }
+        this.dismissAlert('successMessage');
+        this.dismissAlert('errorMessage');
+        this.isLoading = true;
+        this.actionDisable = true;
+        const save$: Observable<PurchaseInvoice> = this.invoiceInfo.purchaseInvoiceId
+            ? this.service.edit(this.toBackendPayload())
+            : this._createInvoice();
+        save$.pipe(
+            tap(() => this.frmInvoice.markAsPristine()),
+            switchMap(() => this.service.sendForApproval(this.invoiceInfo.purchaseInvoiceId))
+        ).subscribe({
+            next: () => this._afterWorkflowStep('Sent for approval'),
+            error: (err) => this._onRequestError(err)
+        });
     }
 
     create() {
@@ -945,7 +980,7 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
      * per invoice.
      */
     checkAutoCreateDraft(): void {
-        if (this.invoiceInfo.purchaseInvoiceId || this.isLoading || !this._hasMinimumDraftFields()) {
+        if (this.invoiceInfo.purchaseInvoiceId || this.isLoading || !this.isEditable || !this._hasMinimumDraftFields()) {
             return;
         }
         this._applyMinimumDraftFields();
@@ -976,7 +1011,7 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
      * see the conversation this was designed in for why that's an accepted gap.
      */
     canDeactivate(): Observable<boolean> {
-        if (!this.frmInvoice || !this.frmInvoice.dirty) {
+        if (!this.frmInvoice || !this.frmInvoice.dirty || !this.isEditable) {
             return of(true);
         }
         if (this.invoiceInfo.purchaseInvoiceId) {
@@ -1030,31 +1065,157 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         this.invoiceInfo.status = created.status;
         this.invoiceInfo.statusDescription = created.statusDescription;
         this.invoiceInfo.statusColor = created.statusColor;
+        this.invoiceInfo.allowedActions = created.allowedActions;
         this.cdr.detectChanges();
     }
 
-    confirm() {
+    // -----------------------------------------------------------------------------------------------------
+    // @ Approval workflow (Draft -> Pending Approval -> Approved -> Posted, Rejected back for rework)
+    // -----------------------------------------------------------------------------------------------------
+
+    /** Pending Approval -> Draft: the sender takes it back, e.g. to fix a mistake. */
+    withdraw(): void {
+        this._runWorkflowStep(this.service.withdraw(this.invoiceInfo.purchaseInvoiceId), 'Withdrawn - the invoice is a draft again');
+    }
+
+    /** Pending Approval -> Approved, by the assigned approver, with an optional comment. */
+    approve(): void {
+        this._askForComment('Approve invoice', 'Approve', 'Comment (optional)').subscribe((comment) => {
+            if (comment !== undefined) {
+                this._runWorkflowStep(this.service.approve(this.invoiceInfo.purchaseInvoiceId, comment), 'Invoice approved');
+            }
+        });
+    }
+
+    /** Pending Approval -> Rejected, by the assigned approver, with an optional reason. */
+    reject(): void {
+        this._askForComment('Reject invoice', 'Reject', 'Reason (optional)').subscribe((comment) => {
+            if (comment !== undefined) {
+                this._runWorkflowStep(this.service.reject(this.invoiceInfo.purchaseInvoiceId, comment), 'Invoice rejected');
+            }
+        });
+    }
+
+    /** Approved -> Draft, to change something; it needs approving again. */
+    reopen(): void {
+        this._runWorkflowStep(this.service.reopen(this.invoiceInfo.purchaseInvoiceId), 'Reopened - the invoice is a draft again');
+    }
+
+    /**
+     * Approved -> Posted; or a Draft posted straight away, for an invoice that needs no approval -
+     * then it is validated and saved first (like Send for Approval) and the user confirms skipping approval.
+     */
+    post(): void {
+        if (!this.isEditable) {
+            this._runWorkflowStep(this.service.post(this.invoiceInfo.purchaseInvoiceId), 'Invoice posted');
+            return;
+        }
+        if (!this.getFormInfo()) {
+            return;
+        }
+        this.reviewValidationAttempted = true;
+        if (!this._hasValidLinesForReview()) {
+            this._result.succeed = false;
+            this._result.message = 'Each line (except Cost Center) needs an account or fixed asset, a description, VAT group, VAT product group, unit, a quantity greater than zero, and a valid unit price before posting';
+            this.showAlert('errorMessage');
+            this.cdr.detectChanges();
+            return;
+        }
+        this._confirm('Post invoice', 'Post this invoice without sending it for approval?', 'Post').subscribe((confirmed) => {
+            if (!confirmed) {
+                return;
+            }
+            const save$: Observable<PurchaseInvoice> = this.invoiceInfo.purchaseInvoiceId
+                ? this.service.edit(this.toBackendPayload())
+                : this._createInvoice();
+            this._runWorkflowStep(save$.pipe(
+                tap(() => this.frmInvoice.markAsPristine()),
+                switchMap(() => this.service.post(this.invoiceInfo.purchaseInvoiceId))
+            ), 'Invoice posted');
+        });
+    }
+
+    private _runWorkflowStep(step$: Observable<PurchaseInvoice>, message: string): void {
         this.dismissAlert('successMessage');
         this.dismissAlert('errorMessage');
-        this.service.confirm(this.toBackendPayload()).subscribe({
-            next: () => {
-                this.isLoading = false;
-                this._result.succeed = true;
-                this._result.message = SAVE_SUCCEEDED_MESSAGE;
-                this.showAlert('successMessage');
-                this.cdr.detectChanges();
-            },
+        this.isLoading = true;
+        this.actionDisable = true;
+        step$.subscribe({
+            next: () => this._afterWorkflowStep(message),
             error: (err) => this._onRequestError(err)
         });
     }
 
-    /** Not wired up yet - the backend has no cancelled status or endpoint for
-     *  it yet. Placeholder so the button can be in the UI now and get real
-     *  behavior later without another round of layout changes. */
+    /** Reloads the invoice after a step: its status, what the user may do now and the lock all change. */
+    private _afterWorkflowStep(message: string): void {
+        this.isLoading = false;
+        this.actionDisable = false;
+        this.reviewValidationAttempted = false;
+        this._result.succeed = true;
+        this._result.message = message;
+        this.showAlert('successMessage');
+        this.getById(this.invoiceInfo.purchaseInvoiceId);
+    }
+
+    /** Header fields and line inputs follow the invoice's lock; the derived amounts stay read-only. */
+    private _applyLock(): void {
+        const locked = !this.isEditable;
+        ['vendorId', 'currencyId', 'jdatepicker', 'vendorInvoiceNumber', 'dueDatepicker', 'reviewedByUserId', 'paymentTypeId']
+            .forEach((name) => locked
+                ? this.frmInvoice.controls[name].disable({ emitEvent: false })
+                : this.frmInvoice.controls[name].enable({ emitEvent: false }));
+        this.lines.controls.forEach((group: FormGroup) => Object.keys(group.controls)
+            .filter((name) => name !== 'netAmount' && name !== 'grossAmount')
+            .forEach((name) => locked
+                ? group.controls[name].disable({ emitEvent: false })
+                : group.controls[name].enable({ emitEvent: false })));
+        this.cdr.detectChanges();
+    }
+
+    /** Emits the comment (null when left empty), or undefined when the dialog was cancelled. */
+    private _askForComment(title: string, confirmLabel: string, label: string): Observable<string | null | undefined> {
+        const formControls: Array<FuseDataEntryDialogFormControls> = [
+            { formControlName: 'comment', index: 0, label, placeHolder: label, type: 'text', disabled: false, value: '' },
+        ];
+        const config = this._formBuilder.group({
+            title,
+            message: '',
+            formControls: this._formBuilder.group(formControls),
+            icon: this._formBuilder.group({ show: true, name: 'heroicons_outline:chat-alt', color: 'info' }),
+            actions: this._formBuilder.group({
+                confirm: this._formBuilder.group({ show: true, label: confirmLabel, color: 'primary' }),
+                cancel: this._formBuilder.group({ show: true, label: 'Cancel' })
+            }),
+            dismissible: true
+        });
+        return this._fuseDataEntryDialogService.open(config.value).afterClosed().pipe(
+            map((result) => {
+                if (!result || result === 'cancelled') {
+                    return undefined;
+                }
+                const value = (result.filter((x) => x.index === 0)[0] || {}).value;
+                return value && String(value).trim() ? String(value).trim().substring(0, 500) : null;
+            })
+        );
+    }
+
+    /** Posted -> Cancelled, for good - after a confirmation. */
     cancel(): void {
-        this._result.succeed = false;
-        this._result.message = "Cancelling a purchase invoice isn't available yet";
-        this.showAlert('errorMessage');
+        this._confirm('Cancel invoice', 'Cancel this posted invoice? This is final - it can\'t be posted again.', 'Cancel invoice')
+            .subscribe((confirmed) => confirmed
+                && this._runWorkflowStep(this.service.cancel(this.invoiceInfo.purchaseInvoiceId), 'Invoice cancelled'));
+    }
+
+    /** Posted -> Draft: cancels the posting and reopens this invoice to be changed and posted again. */
+    correct(): void {
+        this._confirm('Correct invoice', 'Cancel the posting and reopen this invoice as a draft, to change it and post it again?', 'Correct')
+            .subscribe((confirmed) => confirmed
+                && this._runWorkflowStep(this.service.correct(this.invoiceInfo.purchaseInvoiceId), 'Posting cancelled - the invoice is a draft again'));
+    }
+
+    private _confirm(title: string, message: string, confirmLabel: string): Observable<boolean> {
+        return this._fuseConfirmationService.open({ title, message, actions: { confirm: { label: confirmLabel } } })
+            .afterClosed().pipe(map((result) => result === 'confirmed'));
     }
 
     trackByFn(index: number, item: any): any {

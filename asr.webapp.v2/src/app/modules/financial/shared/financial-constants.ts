@@ -11,9 +11,14 @@ export const DEFAULT_CURRENCY_ABBREVIATION = 'EUR';
 export const DEFAULT_CURRENCY_NAME = 'Euro';
 
 // Purchase Invoice statuses — must match erp-be's PurchaseInvoiceStatus (the
-// TBL_TABLE_STATUS rows for TBL_PURCHASE_INVOICE). erp-be allows only these two.
+// TBL_TABLE_STATUS rows for TBL_PURCHASE_INVOICE): the approval workflow
+// Draft -> Pending Approval -> Approved -> Posted, with Rejected back for rework.
 export const PURCHASE_INVOICE_STATUS_DRAFT = 1000007;
+export const PURCHASE_INVOICE_STATUS_PENDING_APPROVAL = 1000093;
+export const PURCHASE_INVOICE_STATUS_APPROVED = 1000094;
+export const PURCHASE_INVOICE_STATUS_REJECTED = 1000095;
 export const PURCHASE_INVOICE_STATUS_POSTED = 1000092;
+export const PURCHASE_INVOICE_STATUS_CANCELLED = 1000096;
 
 // Sales Invoice workflow statuses — must match erp-be's SalesInvoiceStatus
 // constants exactly. Deliberately a different range from the Purchase Invoice

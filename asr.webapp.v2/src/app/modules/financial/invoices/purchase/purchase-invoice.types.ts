@@ -1,6 +1,11 @@
 import { Paging } from "app/core/type/paging/paging.type";
 import { BaseModel } from "app/core/type/base/BaseModel";
 export class PurchaseInvoice extends BaseModel {
+    /** The reviewer's optional comment on approving/rejecting (e.g. why it was rejected). */
+    reviewComment?: string | null;
+    /** What the current user may do now, decided by erp-be: EDIT, SEND_FOR_APPROVAL, WITHDRAW,
+     *  APPROVE, REJECT, REOPEN, POST, CANCEL, CORRECT. */
+    allowedActions?: PurchaseInvoiceAction[];
     purchaseInvoiceId: number;
     invoiceNumber: string;
     subTotal: number;
@@ -98,4 +103,14 @@ export class PurchaseInvoiceDetail extends BaseModel {
 export interface PurchaseInvoiceList {
     purchaseInvoices: PurchaseInvoice[];
     page: Paging;
+}
+
+/** The approval workflow's steps - erp-be's PurchaseInvoiceAction. */
+export type PurchaseInvoiceAction = 'EDIT' | 'SEND_FOR_APPROVAL' | 'WITHDRAW' | 'APPROVE' | 'REJECT' | 'REOPEN' | 'POST' | 'CANCEL' | 'CORRECT';
+
+/** A user who may review purchase invoices (holds the PI_REVIEWER role). */
+export interface PurchaseInvoiceReviewer {
+    userId: number;
+    userName: string;
+    fullName: string;
 }

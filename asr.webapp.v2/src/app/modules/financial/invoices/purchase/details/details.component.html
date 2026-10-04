@@ -50,6 +50,11 @@
                 </div>
                 <p *ngIf="invoiceInfo.statusDescription" class="px-2 py-0.5 rounded text-sm text-white flex-shrink-0"
                     style="width: fit-content;" [ngClass]="invoiceInfo.statusColor">{{invoiceInfo.statusDescription}}</p>
+                <!-- The reviewer's comment, e.g. why it was rejected. -->
+                <div *ngIf="invoiceInfo.reviewComment" class="text-sm text-secondary truncate min-w-0"
+                    [matTooltip]="invoiceInfo.reviewComment">
+                    <span class="font-medium">{{invoiceInfo.reviewedByUserName || 'Approver'}}:</span> {{invoiceInfo.reviewComment}}
+                </div>
             </div>
 
             <!-- Command bar: icon + text buttons separated by thin dividers,
@@ -60,23 +65,65 @@
                  or breaking the card's layout - all 4 buttons always stay on
                  one row, even on a laptop-width screen. -->
             <div class="flex items-center flex-shrink-0 gap-0 whitespace-nowrap overflow-x-auto max-w-full">
-                <button mat-button [disabled]="isLoading || actionDisable || statusStageIndex === 2" (click)="save()">
-                    <mat-icon class="icon-size-4 mr-1" svgIcon="heroicons_outline:save"></mat-icon>
-                    Save
-                </button>
-                <div class="w-px h-5 bg-gray-300 dark:bg-gray-600"></div>
-                <button mat-button [disabled]="isLoading || statusStageIndex >= 1" (click)="sendForReview()">
-                    <mat-icon class="icon-size-4 mr-1" svgIcon="heroicons_outline:paper-airplane"></mat-icon>
-                    Send for Review
-                </button>
-                <div class="w-px h-5 bg-gray-300 dark:bg-gray-600"></div>
-                <button mat-button color="primary" [disabled]="isLoading || pageType !== 'edit' || statusStageIndex === 2"
-                    (click)="confirm()">
-                    <mat-icon class="icon-size-4 mr-1" svgIcon="heroicons_outline:check-circle"></mat-icon>
-                    Confirm
-                </button>
-                <div class="w-px h-5 bg-gray-300 dark:bg-gray-600"></div>
-                <button mat-button color="warn" [disabled]="pageType !== 'edit'" (click)="cancel()">
+                <!-- Only the steps the current user may take now are shown - erp-be decides
+                     (allowedActions): e.g. Approve/Reject only for the assigned approver. -->
+                <ng-container *ngIf="isEditable">
+                    <button mat-button [disabled]="isLoading || actionDisable" (click)="save()">
+                        <mat-icon class="icon-size-4 mr-1" svgIcon="heroicons_outline:save"></mat-icon>
+                        Save
+                    </button>
+                    <div class="w-px h-5 bg-gray-300 dark:bg-gray-600"></div>
+                </ng-container>
+                <ng-container *ngIf="can('SEND_FOR_APPROVAL')">
+                    <button mat-button [disabled]="isLoading || actionDisable" (click)="sendForReview()">
+                        <mat-icon class="icon-size-4 mr-1" svgIcon="heroicons_outline:paper-airplane"></mat-icon>
+                        Send for Approval
+                    </button>
+                    <div class="w-px h-5 bg-gray-300 dark:bg-gray-600"></div>
+                </ng-container>
+                <ng-container *ngIf="can('WITHDRAW')">
+                    <button mat-button [disabled]="isLoading || actionDisable" (click)="withdraw()">
+                        <mat-icon class="icon-size-4 mr-1" svgIcon="heroicons_outline:reply"></mat-icon>
+                        Withdraw
+                    </button>
+                    <div class="w-px h-5 bg-gray-300 dark:bg-gray-600"></div>
+                </ng-container>
+                <ng-container *ngIf="can('APPROVE')">
+                    <button mat-button color="primary" [disabled]="isLoading || actionDisable" (click)="approve()">
+                        <mat-icon class="icon-size-4 mr-1" svgIcon="heroicons_outline:badge-check"></mat-icon>
+                        Approve
+                    </button>
+                    <div class="w-px h-5 bg-gray-300 dark:bg-gray-600"></div>
+                </ng-container>
+                <ng-container *ngIf="can('REJECT')">
+                    <button mat-button color="warn" [disabled]="isLoading || actionDisable" (click)="reject()">
+                        <mat-icon class="icon-size-4 mr-1" svgIcon="heroicons_outline:ban"></mat-icon>
+                        Reject
+                    </button>
+                    <div class="w-px h-5 bg-gray-300 dark:bg-gray-600"></div>
+                </ng-container>
+                <ng-container *ngIf="can('REOPEN')">
+                    <button mat-button [disabled]="isLoading || actionDisable" (click)="reopen()">
+                        <mat-icon class="icon-size-4 mr-1" svgIcon="heroicons_outline:pencil"></mat-icon>
+                        Reopen
+                    </button>
+                    <div class="w-px h-5 bg-gray-300 dark:bg-gray-600"></div>
+                </ng-container>
+                <ng-container *ngIf="can('POST')">
+                    <button mat-button color="primary" [disabled]="isLoading || actionDisable" (click)="post()">
+                        <mat-icon class="icon-size-4 mr-1" svgIcon="heroicons_outline:check-circle"></mat-icon>
+                        Post
+                    </button>
+                    <div class="w-px h-5 bg-gray-300 dark:bg-gray-600"></div>
+                </ng-container>
+                <ng-container *ngIf="can('CORRECT')">
+                    <button mat-button [disabled]="isLoading || actionDisable" (click)="correct()">
+                        <mat-icon class="icon-size-4 mr-1" svgIcon="heroicons_outline:refresh"></mat-icon>
+                        Correction
+                    </button>
+                    <div class="w-px h-5 bg-gray-300 dark:bg-gray-600"></div>
+                </ng-container>
+                <button *ngIf="can('CANCEL')" mat-button color="warn" [disabled]="isLoading || actionDisable" (click)="cancel()">
                     <mat-icon class="icon-size-4 mr-1" svgIcon="heroicons_outline:x-circle"></mat-icon>
                     Cancel
                 </button>
@@ -154,8 +201,9 @@
                             <mat-datepicker #dueDatePicker></mat-datepicker>
                         </mat-form-field>
 
+                        <!-- Only users with the Purchase Invoice approver role (PI_REVIEWER). -->
                         <app-lookup-select formControlName="reviewedByUserId" [options]="reviewers" idKey="userId"
-                            [codeKey]="null" nameKey="name" label="Reviewed By" placeholder="Search reviewer..."
+                            [codeKey]="null" nameKey="fullName" label="Approver" placeholder="Search approver..."
                             (optionSelected)="onReviewerSelected($event)">
                         </app-lookup-select>
 
@@ -214,9 +262,9 @@
 
                 <!-- Right: the invoice's documents (scanned invoice, delivery notes...).
                      Fixed width so it always stays beside the voucher, never below it.
-                     Read-only once posted - erp-be refuses changes then anyway. -->
+                     Read-only while the invoice is locked (pending, approved, posted) - erp-be refuses changes then anyway. -->
                 <div class="w-40 lg:w-48 flex-shrink-0">
-                    <app-file-attachments [filesPath]="attachmentsPath" [readonly]="statusStageIndex === 2">
+                    <app-file-attachments [filesPath]="attachmentsPath" [readonly]="!isEditable">
                     </app-file-attachments>
                 </div>
 
