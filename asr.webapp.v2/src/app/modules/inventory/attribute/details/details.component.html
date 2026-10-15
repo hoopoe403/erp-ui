@@ -1,0 +1,176 @@
+<ng-container *transloco="let t">
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between sm:px-3 bg-card dark:bg-transparent">
+        <div class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-3 sm:px-10 bg-card dark:bg-transparent">
+            <div class="flex-1 min-w-0">
+                <!-- Breadcrumbs -->
+                <div class="flex flex-wrap items-center font-medium">
+                    <div class="flex items-center ml-1 whitespace-nowrap">
+                        <a [routerLink]="['/inventory/attribute']" class="cursor-pointer whitespace-nowrap text-primary-500">
+                            {{ t('inventory.attributes') }}
+                        </a>
+                    </div>
+                    <div class="flex items-center ml-1 whitespace-nowrap">
+                        <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'">
+                        </mat-icon>
+                        {{ titleInfo }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-auto px-6 py-3" fuseScrollbar>
+        <mat-tab-group>
+            <!-- Attribute info -->
+            <mat-tab [label]="t('inventory.attributeInfo')">
+                <form [formGroup]="attributeForm" class="flex rounded-b-md rounded-tr-md flex-col px-8 py-4 bg-card shadow">
+                    <div class="h-2">
+                        <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+                        <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                            <mat-label>{{ t('common.code') }}</mat-label>
+                            <input spellcheck="false" required matInput formControlName="code" maxlength="50">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline"></mat-icon>
+                            <mat-error>Code is required!</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="md:w-1/2 w-full px-3">
+                            <mat-label>{{ t('common.name') }}</mat-label>
+                            <input spellcheck="false" required matInput formControlName="name" maxlength="100">
+                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline"></mat-icon>
+                            <mat-error>Name is required!</mat-error>
+                        </mat-form-field>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+                        <mat-form-field appearance="outline" floatLabel="always" class="md:w-1/2 w-full px-3">
+                            <mat-label>{{ t('inventory.dataType') }}</mat-label>
+                            <mat-select required formControlName="dataType" [placeholder]="t('inventory.dataType')">
+                                <mat-option *ngFor="let type of dataTypes" [value]="type">{{ type }}</mat-option>
+                            </mat-select>
+                            <mat-error>Data type is required!</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" floatLabel="always" class="md:w-1/2 w-full px-3">
+                            <mat-label>{{ t('common.unit') }}</mat-label>
+                            <mat-select formControlName="unit" [placeholder]="t('common.unit')">
+                                <mat-option [value]="null">-</mat-option>
+                                <mat-option *ngFor="let unit of units" [value]="unit.unitId">{{ unit.unitName }}</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row w-full items-center flex-wrap content-center">
+                        <mat-form-field appearance="outline" floatLabel="always" class="md:w-1/2 w-full px-3">
+                            <mat-label>{{ t('common.status') }}</mat-label>
+                            <mat-select formControlName="status" [placeholder]="t('common.status')">
+                                <mat-option *ngFor="let status of statuses" [value]="status.statusId">
+                                    {{ status.statusDescription }}
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+
+                    <div class="w-full mt-6 flex items-center justify-center">
+                        <button mat-flat-button color="primary" [disabled]="isLoading" (click)="save()">
+                            {{ pageType === 'new' ? 'Register' : 'Update' }}
+                        </button>
+                    </div>
+                    <div class="flex items-center flex-wrap content-center w-full py-2">
+                        <div class="w-auto h-auto min-h-15 m-auto">
+                            <fuse-alert *ngIf="_result.succeed" [appearance]="'soft'" [dismissible]="true"
+                                [dismissed]="true" [name]="'successMessage'" [type]="'success'">
+                                <b>Result: </b> {{ _result.message }}
+                            </fuse-alert>
+                            <fuse-alert *ngIf="!_result.succeed" [appearance]="'soft'" [dismissible]="true"
+                                [dismissed]="true" [name]="'errorMessage'" [type]="'error'">
+                                <b>Result: </b> {{ _result.message }}
+                            </fuse-alert>
+                        </div>
+                    </div>
+                </form>
+            </mat-tab>
+
+            <!-- Attribute values: only once the attribute exists -->
+            <mat-tab [label]="t('inventory.attributeValues')" [disabled]="pageType !== 'edit'">
+                <div class="flex rounded-b-md rounded-tr-md flex-col px-8 py-4 bg-card shadow">
+                    <div class="h-2">
+                        <mat-progress-bar *ngIf="isValueLoading" mode="indeterminate"></mat-progress-bar>
+                    </div>
+
+                    <!-- Add / edit value -->
+                    <form [formGroup]="valueForm" class="flex flex-col md:flex-row w-full items-start flex-wrap">
+                        <mat-form-field appearance="outline" class="md:w-2/5 w-full px-3">
+                            <mat-label>{{ t('inventory.value') }}</mat-label>
+                            <input spellcheck="false" required matInput formControlName="value" maxlength="100"
+                                (keydown.enter)="saveValue()">
+                            <mat-error>Value is required!</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="md:w-1/5 w-full px-3">
+                            <mat-label>{{ t('inventory.sortOrder') }}</mat-label>
+                            <input type="number" matInput formControlName="sortOrder" min="0" max="99999">
+                            <mat-error>Between 0 and 99999</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" floatLabel="always" class="md:w-1/5 w-full px-3">
+                            <mat-label>{{ t('common.status') }}</mat-label>
+                            <mat-select formControlName="status" [placeholder]="t('common.status')">
+                                <mat-option *ngFor="let status of valueStatuses" [value]="status.statusId">
+                                    {{ status.statusDescription }}
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+
+                        <div class="md:w-1/5 w-full px-3 pt-2 flex items-center">
+                            <button mat-flat-button color="primary" [disabled]="isValueLoading" (click)="saveValue()">
+                                {{ editingValue ? t('common.edit') : t('common.add') }}
+                            </button>
+                            <button *ngIf="editingValue" class="ml-2" mat-stroked-button (click)="resetValueForm()">
+                                {{ t('common.cancel') }}
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Values list (a saved row flashes green instead of showing a message, so the list never shifts) -->
+                    <div class="mt-4 border rounded">
+                        <div class="grid grid-cols-12 gap-4 py-3 px-4 text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5 border-b">
+                            <div class="col-span-2">{{ t('inventory.sortOrder') }}</div>
+                            <div class="col-span-5">{{ t('inventory.value') }}</div>
+                            <div class="col-span-3">{{ t('common.status') }}</div>
+                            <div class="col-span-2"></div>
+                        </div>
+                        <div *ngFor="let item of values; trackBy: trackByValue"
+                            class="grid grid-cols-12 gap-4 items-center py-2 px-4 border-b transition-colors duration-700"
+                            [ngClass]="{
+                                'bg-primary-50 dark:bg-primary-900': editingValue?.attributeValueId === item.attributeValueId,
+                                'bg-green-100 dark:bg-green-900': highlightedValueId && highlightedValueId === item.attributeValueId
+                            }">
+                            <div class="col-span-2">{{ item.sortOrder }}</div>
+                            <div class="col-span-5 truncate">{{ item.attributeValue }}</div>
+                            <div class="col-span-3">
+                                <p *ngIf="item.statusDescription" style="width: fit-content"
+                                    class="p-1 rounded block truncate text-white" [ngClass]="item.statusColor">
+                                    {{ item.statusDescription }}
+                                </p>
+                            </div>
+                            <div class="col-span-2 flex justify-end">
+                                <button mat-icon-button [matTooltip]="t('common.edit')" (click)="editValue(item)">
+                                    <mat-icon class="icon-size-5" svgIcon="heroicons_outline:pencil"></mat-icon>
+                                </button>
+                            </div>
+                        </div>
+                        <div *ngIf="!isValueLoading && values.length === 0"
+                            class="p-8 text-2xl font-semibold tracking-tight text-center text-secondary">
+                            {{ t('common.noData') }}
+                        </div>
+                    </div>
+                </div>
+            </mat-tab>
+        </mat-tab-group>
+    </div>
+</div>
+</ng-container>

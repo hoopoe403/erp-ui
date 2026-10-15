@@ -137,6 +137,8 @@ export const appRoutes: Route[] = [
                     { path: 'goods', loadChildren: () => import('app/modules/inventory/reports/goods/goods-inventory.module').then(m => m.GoodsInventoryModule) }]
                 },
                 { path: 'warehouse', loadChildren: () => import('app/modules/inventory/warehouse/warehouse.module').then(m => m.WarehouseModule) },
+                { path: 'attribute', loadChildren: () => import('app/modules/inventory/attribute/attribute.module').then(m => m.AttributeModule) },
+                { path: 'product-category', loadChildren: () => import('app/modules/inventory/product-category/product-category.module').then(m => m.ProductCategoryModule) },
                 { path: 'transfer', loadChildren: () => import('app/modules/inventory/transfer/transfer.module').then(m => m.TransferModule) },
     
             ]},
