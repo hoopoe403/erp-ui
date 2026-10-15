@@ -4,57 +4,32 @@ import { Pipe, PipeTransform } from "@angular/core";
 })
 export class PersianMonthNamePipe implements PipeTransform {
 
-
-
-    transform(value: number, args?: any): any {
-        if (!value || value === undefined || value === null || value === 0) {
-            return "";
+    transform(value: any, args?: any): any {
+        if (value === null || value === undefined || value === '' || Number(value) === 0) {
+            return '';
         }
 
-        if (value.toString().length > 2) {
+        const monthNumber = Number(value);
+        if (!Number.isInteger(monthNumber) || monthNumber < 1 || monthNumber > 12) {
             return 'خارج از محدوده';
         }
-        let month: string;
-        value = parseInt(value.toString());
-        switch (value) {
-            case 1:
-                month = 'فروردین';
-                break;
-            case 2:
-                month = 'اردیبهشت';
-                break;
-            case 3:
-                month = 'خرداد';
-                break;
-            case 4:
-                month = 'تیر';
-                break;
-            case 5:
-                month = 'مرداد';
-                break;
-            case 6:
-                month = 'شهریور';
-                break;
-            case 7:
-                month = 'مهر';
-                break;
-            case 8:
-                month = 'آبان';
-                break;
-            case 9:
-                month = 'آذر';
-                break;
-            case 10:
-                month = 'دی';
-                break;
-            case 11:
-                month = 'بهمن';
-                break;
-            case 12:
-                month = 'اسفند';
-                break;
-        }
-        return month.concat(' ').concat('ماه');
+
+        const monthNames = {
+            1: 'فروردین',
+            2: 'اردیبهشت',
+            3: 'خرداد',
+            4: 'تیر',
+            5: 'مرداد',
+            6: 'شهریور',
+            7: 'مهر',
+            8: 'آبان',
+            9: 'آذر',
+            10: 'دی',
+            11: 'بهمن',
+            12: 'اسفند'
+        };
+
+        return monthNames[monthNumber].concat(' ').concat('ماه');
     }
 
 }

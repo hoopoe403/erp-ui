@@ -16,11 +16,15 @@ export class NumberToPersianPipe implements PipeTransform {
     ];
 
     ThreeNumbersToLetter(num) {
-        // return zero
-        if (parseInt(num, 0) === 0) {
+        const cleanedValue = String(num ?? '').replace(/,/g, '').trim();
+        if (cleanedValue === '' || /^0+$/.test(cleanedValue)) {
             return '';
         }
-        const parsedInt = parseInt(num, 0);
+
+        const parsedInt = parseInt(cleanedValue, 10);
+        if (parsedInt === 0) {
+            return '';
+        }
         if (parsedInt < 10) {
             return this.Letters[0][parsedInt];
         }
@@ -28,9 +32,7 @@ export class NumberToPersianPipe implements PipeTransform {
             return this.Letters[1][parsedInt - 10];
         }
         if (parsedInt < 100) {
-            // tslint:disable-next-line:no-shadowed-variable
             const one = parsedInt % 10;
-            // tslint:disable-next-line:no-shadowed-variable
             const ten = (parsedInt - one) / 10;
             if (one > 0) {
                 return this.Letters[2][ten] + this.spliter + this.Letters[0][one];
@@ -61,27 +63,37 @@ export class NumberToPersianPipe implements PipeTransform {
         if (typeof num === 'number') {
             num = num.toString();
         }
+        num = String(num ?? '').replace(/,/g, '').trim();
         const NumberLength = num.length % 3;
         if (NumberLength === 1) {
             num = '00' + num;
         } else if (NumberLength === 2) {
             num = '0' + num;
         }
-        // Explode to array
         return num.replace(/\d{3}(?=\d)/g, '$&*').split('*');
     }
 
     transform(value: any, args?: any): any {
-        if (!value || value === undefined || value === null || value === 0) {
-            return "";
+        if (value === null || value === undefined || value === '') {
+            return '';
         }
 
-        if (value.length > 66) {
+        const normalizedValue = String(value).replace(/,/g, '').trim();
+        if (normalizedValue === '' || normalizedValue === '0' || /^0+$/.test(normalizedValue)) {
+            return this.zero;
+        }
+
+        if (!/^-?\d+$/.test(normalizedValue)) {
             return 'خارج از محدوده';
         }
-        //value = value.toString().substring(0, value.toString().length - 1);
 
-        const SplitedNumber = this.PrepareNumber(value);
+        if (normalizedValue.length > 66) {
+            return 'خارج از محدوده';
+        }
+
+        const isNegative = normalizedValue.startsWith('-');
+        const unsignedValue = normalizedValue.replace(/^-/, '');
+        const SplitedNumber = this.PrepareNumber(unsignedValue);
 
         const funcout: any = [];
         const SplitLength = SplitedNumber.length;
@@ -93,7 +105,9 @@ export class NumberToPersianPipe implements PipeTransform {
                 funcout.push(converted + SectionTitle);
             }
         }
-        return funcout.join(this.spliter);
+
+        const output = funcout.join(this.spliter);
+        return isNegative ? 'منفی ' + output : output;
     }
 
 }
