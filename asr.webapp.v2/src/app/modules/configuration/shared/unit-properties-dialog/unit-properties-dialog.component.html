@@ -1,0 +1,32 @@
+<div class="relative flex flex-col md:w-fit -m-6">
+    <!-- Header -->
+    <div class="w-full border border-slate-300 border-solid flex flex-col sm:flex-row items-center sm:items-start py-3 px-6">
+        <div class="absolute top-0 right-0 py-2 pr-4">
+            <button (click)="cancel()" mat-icon-button>
+                <mat-icon class="text-secondary" [svgIcon]="'heroicons_outline:x'"></mat-icon>
+            </button>
+        </div>
+        <div class="flex flex-col items-center justify-center sm:items-start mt-4 pt-2 sm:mt-0 sm:pr-8 space-y-1 text-center sm:text-left">
+            <span class="text-xl leading-6 font-medium">{{ data.title }}</span>
+            <span *ngIf="data.subtitle" class="text-sm text-secondary">{{ data.subtitle }}</span>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex flex-col p-6 max-h-[70vh] overflow-auto">
+        <app-unit-editor
+            [units]="units"
+            [loadUnits]="data.loadUnits"
+            (unitsChange)="units = $event">
+        </app-unit-editor>
+    </div>
+
+    <!-- Footer -->
+    <div class="w-full mb-6" style="display: flex; align-items: center; place-content: center;">
+        <button mat-flat-button [color]="'primary'"
+                [disabled]="units.length === 0"
+                (click)="save()">
+            Save
+        </button>
+    </div>
+</div>

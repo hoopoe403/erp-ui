@@ -60,9 +60,7 @@ export class GoodsListComponent implements OnInit, AfterViewInit, OnDestroy {
         code: new FormControl(),
         orderDeadline: new FormControl(),
         technicalNumber: new FormControl(),
-        status: new FormControl(),
-        weightUnit: new FormControl(),
-        weight: new FormControl()
+        status: new FormControl()
     });
     @ViewChild(MatPaginator, { static: true })
     paginator: MatPaginator;
@@ -167,8 +165,6 @@ export class GoodsListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.goodsInfo.goodsCode = this.frmAdvancedSearch.controls["code"].value;
         this.goodsInfo.goodsName = this.frmAdvancedSearch.controls["name"].value;
         this.goodsInfo.technicalNumber = this.frmAdvancedSearch.controls["technicalNumber"].value;
-        this.goodsInfo.objectWeight = this.frmAdvancedSearch.controls["weight"].value;
-        this.goodsInfo.weightUnitId = this.frmAdvancedSearch.controls["weightUnit"].value;
         this.goodsInfo.orderDeadline = this.frmAdvancedSearch.controls["orderDeadline"].value;
         this.goodsInfo.categoryId = this.selectedCat;
         this.goodsInfo.status = this.frmAdvancedSearch.controls["status"].value;
@@ -223,8 +219,6 @@ export class GoodsListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.frmAdvancedSearch.controls["name"].setValue(null);
         this.frmAdvancedSearch.controls["orderDeadline"].setValue(null);
         this.frmAdvancedSearch.controls["status"].setValue(null);
-        this.frmAdvancedSearch.controls["weight"].setValue(null);
-        this.frmAdvancedSearch.controls["weightUnit"].setValue(null);
         this.resetGoodsCatBotton();
 
     }

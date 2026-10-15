@@ -21,8 +21,8 @@ import { MatMenuTrigger } from "@angular/material/menu";
 import { Goods } from "app/modules/inventory/goods/goods/goods.types";
 import { MatTabGroup } from "@angular/material/tabs/tab-group";
 import { Units } from "app/modules/configuration/measurement/unit/unit.types";
-import { ProductPropertiesDialogComponent } from "../../product/properties-dialog/properties-dialog.component";
-import { ProductPropertiesDialogResult } from "../../product/properties-dialog/properties-dialog.types";
+import { UnitPropertiesDialogComponent } from "../../../shared/unit-properties-dialog/unit-properties-dialog.component";
+import { UnitPropertiesDialogResult } from "../../../shared/unit-properties-dialog/unit-properties-dialog.types";
 import { MatSnackBar } from "@angular/material/snack-bar";
 
 let tableName: string;
@@ -749,16 +749,18 @@ export class BrandDetailsComponent implements OnInit {
         
         const product = this.products[indx];
         
-        const dialogRef = this._dialogService.open(ProductPropertiesDialogComponent, {
+        const dialogRef = this._dialogService.open(UnitPropertiesDialogComponent, {
             width: '950px',
             maxHeight: '90vh',
             data: {
-                product: product,
-                title: 'Product Properties'
+                title: 'Product Properties',
+                subtitle: product.fullName || product.productName,
+                units: product.units,
+                loadUnits: () => this.service.getUnits()
             }
         });
 
-        dialogRef.afterClosed().subscribe((result: ProductPropertiesDialogResult) => {
+        dialogRef.afterClosed().subscribe((result: UnitPropertiesDialogResult) => {
             if (result && result.saved) {
                 // Update the product with the new units
                 product.units = result.units;

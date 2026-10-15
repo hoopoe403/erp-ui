@@ -6,8 +6,8 @@ import { animate, state, style, transition, trigger } from "@angular/animations"
 import { GoodsService } from "../goods.service";
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { debounceTime, distinctUntilChanged, map, takeUntil, switchMap } from 'rxjs/operators';
-import { BehaviorSubject, fromEvent, Observable, Subject, merge, forkJoin } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, takeUntil, switchMap } from 'rxjs/operators';
+import { BehaviorSubject, fromEvent, Observable, Subject, merge, forkJoin, of } from 'rxjs';
 import { FuseAlertService } from '@fuse/components/alert';
 import { Goods } from '../goods.types';
 import { HierarchicalKeyValue, Measure, KeyValue, GoodsMeasure } from 'app/core/type/key-value/key-value.type';
@@ -20,6 +20,7 @@ import { SelectionModel } from '@angular/cdk/collections';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { MatSort } from '@angular/material/sort';
 import { Product } from 'app/modules/configuration/branding/product/product.types';
+import { MatSnackBar } from '@angular/material/snack-bar';
 let products: Array<TodoItemFlatNode> = [];
 @Component({
     selector: 'goods-details',
@@ -253,7 +254,8 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
         private http: HttpClient,
         private route: ActivatedRoute,
         private _changeDetectorRef: ChangeDetectorRef,
-        private _fuseAlertService: FuseAlertService
+        private _fuseAlertService: FuseAlertService,
+        private _snackBar: MatSnackBar
     ) {
 
         this._unsubscribeAll = new Subject();
@@ -326,38 +328,60 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
         this._unsubscribeAll.next();
         this._unsubscribeAll.complete();
     }
+    /** Loads what the page needs for a new goods - the same lookups as edit mode, without the goods itself. */
     private loadData() {
+        this.isLoading = true;
 
         forkJoin(
-            //this.getProductsTree(),
-            //this.getGoodsOnInit(),
             this.getServices(),
             this.getGoodsCat(),
+            this.getMeasurementMetrics(),
+            this.getNames(),
+            this.getUnits(),
+            this.getBrands()
         ).subscribe(res => {
             this.setForkJoinValues(res);
             this.isLoading = false;
+            this._changeDetectorRef.markForCheck();
             this._changeDetectorRef.detectChanges();
         });
 
     }
     private setForkJoinValues(values: Array<any>): void {
-        products = values[0].data;
-        this._database.initialize(products);
+        this.goodsInfo = new Goods();
+        this.goodsInfo.childrenList = [];
+        this.goodsInfo.productsList = [];
+        this.goodsInfo.goodsPropertyValue = [];
+        this.goodsInfo.unitList = [];
+        this.products = this.products$ = [];
 
-        this.goodsInfo = values[0].data;
-        products = values[1].data;
-        this._database.initialize(products);
-        this.setGoodsProducts();
-        this.checkMassAndArea(this.goodsInfo.goodsPropertyValue);
+        this.services = values[0].data;
 
-        this.services = values[2].data;
-
-        this.menuArray = values[3].data;
-        this.goodsCatArray = values[3].data;
+        this.menuArray = values[1].data;
+        this.goodsCatArray = values[1].data;
         this.addSelectanItemToCatMenu();
         this.addSelectanItemToCatMenuAd();
-        this.setValues();
 
+        this.measurementMetrics = values[2].data;
+
+        this.goodsNames = values[3].data;
+        this.nameP1 = this.goodsNames.filter(x => x.categoryId == 1000511);
+        this.nameP2 = this.goodsNames.filter(x => x.categoryId == 1000512);
+        this.nameP3 = this.goodsNames.filter(x => x.categoryId == 1000513);
+        this.nameP4 = this.goodsNames.filter(x => x.categoryId == 1000514);
+
+        this.massUnitData = values[4].data.filter(x => x.measurementMetricId == 1000692);
+        this.lengthUnitData = values[4].data.filter(x => x.measurementMetricId == 1000694);
+        this.areaUnitData = values[4].data.filter(x => x.measurementMetricId == 1000693);
+
+        this.brands = values[5].data;
+
+        this.setPaginatorAndSort();
+        this.setProductPaginatorAndSort();
+        this.setValues();
+        this.goodsMixtureInfo.selectedItemsViewMode = 1;
+        this.goodsMixtureInfo.selectedGoodsIdList = [];
+        this.getGoods(this.goodsMixtureInfo);
     }
     private setForkJoinValuesEditMode(values: Array<any>): void {
         this.goodsInfo = values[0].data;
@@ -534,8 +558,6 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
             selServices: [this.goodsInfo.serviceList],
             selOrgProduct: [this.goodsInfo.productsList],
             material: [this.goodsInfo.materialList],
-            weight: [this.goodsInfo.objectWeight],
-            weightUnit: [this.goodsInfo.weightUnitId],
             status: [this.goodsInfo.status],
             cover: [this.goodsInfo.hasCover],
             orderDeadline: [this.goodsInfo.orderDeadline],
@@ -708,7 +730,10 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
         this.productInfo.page = { ...this.productPagination };
         this.productInfo.page.pageNumber = this.productInfo.page.pageNumber + 1;
         this.productInfo.status = 1;
-        return this.goodsService.getFinalProductList(this.productInfo);
+        // The product list comes from the product module; if it is unavailable the goods must still open
+        return this.goodsService.getFinalProductList(this.productInfo).pipe(
+            catchError(() => of({ data: { products: [], page: { ...this.productInfo.page } } }))
+        );
     }
 
     private getGoods(info: Goods) {
@@ -888,8 +913,6 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
         this.frmGoods.controls['criticalPoint'].setValue(this.goodsInfo.criticalPoint);
         this.frmGoods.controls['technicalNumber'].setValue(this.goodsInfo.technicalNumber);
         this.frmGoods.controls['status'].setValue(this.goodsInfo.status);
-        this.frmGoods.controls['weight'].setValue(this.goodsInfo.objectWeight);
-        this.frmGoods.controls['weightUnit'].setValue(this.goodsInfo.weightUnitId);
         this.frmGoods.controls['cover'].setValue(this.goodsInfo.hasGoodsCover);
         this.frmGoods.controls['reductionTiming'].setValue(this.goodsInfo.reductionTimingId);
         this.setGoodsMixture();
@@ -1760,11 +1783,22 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
         return products;
     }
 
+    get hasPrimaryUnit(): boolean {
+        return !!this.goodsInfo.unitList?.some(u => u.isPrimary);
+    }
+
+    /** The units the Units tab can pick from. */
+    loadUnits = () => this.goodsService.getUnits();
+
     save() {
         this.dismissAlert('successMessage');
         this.dismissAlert('errorMessage');
         if (!this.checkFormValidity()) {
             this.showAlert('errorMessage');
+            return;
+        }
+        if (!this.hasPrimaryUnit) {
+            this._snackBar.open('Please add units and set a primary unit', undefined, { duration: 3000 });
             return;
         }
         this.isLoading = true;
@@ -1779,8 +1813,6 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
         this.goodsInfo.criticalPoint = this.frmGoods.controls['criticalPoint'].value;
         this.goodsInfo.technicalNumber = this.frmGoods.controls['technicalNumber'].value;
         this.goodsInfo.status = this.frmGoods.controls['status'].value;
-        this.goodsInfo.objectWeight = this.frmGoods.controls['weight'].value;
-        this.goodsInfo.weightUnitId = this.frmGoods.controls['weightUnit'].value;
         this.goodsInfo.hasGoodsCover = this.frmGoods.controls['cover'].value;
         this.goodsInfo.reductionTimingId = this.frmGoods.controls['reductionTiming'].value;
         this.goodsInfo.language = 'EN';

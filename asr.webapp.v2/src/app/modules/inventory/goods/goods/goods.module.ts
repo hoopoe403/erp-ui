@@ -28,6 +28,7 @@ import { FuseScrollbarModule } from '@fuse/directives/scrollbar/public-api';
 import { FuseDrawerModule } from '@fuse/components/drawer';
 import { NgxPrintModule } from 'ngx-print';
 import { MatTreeModule } from "@angular/material/tree";
+import { UnitPropertiesDialogModule } from 'app/modules/configuration/shared/unit-properties-dialog/unit-properties-dialog.module';
 
 @NgModule({
     declarations: [
@@ -58,7 +59,8 @@ import { MatTreeModule } from "@angular/material/tree";
         MatMenuModule,
         MatCheckboxModule,
         FuseAlertModule,
-        FuseScrollbarModule, FuseDrawerModule, MatTreeModule
+        FuseScrollbarModule, FuseDrawerModule, MatTreeModule,
+        UnitPropertiesDialogModule
     ]
 })
 export class GoodsModule {

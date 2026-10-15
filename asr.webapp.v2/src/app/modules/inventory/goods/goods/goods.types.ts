@@ -18,10 +18,8 @@ export class Goods {
   objectHeight: number;
   dimensionsUnitId: number;
   dimensionsUnitName: string;
-  objectWeight: number;
-  weightUnitId: number;
-  weightUnitName: string;
   materialList: Array<number>;
+  unitList: Array<GoodsUnit>;
   orderDeadline: number;
   criticalPoint: number;
   measurementMetricId: number;
@@ -50,6 +48,18 @@ export class Goods {
   chaneDate: string;
   page: Paging;
 
+}
+
+/**
+ * A unit a goods is counted in. Exactly one per goods is primary (conversionRate 1); every other unit
+ * says how many primary units it is (1 box = 12 pieces -> conversionRate 12 when pieces are primary).
+ */
+export interface GoodsUnit {
+  unitId: number;
+  unitName?: string;
+  unitCode?: string;
+  isPrimary: boolean;
+  conversionRate: number;
 }
 
 export class OrgProducts {

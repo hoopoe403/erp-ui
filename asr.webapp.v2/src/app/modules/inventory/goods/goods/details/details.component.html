@@ -180,16 +180,6 @@
 
 
                             <mat-form-field appearance="outline" class="w-1/2 px-3">
-                                <mat-label>Weight</mat-label>
-                                <input matInput formControlName="weight">
-                                <mat-select [value]="10002612" required matSuffix formControlName="weightUnit">
-                                    <mat-option *ngFor="let UD of massUnitData" [value]="UD.unitId">
-                                        {{UD.unitName}}
-                                    </mat-option>
-                                </mat-select>
-                            </mat-form-field>
-
-                            <mat-form-field appearance="outline" class="w-1/2 px-3">
                                 <mat-label>Reduction Timing</mat-label>
                                 <mat-select required formControlName="reductionTiming">
                                     <mat-option [value]="1000751">
@@ -209,6 +199,15 @@
 
                     </form>
 
+                </mat-tab>
+                <mat-tab label="Units">
+                    <div class="flex rounded-b-md rounded-tr-md flex-col p-8 pb-4 bg-card shadow">
+                        <app-unit-editor
+                            [units]="goodsInfo.unitList"
+                            [loadUnits]="loadUnits"
+                            (unitsChange)="goodsInfo.unitList = $event">
+                        </app-unit-editor>
+                    </div>
                 </mat-tab>
                 <mat-tab label="Category">
                     <div class="flex rounded-b-md rounded-tr-md flex-col p-8 pb-4 bg-card shadow">
