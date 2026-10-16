@@ -1,0 +1,50 @@
+<ng-container *transloco="let t">
+<form [formGroup]="form" (ngSubmit)="save()" class="flex flex-col">
+    <div class="flex items-start gap-3 px-6 pt-5 pb-4 border-b">
+        <div class="flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0 bg-green-100 dark:bg-green-900">
+            <mat-icon class="icon-size-5 text-green-600" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+        </div>
+        <div class="flex-auto text-xl font-bold tracking-tight pt-1.5">{{ t('inventory.newBrand') }}</div>
+        <button mat-icon-button type="button" [matTooltip]="t('common.close')" [disabled]="isSaving" (click)="close()">
+            <mat-icon [svgIcon]="'heroicons_outline:x'"></mat-icon>
+        </button>
+    </div>
+
+    <div class="px-6 pt-5">
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>{{ t('common.name') }}</mat-label>
+            <input matInput formControlName="name" maxlength="200" required spellcheck="false" [autocomplete]="'off'" cdkFocusInitial>
+            <mat-error>{{ t('inventory.nameRequired') }}</mat-error>
+        </mat-form-field>
+        <div *ngIf="duplicateName" class="flex items-center gap-2 -mt-3 mb-3 text-sm text-amber-600 dark:text-amber-400">
+            <mat-icon class="icon-size-4 text-current" [svgIcon]="'heroicons_outline:exclamation'"></mat-icon>
+            {{ t('inventory.brandNameExists') }}
+        </div>
+        <mat-form-field appearance="outline" class="w-full sm:w-1/2">
+            <mat-label>{{ t('common.code') }}</mat-label>
+            <input matInput formControlName="code" maxlength="10" required spellcheck="false" [autocomplete]="'off'">
+            <mat-hint>{{ t('inventory.brandCodeHint') }}</mat-hint>
+            <mat-error>{{ t('inventory.codeRequired') }}</mat-error>
+        </mat-form-field>
+        <div *ngIf="duplicateCode" class="flex items-center gap-2 mt-2 mb-1 text-sm text-amber-600 dark:text-amber-400">
+            <mat-icon class="icon-size-4 text-current" [svgIcon]="'heroicons_outline:exclamation'"></mat-icon>
+            {{ t('inventory.brandCodeExists') }}
+        </div>
+        <div *ngIf="errorMessage"
+            class="flex items-start gap-2 my-4 px-3 py-2 rounded-lg text-sm bg-red-50 text-red-800 dark:bg-red-900 dark:text-red-50">
+            <mat-icon class="icon-size-5 text-current flex-shrink-0" [svgIcon]="'heroicons_outline:exclamation-circle'"></mat-icon>
+            <span>{{ errorMessage }}</span>
+        </div>
+    </div>
+
+    <div class="flex items-center justify-end gap-2 px-6 py-4 mt-4 border-t bg-gray-50 dark:bg-transparent">
+        <button mat-button type="button" [disabled]="isSaving" (click)="close()">{{ t('common.cancel') }}</button>
+        <button mat-flat-button type="submit" [color]="'primary'" [disabled]="isSaving">
+            <span class="flex items-center">
+                <mat-progress-spinner *ngIf="isSaving" [diameter]="18" [mode]="'indeterminate'" class="mr-2"></mat-progress-spinner>
+                {{ t('common.create') }}
+            </span>
+        </button>
+    </div>
+</form>
+</ng-container>

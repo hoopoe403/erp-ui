@@ -48,6 +48,8 @@ export class AttributeValue {
     attributeCode: string;
     attributeName: string;
     attributeValue: string;
+    /** Short code used in generated variant SKUs (e.g. RED for Red). */
+    shortCode: string;
     sortOrder: number;
     status: number;
     statusDescription: string;

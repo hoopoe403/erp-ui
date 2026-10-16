@@ -1,0 +1,300 @@
+<ng-container *transloco="let t">
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between sm:px-3 bg-card dark:bg-transparent">
+        <div class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-3 sm:px-10 bg-card dark:bg-transparent">
+            <div class="flex-1 min-w-0">
+                <!-- Breadcrumbs -->
+                <div class="flex flex-wrap items-center font-medium">
+                    <div class="flex items-center ml-1 whitespace-nowrap">
+                        <a [routerLink]="['/inventory/product/product']" class="cursor-pointer whitespace-nowrap text-primary-500">
+                            {{ t('inventory.products') }}
+                        </a>
+                    </div>
+                    <div class="flex items-center ml-1 whitespace-nowrap">
+                        <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'"></mat-icon>
+                        {{ titleInfo || t('inventory.newProduct') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-auto px-6 py-3" fuseScrollbar>
+        <div class="h-2">
+            <mat-progress-bar *ngIf="isLoading || isSaving" mode="indeterminate"></mat-progress-bar>
+        </div>
+        <fuse-alert *ngIf="errorMessage" class="mb-3" [appearance]="'soft'" [type]="'error'">
+            {{ errorMessage }}
+        </fuse-alert>
+
+        <mat-tab-group [selectedIndex]="selectedTab" (selectedIndexChange)="onTabChange($event)" animationDuration="0ms">
+
+            <!-- ============ Product ============ -->
+            <mat-tab [label]="t('inventory.productInfo')">
+                <form [formGroup]="productForm" class="flex flex-col gap-6 pb-4">
+
+                    <!-- General -->
+                    <div class="flex flex-col px-8 py-6 bg-card shadow rounded-2xl rounded-tl-none">
+                        <div class="text-lg font-semibold mb-4">{{ t('inventory.general') }}</div>
+                        <!-- Code and name on one line -->
+                        <div class="flex flex-col md:flex-row w-full gap-x-6">
+                            <mat-form-field appearance="outline" class="md:w-1/3 w-full fuse-mat-dense">
+                                <mat-label>{{ t('common.code') }}</mat-label>
+                                <input spellcheck="false" required matInput formControlName="code" maxlength="20" [autocomplete]="'off'"
+                                    class="font-mono uppercase">
+                                <mat-hint>{{ t('inventory.productCodeHint') }}</mat-hint>
+                                <mat-error>{{ t('inventory.codeRequired') }}</mat-error>
+                            </mat-form-field>
+                            <mat-form-field appearance="outline" class="md:w-2/3 w-full fuse-mat-dense">
+                                <mat-label>{{ t('common.name') }}</mat-label>
+                                <input spellcheck="false" required matInput formControlName="name" maxlength="200" [autocomplete]="'off'">
+                                <mat-error>{{ t('inventory.nameRequired') }}</mat-error>
+                            </mat-form-field>
+                        </div>
+                        <!-- Category on the left; brand and status, small, side by side on the right -->
+                        <div class="flex flex-col md:flex-row w-full gap-x-6 mt-2">
+                            <div class="md:w-1/2 w-full flex flex-col">
+                                <mat-form-field appearance="outline" class="w-full fuse-mat-dense">
+                                    <mat-label>{{ t('inventory.productCategory') }}</mat-label>
+                                    <mat-select formControlName="category" required (openedChange)="!$event && categoryFilter.setValue('')">
+                                        <mat-option>
+                                            <ngx-mat-select-search [formControl]="categoryFilter" [placeholderLabel]="t('inventory.searchCodeOrName')"
+                                                [noEntriesFoundLabel]="t('common.notFound')"></ngx-mat-select-search>
+                                        </mat-option>
+                                        <!-- Parent categories stay visible for context but only leaf categories can be picked -->
+                                        <mat-option *ngFor="let category of filteredCategories" [value]="category.productCategoryId"
+                                            [disabled]="!isLeafCategory(category)">
+                                            <span class="font-mono text-secondary mr-2">{{ category.fullCode }}</span>{{ category.fullName }}
+                                        </mat-option>
+                                    </mat-select>
+                                    <mat-hint>{{ t('inventory.categoryDrivesAttributes') }}</mat-hint>
+                                    <mat-error *ngIf="productForm.controls['category'].hasError('required')">{{ t('inventory.categoryRequired') }}</mat-error>
+                                    <mat-error *ngIf="productForm.controls['category'].hasError('notLeaf')">{{ t('inventory.categoryMustBeLeaf') }}</mat-error>
+                                </mat-form-field>
+                                <div *ngIf="product" class="flex flex-wrap gap-x-6 text-sm text-secondary pt-4">
+                                    <span>{{ t('common.createdBy') }}: {{ product.userFullName }}</span>
+                                    <span>{{ t('common.updatedAt') }}: {{ product.changeDate | date:'yyyy-MM-dd HH:mm' }}</span>
+                                </div>
+                            </div>
+                            <div class="md:w-1/2 w-full flex flex-col sm:flex-row gap-x-4">
+                                <mat-form-field appearance="outline" class="sm:w-1/2 w-full fuse-mat-dense">
+                                    <mat-label>{{ t('inventory.brand') }}</mat-label>
+                                    <mat-select #brandSelect formControlName="brand" required (openedChange)="!$event && brandFilter.setValue('')">
+                                        <mat-option>
+                                            <ngx-mat-select-search [formControl]="brandFilter" [placeholderLabel]="t('common.search')"
+                                                [noEntriesFoundLabel]="t('common.notFound')"></ngx-mat-select-search>
+                                        </mat-option>
+                                        <mat-option *ngFor="let brand of filteredBrands" [value]="brand.brandId">{{ brand.brandName }}</mat-option>
+                                        <!-- Not a mat-option: picking it must not change the selected brand -->
+                                        <div class="sticky bottom-0 border-t bg-card">
+                                            <button mat-button type="button" class="w-full justify-start" [color]="'primary'"
+                                                (click)="$event.stopPropagation(); addBrand(brandFilter.value); brandSelect.close()">
+                                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                                                <span class="ml-2 truncate">
+                                                    {{ brandFilter.value ? t('inventory.addBrandNamed') + ' "' + brandFilter.value + '"' : t('inventory.addBrand') }}
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </mat-select>
+                                    <button mat-icon-button matSuffix type="button" [matTooltip]="t('inventory.addBrand')"
+                                        (click)="$event.stopPropagation(); addBrand()">
+                                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:plus-circle'"></mat-icon>
+                                    </button>
+                                    <mat-error>{{ t('inventory.brandRequired') }}</mat-error>
+                                </mat-form-field>
+                                <mat-form-field appearance="outline" floatLabel="always" class="sm:w-1/2 w-full fuse-mat-dense">
+                                    <mat-label>{{ t('common.status') }}</mat-label>
+                                    <mat-select formControlName="status">
+                                        <mat-option *ngFor="let status of statuses" [value]="status.statusId">
+                                            {{ status.statusDescription }}
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attributes of the main category -->
+                    <div class="flex flex-col px-8 py-6 bg-card shadow rounded-2xl">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="text-lg font-semibold">{{ t('inventory.attributes') }}</div>
+                            <mat-progress-spinner *ngIf="loadingAttributes" [diameter]="20" mode="indeterminate"></mat-progress-spinner>
+                        </div>
+                        <div class="text-sm text-secondary mb-4">{{ t('inventory.productAttributesHint') }}</div>
+
+                        <div *ngIf="droppedAttributeNames.length"
+                            class="flex items-start gap-2 mb-4 px-3 py-2 rounded-lg text-sm bg-amber-50 text-amber-800 dark:bg-amber-900 dark:text-amber-50">
+                            <mat-icon class="icon-size-5 text-current flex-shrink-0" [svgIcon]="'heroicons_outline:exclamation'"></mat-icon>
+                            <span>{{ t('inventory.attributesDropped') }}: {{ droppedAttributeNames.join(', ') }}</span>
+                        </div>
+
+                        <div *ngIf="!productForm.controls['category'].value" class="py-8 text-center text-secondary">
+                            {{ t('inventory.selectCategoryFirst') }}
+                        </div>
+                        <div *ngIf="productForm.controls['category'].value && !loadingAttributes && !lines.length"
+                            class="py-8 text-center text-secondary">
+                            {{ t('inventory.categoryHasNoAttributes') }}
+                        </div>
+
+                        <div *ngIf="lines.length" class="flex flex-col rounded-lg border divide-y">
+                            <!-- Same column split as the SKU list below, so the value fields line up with the SKU fields -->
+                            <div class="hidden sm:flex gap-x-4 px-4 py-2 text-sm font-semibold text-secondary bg-gray-50 dark:bg-transparent">
+                                <div class="sm:w-2/5">{{ t('inventory.attribute') }}</div>
+                                <div class="sm:flex-auto">{{ t('inventory.fixedValue') }}</div>
+                            </div>
+                            <div *ngFor="let line of lines" [formGroup]="line.form"
+                                class="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1 px-4 py-2">
+                                <div class="sm:w-2/5 min-w-0">
+                                    <div class="font-medium truncate">{{ line.attributeName }}</div>
+                                    <div class="text-sm font-mono text-secondary truncate">{{ line.attributeCode }}</div>
+                                </div>
+                                <div class="sm:flex-auto min-w-0">
+                                    <ng-container>
+                                        <mat-form-field *ngIf="line.isList" appearance="outline" class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                            <mat-select formControlName="valueIds" [multiple]="true" [placeholder]="t('inventory.selectValues')">
+                                                <mat-select-trigger>
+                                                    <span [matTooltip]="selectedValueNames(line)">{{ selectedValueNames(line) }}</span>
+                                                </mat-select-trigger>
+                                                <mat-option *ngFor="let value of line.values" [value]="value.attributeValueId">
+                                                    {{ value.attributeValue }}
+                                                </mat-option>
+                                            </mat-select>
+                                        </mat-form-field>
+                                        <mat-form-field *ngIf="line.isNumber" appearance="outline" class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                            <input matInput type="number" formControlName="valueNum" [placeholder]="t('inventory.noValue')">
+                                            <span matSuffix *ngIf="line.unitName" class="text-secondary ml-2">{{ line.unitName }}</span>
+                                        </mat-form-field>
+                                        <mat-form-field *ngIf="!line.isList && !line.isNumber" appearance="outline" class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                            <input matInput formControlName="valueText" maxlength="4000" [placeholder]="t('inventory.noValue')">
+                                            <span matSuffix *ngIf="line.unitName" class="text-secondary ml-2">{{ line.unitName }}</span>
+                                        </mat-form-field>
+                                    </ng-container>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- What the save will generate: one SKU per combination -->
+                        <div *ngIf="lines.length && tooManyCombinations"
+                            class="flex items-start gap-2 mt-4 px-3 py-2 rounded-lg text-sm bg-red-50 text-red-800 dark:bg-red-900 dark:text-red-50">
+                            <mat-icon class="icon-size-5 text-current flex-shrink-0" [svgIcon]="'heroicons_outline:exclamation-circle'"></mat-icon>
+                            <span>{{ t('inventory.tooManyVariants') }} ({{ combinationCount }})</span>
+                        </div>
+                        <div *ngIf="skuRows.length" class="flex flex-col mt-6">
+                            <div class="flex flex-wrap items-baseline justify-between gap-2 mb-2">
+                                <div class="font-semibold">{{ t('inventory.skusOnSave') }} ({{ skuRows.length }})</div>
+                                <div class="text-sm text-secondary">
+                                    <span *ngIf="newSkuRowCount">{{ t('inventory.newVariantsCount') }}: {{ newSkuRowCount }}</span>
+                                    <span *ngIf="variantsToDeactivate" class="ml-3 text-amber-600">
+                                        {{ t('inventory.variantsToDeactivate') }}: {{ variantsToDeactivate }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-sm text-secondary mb-2">{{ t('inventory.skusHint') }}</div>
+                            <div class="flex flex-col rounded-lg border divide-y max-h-96 overflow-y-auto">
+                                <div *ngFor="let row of skuRows; trackBy: trackSkuRow"
+                                    class="flex flex-col sm:flex-row sm:items-start gap-x-4 gap-y-1 px-4 py-2">
+                                    <div class="sm:w-2/5 min-w-0 pt-2 truncate" [matTooltip]="row.text">
+                                        {{ row.text || t('inventory.plainVariant') }}
+                                    </div>
+                                    <div class="sm:flex-auto min-w-0">
+                                        <mat-form-field appearance="outline" class="w-full fuse-mat-dense"
+                                            [class.mat-form-field-invalid]="!row.sku || isDuplicateSku(row) || row.conflict">
+                                            <input matInput class="font-mono" maxlength="50" spellcheck="false" [autocomplete]="'off'"
+                                                [(ngModel)]="row.sku" [ngModelOptions]="{ standalone: true }" (blur)="onSkuBlur(row)"
+                                                (keydown.enter)="$event.preventDefault(); onSkuBlur(row)">
+                                            <mat-progress-spinner matSuffix *ngIf="row.checking" [diameter]="16" mode="indeterminate"></mat-progress-spinner>
+                                            <button matSuffix mat-icon-button type="button" *ngIf="row.edited && !row.checking"
+                                                [matTooltip]="row.variant ? t('inventory.backToVariantSku') : t('inventory.backToSuggestedSku')"
+                                                (click)="resetSku(row)">
+                                                <mat-icon class="icon-size-4" [svgIcon]="'heroicons_outline:refresh'"></mat-icon>
+                                            </button>
+                                            <mat-hint *ngIf="!row.sku" class="text-warn">{{ t('inventory.skuRequired') }}</mat-hint>
+                                            <mat-hint *ngIf="row.sku && isDuplicateSku(row)" class="text-warn">{{ t('inventory.duplicateSkusInList') }}</mat-hint>
+                                            <mat-hint *ngIf="row.sku && !isDuplicateSku(row) && row.conflict" class="text-warn">{{ row.conflict }}</mat-hint>
+                                        </mat-form-field>
+                                    </div>
+                                    <div class="sm:w-28 pt-2">
+                                        <span *ngIf="!row.variant" class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-50">
+                                            {{ t('common.new') }}
+                                        </span>
+                                        <span *ngIf="row.variant && row.variant.status === statusActive"
+                                            class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-100">
+                                            {{ t('inventory.existingVariant') }}
+                                        </span>
+                                        <span *ngIf="row.variant && row.variant.status !== statusActive"
+                                            class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-50">
+                                            {{ t('common.inactive') }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2">
+                        <button *ngIf="product" mat-button type="button" [disabled]="isSaving || productForm.pristine" (click)="cancel()">
+                            {{ t('common.reset') }}
+                        </button>
+                        <button mat-flat-button color="primary" type="button" [disabled]="isLoading || isSaving || tooManyCombinations || hasSkuErrors" (click)="save()">
+                            {{ isNew ? t('common.create') : t('common.save') }}
+                        </button>
+                    </div>
+                </form>
+            </mat-tab>
+
+            <!-- ============ Variants ============ -->
+            <mat-tab [disabled]="isNew">
+                <ng-template mat-tab-label>
+                    {{ t('inventory.variants') }}
+                    <span *ngIf="variants.length" class="ml-2 px-2 rounded-full text-xs bg-primary-50 text-primary-800 dark:bg-primary-900 dark:text-primary-50">
+                        {{ activeVariantCount }}/{{ variants.length }}
+                    </span>
+                </ng-template>
+                <div *ngIf="product" class="flex flex-col pb-4">
+                    <div class="flex flex-col px-8 py-6 bg-card shadow rounded-2xl rounded-tl-none">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+                            <div>
+                                <div class="text-lg font-semibold">{{ t('inventory.variants') }}</div>
+                                <div class="text-sm text-secondary">
+                                    <ng-container *ngIf="savedVariantAttributes.length; else plainVariant">
+                                        {{ t('inventory.variantsDifferBy') }}:
+                                        <span class="font-medium text-default">
+                                            {{ savedVariantAttributeNames }}
+                                        </span>
+                                    </ng-container>
+                                    <ng-template #plainVariant>{{ t('inventory.noVariantAttributes') }}</ng-template>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-sm text-secondary">{{ t('inventory.variantsGeneratedHint') }}</div>
+                        <div *ngIf="productForm.dirty"
+                            class="flex items-start gap-2 my-2 px-3 py-2 rounded-lg text-sm bg-amber-50 text-amber-800 dark:bg-amber-900 dark:text-amber-50">
+                            <mat-icon class="icon-size-5 text-current flex-shrink-0" [svgIcon]="'heroicons_outline:exclamation'"></mat-icon>
+                            <span>{{ t('inventory.saveToUpdateVariants') }}</span>
+                        </div>
+
+                        <div *ngIf="!variants.length" class="py-10 text-center text-secondary">
+                            {{ t('inventory.noVariants') }}
+                        </div>
+                        <div *ngIf="variants.length" class="flex flex-col rounded-lg border divide-y mt-3">
+                            <a *ngFor="let variant of variants" (click)="openVariant(variant)"
+                                class="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 cursor-pointer hover:bg-hover"
+                                [class.opacity-60]="variant.status !== statusActive">
+                                <div class="w-40 min-w-0">
+                                    <div class="font-mono font-semibold truncate">{{ variant.sku }}</div>
+                                    <div class="text-sm text-secondary truncate" *ngIf="variant.barcode">{{ variant.barcode }}</div>
+                                </div>
+                                <div class="flex-auto min-w-0 truncate">{{ combinationText(variant) || '-' }}</div>
+                                <p *ngIf="variant.statusDescription" class="p-1 rounded text-white text-sm" [ngClass]="variant.statusColor">
+                                    {{ variant.statusDescription }}
+                                </p>
+                                <mat-icon class="icon-size-5 text-hint" [svgIcon]="'heroicons_outline:pencil'"></mat-icon>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </mat-tab>
+        </mat-tab-group>
+    </div>
+</div>
+</ng-container>

@@ -138,7 +138,19 @@ export const appRoutes: Route[] = [
                 },
                 { path: 'warehouse', loadChildren: () => import('app/modules/inventory/warehouse/warehouse.module').then(m => m.WarehouseModule) },
                 { path: 'attribute', loadChildren: () => import('app/modules/inventory/attribute/attribute.module').then(m => m.AttributeModule) },
-                { path: 'product-category', loadChildren: () => import('app/modules/inventory/product-category/product-category.module').then(m => m.ProductCategoryModule) },
+                // Products and their categories, as the menu links them: /inventory/product/product and
+                // /inventory/product/product-category.
+                {
+                    path: 'product', children: [
+                        { path: 'product', loadChildren: () => import('app/modules/inventory/product/product.module').then(m => m.InventoryProductModule) },
+                        { path: 'product-category', loadChildren: () => import('app/modules/inventory/product-category/product-category.module').then(m => m.ProductCategoryModule) },
+                        // The earlier addresses (/inventory/product, /inventory/product/details/:id) still work.
+                        { path: '', pathMatch: 'full', redirectTo: 'product' },
+                        { path: 'details', redirectTo: 'product/details' },
+                    ]
+                },
+                // The earlier category address (/inventory/product-category/...) still works.
+                { path: 'product-category', redirectTo: 'product/product-category' },
                 { path: 'transfer', loadChildren: () => import('app/modules/inventory/transfer/transfer.module').then(m => m.TransferModule) },
     
             ]},

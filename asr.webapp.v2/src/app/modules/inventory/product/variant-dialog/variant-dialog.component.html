@@ -1,0 +1,117 @@
+<ng-container *transloco="let t">
+<form [formGroup]="form" (ngSubmit)="save()" class="flex flex-col max-h-screen">
+
+    <!-- Header -->
+    <div class="flex items-start gap-3 px-6 pt-5 pb-4 border-b">
+        <div class="flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0"
+            [ngClass]="isEdit ? 'bg-primary-50 dark:bg-primary-900' : 'bg-green-100 dark:bg-green-900'">
+            <mat-icon class="icon-size-5" [ngClass]="isEdit ? 'text-primary' : 'text-green-600'"
+                [svgIcon]="isEdit ? 'heroicons_outline:pencil' : 'heroicons_outline:plus'"></mat-icon>
+        </div>
+        <div class="flex-auto min-w-0">
+            <div class="text-xl font-bold tracking-tight truncate">
+                {{ isEdit ? t('common.edit') + ': ' + data.variant.sku : t('inventory.newVariant') }}
+            </div>
+            <div class="text-sm text-secondary mt-1 truncate">{{ data.product.productName }}</div>
+        </div>
+        <button mat-icon-button type="button" [matTooltip]="t('common.close')" [disabled]="isSaving" (click)="close()">
+            <mat-icon [svgIcon]="'heroicons_outline:x'"></mat-icon>
+        </button>
+    </div>
+
+    <div class="flex-auto overflow-y-auto px-6 pt-5">
+        <!-- Combination -->
+        <div *ngIf="data.variantAttributes.length" formGroupName="values">
+            <div class="font-medium mb-1">{{ t('inventory.combination') }}</div>
+            <div class="text-sm text-secondary mb-3">{{ t('inventory.valuesFromProduct') }}</div>
+            <div class="flex flex-col sm:flex-row sm:flex-wrap gap-x-4">
+                <mat-form-field *ngFor="let attribute of data.variantAttributes" appearance="outline" class="w-full sm:flex-1 sm:min-w-40">
+                    <mat-label>{{ attribute.attributeName }}</mat-label>
+                    <mat-select [formControlName]="'a' + attribute.attributeId" required>
+                        <mat-option *ngFor="let value of attribute.values" [value]="value.attributeValueId">
+                            {{ value.attributeValue }}
+                        </mat-option>
+                    </mat-select>
+                    <mat-error>{{ t('inventory.valueRequired') }}</mat-error>
+                </mat-form-field>
+            </div>
+            <div *ngIf="duplicateCombination as other"
+                class="flex items-center gap-2 -mt-3 mb-4 text-sm text-amber-600 dark:text-amber-400">
+                <mat-icon class="icon-size-4 text-current" [svgIcon]="'heroicons_outline:exclamation'"></mat-icon>
+                {{ t('inventory.duplicateCombination') }} {{ other.sku }}
+            </div>
+        </div>
+        <div *ngIf="!data.variantAttributes.length" class="text-sm text-secondary mb-4">
+            {{ t('inventory.noVariantAttributes') }}
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-x-4">
+            <mat-form-field appearance="outline" class="w-full sm:w-1/2">
+                <mat-label>{{ t('inventory.sku') }}</mat-label>
+                <input matInput formControlName="sku" maxlength="50" spellcheck="false" [autocomplete]="'off'" required cdkFocusInitial>
+                <mat-error>{{ t('inventory.skuRequired') }}</mat-error>
+                <mat-hint *ngIf="suggestion && suggestion !== form.controls['sku'].value">
+                    {{ t('inventory.suggestedSku') }}:
+                    <a class="font-mono cursor-pointer text-primary hover:underline" (click)="useSuggestion()">{{ suggestion }}</a>
+                </mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="w-full sm:w-1/2">
+                <mat-label>{{ t('inventory.barcode') }}</mat-label>
+                <input matInput formControlName="barcode" maxlength="50" spellcheck="false" [autocomplete]="'off'">
+            </mat-form-field>
+        </div>
+        <div *ngIf="duplicateSku as other" class="flex items-center gap-2 -mt-3 mb-3 text-sm text-amber-600 dark:text-amber-400">
+            <mat-icon class="icon-size-4 text-current" [svgIcon]="'heroicons_outline:exclamation'"></mat-icon>
+            {{ t('inventory.duplicateSku') }}
+        </div>
+        <div *ngIf="duplicateBarcode as other" class="flex items-center gap-2 -mt-1 mb-3 text-sm text-amber-600 dark:text-amber-400">
+            <mat-icon class="icon-size-4 text-current" [svgIcon]="'heroicons_outline:exclamation'"></mat-icon>
+            {{ t('inventory.duplicateBarcode') }} {{ other.sku }}
+        </div>
+
+        <mat-form-field appearance="outline" floatLabel="always" class="w-full sm:w-1/2">
+            <mat-label>{{ t('common.status') }}</mat-label>
+            <mat-select formControlName="status">
+                <mat-option *ngFor="let status of data.statuses" [value]="status.statusId">{{ status.statusDescription }}</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <!-- History of the variant's values (TBL_PRODUCT_VARIANT_ATTRIBUTE_VALUE / _LOG) -->
+        <div *ngIf="isEdit" class="mb-4">
+            <button mat-button type="button" class="px-0" (click)="toggleHistory()">
+                <mat-icon class="icon-size-5" [svgIcon]="showHistory ? 'heroicons_outline:chevron-up' : 'heroicons_outline:chevron-down'"></mat-icon>
+                <span class="ml-1">{{ t('inventory.valueHistory') }}</span>
+            </button>
+            <div *ngIf="showHistory" class="mt-2">
+                <mat-progress-bar *ngIf="!history" mode="indeterminate"></mat-progress-bar>
+                <div *ngIf="history && !history.length" class="text-sm text-secondary">{{ t('common.noData') }}</div>
+                <div *ngIf="history?.length" class="flex flex-col rounded-lg border divide-y text-sm">
+                    <div *ngFor="let row of history" class="flex flex-wrap items-center gap-x-3 px-3 py-2">
+                        <span class="flex-auto">{{ row.attributeName }}: <span class="font-medium">{{ row.attributeValue }}</span></span>
+                        <span class="p-1 rounded text-white" [ngClass]="row.statusColor">{{ row.statusDescription }}</span>
+                        <span class="text-secondary">{{ row.userFullName }}</span>
+                        <span class="text-secondary">{{ row.changeDate | date:'yyyy-MM-dd HH:mm' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div *ngIf="errorMessage"
+            class="flex items-start gap-2 mb-4 px-3 py-2 rounded-lg text-sm bg-red-50 text-red-800 dark:bg-red-900 dark:text-red-50">
+            <mat-icon class="icon-size-5 text-current flex-shrink-0" [svgIcon]="'heroicons_outline:exclamation-circle'"></mat-icon>
+            <span>{{ errorMessage }}</span>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center justify-end gap-2 px-6 py-4 border-t bg-gray-50 dark:bg-transparent">
+        <button mat-button type="button" [disabled]="isSaving" (click)="close()">{{ t('common.cancel') }}</button>
+        <button mat-flat-button type="submit" [color]="'primary'" [disabled]="isSaving || (isEdit && form.pristine)">
+            <span class="flex items-center">
+                <mat-progress-spinner *ngIf="isSaving" [diameter]="18" [mode]="'indeterminate'" class="mr-2"></mat-progress-spinner>
+                {{ isEdit ? t('common.save') : t('common.create') }}
+            </span>
+        </button>
+    </div>
+</form>
+</ng-container>

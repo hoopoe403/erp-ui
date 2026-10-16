@@ -70,6 +70,7 @@ export class AttributeDetailsComponent implements OnInit, OnDestroy {
     });
     this.valueForm = this._formBuilder.group({
       value: [null, [Validators.required, Validators.maxLength(100)]],
+      shortCode: [null, [Validators.maxLength(20)]],
       sortOrder: [0, [Validators.min(0), Validators.max(99999)]],
       status: [null],
     });
@@ -204,6 +205,7 @@ export class AttributeDetailsComponent implements OnInit, OnDestroy {
     this.editingValue = value;
     this.valueForm.reset({
       value: value.attributeValue,
+      shortCode: value.shortCode,
       sortOrder: value.sortOrder ?? 0,
       status: value.status,
     });
@@ -217,6 +219,7 @@ export class AttributeDetailsComponent implements OnInit, OnDestroy {
     const defaultStatus = this.valueStatuses.find(x => x.isDefault === 1);
     this.valueForm.reset({
       value: null,
+      shortCode: null,
       sortOrder: Math.min(nextSort, 99999),
       status: defaultStatus ? defaultStatus.statusId : null,
     });
@@ -234,6 +237,7 @@ export class AttributeDetailsComponent implements OnInit, OnDestroy {
     value.attributeValueId = this.editingValue ? this.editingValue.attributeValueId : null;
     value.attributeId = this.id;
     value.attributeValue = controls['value'].value;
+    value.shortCode = (controls['shortCode'].value || '').trim().toUpperCase() || null;
     value.sortOrder = controls['sortOrder'].value ?? 0;
     value.status = controls['status'].value;
 

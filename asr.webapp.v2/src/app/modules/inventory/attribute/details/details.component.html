@@ -103,14 +103,21 @@
 
                     <!-- Add / edit value -->
                     <form [formGroup]="valueForm" class="flex flex-col md:flex-row w-full items-start flex-wrap">
-                        <mat-form-field appearance="outline" class="md:w-2/5 w-full px-3">
+                        <mat-form-field appearance="outline" class="md:w-1/4 w-full px-3">
                             <mat-label>{{ t('inventory.value') }}</mat-label>
                             <input spellcheck="false" required matInput formControlName="value" maxlength="100"
                                 (keydown.enter)="saveValue()">
                             <mat-error>Value is required!</mat-error>
                         </mat-form-field>
 
-                        <mat-form-field appearance="outline" class="md:w-1/5 w-full px-3">
+                        <mat-form-field appearance="outline" class="md:w-1/6 w-full px-3">
+                            <mat-label>{{ t('inventory.shortCode') }}</mat-label>
+                            <input spellcheck="false" matInput formControlName="shortCode" maxlength="20"
+                                class="uppercase" (keydown.enter)="saveValue()">
+                            <mat-hint>{{ t('inventory.shortCodeHint') }}</mat-hint>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="md:w-1/6 w-full px-3">
                             <mat-label>{{ t('inventory.sortOrder') }}</mat-label>
                             <input type="number" matInput formControlName="sortOrder" min="0" max="99999">
                             <mat-error>Between 0 and 99999</mat-error>
@@ -139,8 +146,9 @@
                     <div class="mt-4 border rounded">
                         <div class="grid grid-cols-12 gap-4 py-3 px-4 text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5 border-b">
                             <div class="col-span-2">{{ t('inventory.sortOrder') }}</div>
-                            <div class="col-span-5">{{ t('inventory.value') }}</div>
-                            <div class="col-span-3">{{ t('common.status') }}</div>
+                            <div class="col-span-4">{{ t('inventory.value') }}</div>
+                            <div class="col-span-2">{{ t('inventory.shortCode') }}</div>
+                            <div class="col-span-2">{{ t('common.status') }}</div>
                             <div class="col-span-2"></div>
                         </div>
                         <div *ngFor="let item of values; trackBy: trackByValue"
@@ -150,8 +158,9 @@
                                 'bg-green-100 dark:bg-green-900': highlightedValueId && highlightedValueId === item.attributeValueId
                             }">
                             <div class="col-span-2">{{ item.sortOrder }}</div>
-                            <div class="col-span-5 truncate">{{ item.attributeValue }}</div>
-                            <div class="col-span-3">
+                            <div class="col-span-4 truncate">{{ item.attributeValue }}</div>
+                            <div class="col-span-2 truncate font-mono">{{ item.shortCode || '-' }}</div>
+                            <div class="col-span-2">
                                 <p *ngIf="item.statusDescription" style="width: fit-content"
                                     class="p-1 rounded block truncate text-white" [ngClass]="item.statusColor">
                                     {{ item.statusDescription }}
