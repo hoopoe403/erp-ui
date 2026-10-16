@@ -192,6 +192,15 @@
                                 <mat-error>Reduction is required!</mat-error>
                             </mat-form-field>
 
+                            <mat-form-field appearance="outline" class="w-1/2 px-3">
+                                <mat-label>Organization</mat-label>
+                                <mat-select required placeholder="Select one" formControlName="organization">
+                                    <mat-option *ngFor="let organ of organizations" [value]="organ.key">
+                                        {{organ.value}}</mat-option>
+                                </mat-select>
+                                <mat-error>Organization is required!</mat-error>
+                            </mat-form-field>
+
                         </div>
 
 
@@ -375,7 +384,7 @@
                                             <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript min-w-50">
                                                 <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
                                                 <input #goodsFilter [autocomplete]="'off'" matInput
-                                                    [autocomplete]="'off'" [placeholder]="'Search'">
+                                                    (keyup)="filterGoods(goodsFilter.value)" [placeholder]="'Search'">
                                                 <mat-icon matPostfix (click)="goodsAdvancedSearch.toggle()"
                                                     matTooltip="Advanced Search" class="cursor-pointer">
                                                     settings
@@ -1004,11 +1013,11 @@
                         </div>
                         <div class="flex items-center flex-wrap content-center w-full py-2">
                             <div class="w-auto h-auto min-h-15 m-auto">
-                                <fuse-alert *ngIf="_result.message" [appearance]="'soft'" [dismissible]=" true"
+                                <fuse-alert [appearance]="'soft'" [dismissible]=" true"
                                     [dismissed]="true" [name]="'successMessage'" [type]="'success'">
                                     <b>Result: </b> {{_result.message}}.
                                 </fuse-alert>
-                                <fuse-alert *ngIf="_result.message" [appearance]="'soft'" [dismissible]="true"
+                                <fuse-alert [appearance]="'soft'" [dismissible]="true"
                                     [dismissed]="true" [name]="'errorMessage'" [type]="'error'">
                                     <b>Result: </b> {{_result.message}}.
                                 </fuse-alert>

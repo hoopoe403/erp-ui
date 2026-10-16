@@ -6,8 +6,8 @@ import { animate, state, style, transition, trigger } from "@angular/animations"
 import { GoodsService } from "../goods.service";
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { catchError, debounceTime, distinctUntilChanged, map, takeUntil, switchMap } from 'rxjs/operators';
-import { BehaviorSubject, fromEvent, Observable, Subject, merge, forkJoin, of } from 'rxjs';
+import { catchError, map, takeUntil, switchMap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject, merge, forkJoin, of } from 'rxjs';
 import { FuseAlertService } from '@fuse/components/alert';
 import { Goods } from '../goods.types';
 import { HierarchicalKeyValue, Measure, KeyValue, GoodsMeasure } from 'app/core/type/key-value/key-value.type';
@@ -136,6 +136,7 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
     selectedProducts$: Array<any> = [];
     goodsAdSearchInfo: Goods;
     goodsInfo: Goods = new Goods();
+    organizations: Array<{ key: number, value: string }> = [];
     goodsMixtureInfo: Goods = new Goods();
     productInfo: Product = new Product();
     pageType: string;
@@ -300,25 +301,18 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
         this.initialPaginations();
     }
     ngAfterViewInit() {
+    }
 
-
-        fromEvent(this.goodsFilter.nativeElement, 'keyup')
-            .pipe(
-                takeUntil(this._unsubscribeAll),
-                debounceTime(150),
-                distinctUntilChanged()
-            )
-            .subscribe(() => {
-                if (!this.goods) {
-                    return;
-                }
-                this.goods$ = this.goods.filter(item =>
-                    item.goodsName.toLowerCase().includes(this.goodsFilter.nativeElement.value.toLowerCase())
-                    || item.categoryGoodsCode.toLocaleLowerCase().includes(this.goodsFilter.nativeElement.value.toLowerCase())
-                    || item.categoryName.toLocaleLowerCase().includes(this.goodsFilter.nativeElement.value.toLowerCase()));
-            });
-
-
+    /** Filters the Mixture tab's goods. Bound in the template because the input only exists while that tab is open. */
+    filterGoods(text: string) {
+        if (!this.goods) {
+            return;
+        }
+        const value = (text || '').toLowerCase();
+        this.goods$ = this.goods.filter(item =>
+            item.goodsName?.toLowerCase().includes(value)
+            || item.categoryGoodsCode?.toLowerCase().includes(value)
+            || item.categoryName?.toLowerCase().includes(value));
     }
 
     /**
@@ -338,7 +332,9 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
             this.getMeasurementMetrics(),
             this.getNames(),
             this.getUnits(),
-            this.getBrands()
+            this.getBrands(),
+            this.getProductOnInit(),
+            this.goodsService.getOrganizations()
         ).subscribe(res => {
             this.setForkJoinValues(res);
             this.isLoading = false;
@@ -353,7 +349,11 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
         this.goodsInfo.productsList = [];
         this.goodsInfo.goodsPropertyValue = [];
         this.goodsInfo.unitList = [];
-        this.products = this.products$ = [];
+
+        // The products paginator reads productPagination, so it must be set before the page renders
+        this.products = this.products$ = values[6].data.products;
+        this.productPagination = { ...values[6].data.page };
+        this.productPagination.pageNumber = this.productPagination.pageNumber - 1;
 
         this.services = values[0].data;
 
@@ -375,6 +375,11 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
         this.areaUnitData = values[4].data.filter(x => x.measurementMetricId == 1000693);
 
         this.brands = values[5].data;
+
+        // The database requires an organization; preselect it when there is only one to choose from
+        this.organizations = values[7].data || [];
+        if (this.organizations.length === 1)
+            this.goodsInfo.organizationId = this.organizations[0].key;
 
         this.setPaginatorAndSort();
         this.setProductPaginatorAndSort();
@@ -410,6 +415,7 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
         this.areaUnitData = values[6].data.filter(x => x.measurementMetricId == 1000693);
 
         this.brands = values[7].data;
+        this.organizations = values[8].data || [];
 
         this.setPaginatorAndSort();
         this.setProductPaginatorAndSort();
@@ -434,7 +440,8 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
             this.getMeasurementMetrics(),
             this.getNames(),
             this.getUnits(),
-            this.getBrands()
+            this.getBrands(),
+            this.goodsService.getOrganizations()
         ).subscribe(res => {
             this.setForkJoinValuesEditMode(res);
             this.isLoading = false;
@@ -564,6 +571,7 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
             technicalNumber: [this.goodsInfo.technicalNumber],
             criticalPoint: [this.goodsInfo.criticalPoint],
             reductionTiming: [this.goodsInfo.reductionTimingId],
+            organization: [this.goodsInfo.organizationId],
 
         });
     }
@@ -915,6 +923,7 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
         this.frmGoods.controls['status'].setValue(this.goodsInfo.status);
         this.frmGoods.controls['cover'].setValue(this.goodsInfo.hasGoodsCover);
         this.frmGoods.controls['reductionTiming'].setValue(this.goodsInfo.reductionTimingId);
+        this.frmGoods.controls['organization'].setValue(this.goodsInfo.organizationId);
         this.setGoodsMixture();
         this.setGoodsProducts();
 
@@ -968,7 +977,10 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
 
 
     private removeSelectedGoodsContols(goodsId: number) {
-        const indx = this.selectedGoods.selected.findIndex(x => x.key == goodsId);
+        const indx = this.selectedGoods.selected.findIndex(x => x.goodsId == goodsId);
+        if (indx === -1) {
+            return;
+        }
         const goods = this.selectedGoods.selected[indx];
         if (goods.measurementMetricId == 1000691)
             this.frmSelectedGoods.removeControl(goodsId.toString());
@@ -1047,12 +1059,18 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
         this.selectedGoods$.push(this.selectedGoods.selected[this.selectedGoods.selected.length - 1]);
     }
 
+    /** The mixture form controls of a goods are named by its id, with a prefix for mass/area/length goods. */
+    private hasSelectedGoodsControls(goodsId: number): boolean {
+        const id = goodsId.toString();
+        return ['', 'mass', 'width', 'length'].some(prefix => !!this.frmSelectedGoods.controls[prefix + id]);
+    }
+
     private toggleSelectedGoodsControl(controlId: string) {
-        let control = this.frmSelectedGoods.controls[controlId];
-        if (control)
-            this.removeSelectedGoodsContols(Number(controlId));
+        const goodsId = Number(controlId);
+        if (this.hasSelectedGoodsControls(goodsId))
+            this.removeSelectedGoodsContols(goodsId);
         else {
-            this.addSelectedGoodsContols(Number(controlId));
+            this.addSelectedGoodsContols(goodsId);
         }
     }
 
@@ -1070,7 +1088,7 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
 
         if (this.isAllSelected()) {
             this.selectedGoods.selected.forEach(element => {
-                this.toggleSelectedGoodsControl(element.goodsId);
+                this.removeSelectedGoodsContols(element.goodsId);
             });
             this.selectedGoods.clear();
 
@@ -1106,12 +1124,15 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
     changeGoodsCheckBox(goodsId: number) {
 
         const indx = this.selectedGoods.selected.findIndex(x => x.goodsId == goodsId);
-        if (indx !== -1)
+        if (indx !== -1) {
+            // Remove the controls while the row is still selected - they are looked up through it
+            this.removeSelectedGoodsContols(goodsId);
             this.selectedGoods.selected.splice(indx, 1);
-        else
+        }
+        else {
             this.addToSelectedGoodsSelection(goodsId);
-
-        this.toggleSelectedGoodsControl(goodsId.toString());
+            this.addSelectedGoodsContols(goodsId);
+        }
     }
 
     checkboxLabel(row?): string {
@@ -1529,92 +1550,58 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
 
     }
 
+    /** Labels of the Information tab's fields, used to say which one is missing. */
+    private readonly goodsFieldLabels: { [control: string]: string } = {
+        name: 'Name', code: 'Code', cover: 'Has Cover', orderDeadline: 'Order Deadline',
+        criticalPoint: 'Critical Point', technicalNumber: 'Technical Number', status: 'Status',
+        reductionTiming: 'Reduction Timing', organization: 'Organization'
+    };
+
+    /** Checks every tab and names each missing field, so the user knows exactly what to fill. */
     private checkFormValidity(): boolean {
-        let result: boolean = true;
-        const controls = this.frmGoods.controls;
-        for (const name in controls) {
-            if (controls[name].invalid) {
-                this._result.succeed = false;
-                this._result.message = "There is atleast one unfilled element! Please fill all the elements in the all tabs";
-                result = false;
-                return result;
-            }
-        }
+        const missing: string[] = [];
+
+        Object.keys(this.frmGoods.controls)
+            .filter(name => this.frmGoods.controls[name].invalid)
+            .forEach(name => missing.push(`Information: ${this.goodsFieldLabels[name] || name}`));
+        this.frmGoods.markAllAsTouched();
+
         if (this.selectedCat == 0 || this.selectedCat == null || this.selectedCat.toString() == "Select a category") {
-            this._result.succeed = false;
-            this._result.message = "Goods category is not selected! Please select a category and fill all properties";
-            result = false;
-            return result;
-        }
-        const propControls = this.frmProperties.controls;
-        for (const name in propControls) {
-            if (propControls[name].invalid) {
-                this._result.succeed = true;
-                this._result.message = "There is atleast one unfilled element! Please fill all the elements in the all tabs";
-                this.frmProperties.markAllAsTouched();
-                result = false;
-                return result;
-            }
+            missing.push('Category: no category selected');
         }
 
-        Object.keys(this.frmSelectedProducts.controls).forEach(key => {
+        Object.keys(this.frmProperties.controls)
+            .filter(key => this.frmProperties.controls[key].invalid)
+            .forEach(key => {
+                const prop = (this.catPropList as any[]).find(p => p.propertyId == key);
+                missing.push(`Category: ${prop?.propertyName || 'property ' + key}`);
+            });
+        this.frmProperties.markAllAsTouched();
 
-            if (this.frmSelectedProducts.controls[key].value == "") {
-                this._result.succeed = true;
-                this._result.message = "There is atleast one unfilled element! Please fill all the elements in the all tabs";
-                this.frmSelectedProducts.markAllAsTouched();
-                result = false;
-                return result;
-            }
-        });
-
-
+        if (Object.keys(this.frmSelectedProducts.controls).some(key => this.frmSelectedProducts.controls[key].value === '')) {
+            missing.push('Products: a measure of a selected product');
+            this.frmSelectedProducts.markAllAsTouched();
+        }
 
         this.selectedGoods.selected.forEach(element => {
-
-
-            if (element.measurementMetricId == 1000691 && this.frmSelectedGoods.controls[element.key].value == '') {
-                this._result.succeed = true;
-                this._result.message = "There is atleast one unfilled element! Please fill all the elements in the all tabs";
+            const id = element.goodsId;
+            const value = (name: string) => this.frmSelectedGoods.controls[name]?.value;
+            const incomplete =
+                (element.measurementMetricId == 1000691 && value('' + id) == '') ||
+                (element.measurementMetricId == 1000692 && (value('mass' + id) == '' || value('massUnit' + id) == 0)) ||
+                (element.measurementMetricId == 1000693 && (value('width' + id) == '' || value('length' + id) == '' || value('areaUnit' + id) == 0)) ||
+                (element.measurementMetricId == 1000694 && (value('length' + id) == '' || value('lengthUnit' + id) == 0));
+            if (incomplete) {
+                missing.push(`Mixture: ${element.goodsName || id}`);
                 this.frmSelectedGoods.markAllAsTouched();
-                result = false;
-                return result;
-
             }
-            else if (element.measurementMetricId == 1000692 &&
-                (this.frmSelectedGoods.controls['mass'.concat(element.key)].value == '' ||
-                    this.frmSelectedGoods.controls['massUnit'.concat(element.key)].value == 0)) {
-                this._result.succeed = true;
-                this._result.message = "There is atleast one unfilled element! Please fill all the elements in the all tabs";
-                this.frmSelectedGoods.markAllAsTouched();
-                result = false;
-                return result;
-            }
-            else if (element.measurementMetricId == 1000693 &&
-                (this.frmSelectedGoods.controls['width'.concat(element.key)].value == '' ||
-                    this.frmSelectedGoods.controls['length'.concat(element.key)].value == '' ||
-                    this.frmSelectedGoods.controls['areaUnit'.concat(element.key)].value == 0
-                )) {
-                this._result.succeed = true;
-                this._result.message = "There is atleast one unfilled element! Please fill all the elements in the all tabs";
-                this.frmSelectedGoods.markAllAsTouched();
-                result = false;
-                return result;
-            }
-            else if (element.measurementMetricId == 1000694 &&
-                (this.frmSelectedGoods.controls['length'.concat(element.key)].value == '' ||
-                    this.frmSelectedGoods.controls['lengthUnit'.concat(element.key)].value == 0
-                )) {
-                this._result.succeed = true;
-                this._result.message = "There is atleast one unfilled element! Please fill all the elements in the all tabs";
-                this.frmSelectedGoods.markAllAsTouched();
-                result = false;
-                return result;
-            }
-
         });
 
-        return result;
+        if (missing.length) {
+            this._result.succeed = false;
+            this._result.message = 'Please fill: ' + missing.join(', ');
+        }
+        return missing.length === 0;
     }
     setProductViewMode(event: {
         isUserInput: any;
@@ -1690,41 +1677,44 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
 
         let children: Array<Measure> = [];
         this.selectedGoods.selected.forEach(element => {
+            // Mixture rows carry the goods id as goodsId; its form controls are named after it
+            const id = element.goodsId;
+            const value = (name: string) => this.frmSelectedGoods.controls[name]?.value;
             const item: Measure = new Measure();
-            item.key = element.key;
+            item.key = id;
 
             switch (element.measurementMetricId) {
                 case 1000691:
                     item.itemId = 1000711;
-                    item.measure = this.frmSelectedGoods.controls[element.key].value;
+                    item.measure = value(`${id}`);
                     item.unitId = 0;
                     children.push(item);
                     break;
                 case 1000692:
                     item.itemId = 1000712;
-                    item.measure = this.frmSelectedGoods.controls[`mass${element.key}`].value;
-                    item.unitId = this.frmSelectedGoods.controls[`massUnit${element.key}`].value;
+                    item.measure = value(`mass${id}`);
+                    item.unitId = value(`massUnit${id}`);
                     children.push(item);
                     break;
                 case 1000693:
                     const widthItem: Measure = new Measure();
-                    widthItem.key = element.key;
+                    widthItem.key = id;
                     widthItem.itemId = 1000713;
-                    widthItem.measure = this.frmSelectedGoods.controls[`width${element.key}`].value;
-                    widthItem.unitId = this.frmSelectedGoods.controls[`areaUnit${element.key}`].value;
+                    widthItem.measure = value(`width${id}`);
+                    widthItem.unitId = value(`areaUnit${id}`);
                     children.push(widthItem);
 
                     const lengthItem: Measure = new Measure();
-                    lengthItem.key = element.key;
+                    lengthItem.key = id;
                     lengthItem.itemId = 1000714;
-                    lengthItem.measure = this.frmSelectedGoods.controls[`length${element.key}`].value;
-                    lengthItem.unitId = this.frmSelectedGoods.controls[`areaUnit${element.key}`].value;
+                    lengthItem.measure = value(`length${id}`);
+                    lengthItem.unitId = value(`areaUnit${id}`);
                     children.push(lengthItem);
                     break;
                 case 1000694:
                     item.itemId = 1000714;
-                    item.measure = this.frmSelectedGoods.controls[`length${element.key}`].value;
-                    item.unitId = this.frmSelectedGoods.controls[`lengthUnit${element.key}`].value;
+                    item.measure = value(`length${id}`);
+                    item.unitId = value(`lengthUnit${id}`);
                     children.push(item);
                     break;
                 default:
@@ -1815,6 +1805,7 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
         this.goodsInfo.status = this.frmGoods.controls['status'].value;
         this.goodsInfo.hasGoodsCover = this.frmGoods.controls['cover'].value;
         this.goodsInfo.reductionTimingId = this.frmGoods.controls['reductionTiming'].value;
+        this.goodsInfo.organizationId = this.frmGoods.controls['organization'].value;
         this.goodsInfo.language = 'EN';
 
 
@@ -1840,31 +1831,28 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     private create() {
-
-        this.goodsService.create(this.goodsInfo).subscribe(res => {
-            this.isLoading = false;
-            this._result.succeed = res.succeed;
-            this._result.message = res.message;
-            if (this._result.succeed)
-                this.showAlert('successMessage');
-            else
-                this.showAlert('errorMessage');
-
-        });
+        this.goodsService.create(this.goodsInfo).subscribe(res => this.showSaveResult(res), err => this.showSaveError(err));
     }
 
     private edit() {
+        this.goodsService.edit(this.goodsInfo).subscribe(res => this.showSaveResult(res), err => this.showSaveError(err));
+    }
 
-        this.goodsService.edit(this.goodsInfo).subscribe(res => {
-            this.isLoading = false;
-            this._result.succeed = res.succeed;
-            this._result.message = res.message;
-            if (this._result.succeed)
-                this.showAlert('successMessage');
-            else
-                this.showAlert('errorMessage');
+    private showSaveResult(res: any) {
+        this.isLoading = false;
+        this._result.succeed = res.succeed;
+        this._result.message = res.message;
+        this.showAlert(this._result.succeed ? 'successMessage' : 'errorMessage');
+        this._changeDetectorRef.markForCheck();
+    }
 
-        });
+    /** A rejected save (e.g. 400 for invalid units, 500 from the database) must re-enable the form and say why. */
+    private showSaveError(err: any) {
+        this.isLoading = false;
+        this._result.succeed = false;
+        this._result.message = err?.error?.detail || err?.error?.message || err?.message || 'Saving the goods failed';
+        this.showAlert('errorMessage');
+        this._changeDetectorRef.markForCheck();
     }
 
 
