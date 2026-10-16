@@ -11,7 +11,7 @@
                 <div class="flex flex-wrap items-center font-medium">
                     <div>
                         <a [routerLink]="['../list']" style="cursor: pointer;"
-                            class="whitespace-nowrap text-primary-500">Categories</a>
+                            class="whitespace-nowrap text-primary-500">Chart of Accounts</a>
 
                     </div>
                     <div class="flex items-center ml-1 whitespace-nowrap">
@@ -39,7 +39,7 @@
 
             <mat-tab-group #tabGroup fxLayout="column" fxFlex>
                 <mat-tab label="Information">
-                    <form [formGroup]="frmCategory"
+                    <form [formGroup]="frmAccountChart"
                         class="flex rounded-b-md rounded-tr-md flex-col px-8 py-4 bg-card shadow">
                         <div class="h-2">
                             <mat-progress-bar *ngIf="isLoading" mode="indeterminate"></mat-progress-bar>
@@ -51,7 +51,7 @@
                         </div>
                         <div class="w-full  border border-solid border-gray-200 rounded-sm min-h-96">
                             <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
-                                <mat-tree-node [class.selected]="node.id === selectedCatNode.id"
+                                <mat-tree-node [class.selected]="node.id === selectedNode.id"
                                     *matTreeNodeDef="let node" matTreeNodePadding>
                                     <div fxLayout="row" class="border-dotted border-l flex flex-row items-center">
                                         <button [disabled]="!hasNodeChild(node)" mat-icon-button matTreeNodeToggle
@@ -63,7 +63,7 @@
                                         <mat-checkbox [disabled]="true" [checked]="descendantsAllSelected(node)">
                                             {{node.code}} - {{node.item}}</mat-checkbox>
                                         <button mat-icon-button [matMenuTriggerFor]="contextMenu"
-                                            (click)="selectedCatNode=node">
+                                            (click)="selectedNode=node">
                                             <mat-icon color="accent">more_vert</mat-icon>
                                         </button>
                                     </div>
@@ -90,9 +90,9 @@
     </ng-container>
     <mat-menu #contextMenu="matMenu">
         <ng-template matMenuContent>
-            <button mat-menu-item (click)="addItem(selectedCatNode.id);">Add
+            <button mat-menu-item (click)="addItem(selectedNode.id);">Add
                 Item</button>
-            <button mat-menu-item (click)="editItem(selectedCatNode);">Edit</button>
+            <button mat-menu-item (click)="editItem(selectedNode);">Edit</button>
         </ng-template>
     </mat-menu>
 </div>

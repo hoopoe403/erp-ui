@@ -611,7 +611,7 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
 
     // -----------------------------------------------------------------------------------------------------
     // @ Quick-add dialog (reuses the FuseDataEntryDialogService pattern from
-    // financial/category/details/details.component.ts) — still used by Cost Center.
+    // financial/account-chart/details/details.component.ts) — still used by Cost Center.
     // -----------------------------------------------------------------------------------------------------
 
     private buildQuickAddDialog(title: string, prefillName: string): FormGroup {

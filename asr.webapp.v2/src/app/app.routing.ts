@@ -179,7 +179,7 @@ export const appRoutes: Route[] = [
                         ]
                     },
                     { path: 'resource', loadChildren: () => import('app/modules/financial/resource/resource.module').then(m => m.ResourceModule) },
-                    { path: 'category', loadChildren: () => import('app/modules/financial/category/category.module').then(m => m.CategoryModule) },
+                    { path: 'category', loadChildren: () => import('app/modules/financial/account-chart/account-chart.module').then(m => m.AccountChartModule) },
                     {
                         path: 'transactions', children: [{ path: 'revenue', loadChildren: () => import('app/modules/financial/transactions/revenue/revenue.module').then(m => m.RevenueModule) },
                         { path: 'expense', loadChildren: () => import('app/modules/financial/transactions/expense/expense.module').then(m => m.ExpenseModule) }]

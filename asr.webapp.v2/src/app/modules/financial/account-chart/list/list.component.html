@@ -24,7 +24,7 @@
                 <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
                 <input [autocomplete]="'off'" [formControl]="searchInputControl" matInput [autocomplete]="'off'"
                     [placeholder]="t('common.search')">
-                <mat-icon matPostfix (click)="categoriesAdvancedSearch.toggle()" [matTooltip]="t('common.advancedSearch')"
+                <mat-icon matPostfix (click)="accountChartsAdvancedSearch.toggle()" [matTooltip]="t('common.advancedSearch')"
                     class="cursor-pointer">
                     settings
                 </mat-icon>
@@ -40,16 +40,16 @@
 
         <!-- Products list -->
         <div class="flex flex-col flex-auto sm:mb-18 overflow-hidden sm:overflow-y-auto">
-            <ng-container *ngIf="(categories$ | async) as categories">
-                <ng-container *ngIf="categories.length > 0; else noCategories">
+            <ng-container *ngIf="(accountCharts$ | async) as accountCharts">
+                <ng-container *ngIf="accountCharts.length > 0; else noAccountCharts">
                     <div class="grid" id="section-to-print">
                         <!-- Header -->
-                        <div class="categories-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
+                        <div class="account-charts-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5"
                             matSort matSortDisableClear>
-                            <div [mat-sort-header]="'financialCategoryCode'">
+                            <div [mat-sort-header]="'accountChartCode'">
                                 {{ t('common.code') }}
                             </div>
-                            <div [mat-sort-header]="'financialCategoryName'">{{ t('common.name') }}</div>
+                            <div [mat-sort-header]="'accountChartName'">{{ t('common.name') }}</div>
 
                             <div class="hidden lg:block print:block" [mat-sort-header]="'parentCode'">
                                 {{ t('financial.parentCode') }}
@@ -63,48 +63,41 @@
                             <div class="print:hidden">{{ t('common.more') }}</div>
                         </div>
                         <!-- Rows -->
-                        <ng-container *ngIf="(categories$ | async) as categories">
-                            <ng-container *ngFor="let category of categories; trackBy: trackByFn">
-                                <div class="categories-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b">
+                        <ng-container *ngIf="(accountCharts$ | async) as accountCharts">
+                            <ng-container *ngFor="let accountChart of accountCharts; trackBy: trackByFn">
+                                <div class="account-charts-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b">
 
                                     <!-- SKU -->
                                     <div class="truncate">
-                                        {{category.financialCategoryCode}}
+                                        {{accountChart.accountChartCode}}
                                     </div>
 
                                     <!-- Name -->
                                     <div class="lg:flex items-center">
-                                        {{category.financialCategoryName}}
+                                        {{accountChart.accountChartName}}
                                     </div>
 
                                     <!-- Stock -->
                                     <div class="hidden lg:flex items-center print:block">
-                                        {{category.parentCode}}
+                                        {{accountChart.parentCode}}
                                     </div>
 
                                     <div class="hidden lg:flex items-center print:block">
-                                        {{category.parentName}}
+                                        {{accountChart.parentName}}
                                     </div>
 
 
                                     <div class="hidden lg:block print:block">
                                         <p style="width: fit-content;" class="p-1 rounded block truncate text-white"
-                                            [ngClass]="category.statusColor">{{category.statusDescription}}</p>
+                                            [ngClass]="accountChart.statusColor">{{accountChart.statusDescription}}</p>
                                     </div>
                                     <div class="print:hidden">
                                         <div class="flex items-center">
                                             <ng-container>
                                                 <button mat-icon-button class="info" [color]="'primary'"
-                                                    (click)="$event.stopPropagation(); selectedInfoRow = category"
+                                                    (click)="$event.stopPropagation(); selectedInfoRow = accountChart"
                                                     [matMenuTriggerFor]="infoMenu">
                                                     <mat-icon class="icon-size-5">info</mat-icon>
-                                                </button>
-                                            </ng-container>
-                                            <ng-container fxLayout="row">
-                                                <button mat-icon-button
-                                                    (click)="$event.stopPropagation(); selectedInfoRow = category"
-                                                    [matMenuTriggerFor]="contextMenu">
-                                                    <mat-icon color="accent">more_vert</mat-icon>
                                                 </button>
                                             </ng-container>
 
@@ -120,7 +113,7 @@
                     <mat-paginator
                         class="sm:absolute sm:inset-x-0 sm:bottom-0 border-b sm:border-t sm:border-b-0 z-10 bg-gray-50 dark:bg-transparent"
                         [ngClass]="{'pointer-events-none': isLoading}" [length]="pagination.length"
-                        [pageIndex]="pagination.pageIndex" (page)="handlePageEvent($event)"
+                        [pageIndex]="pagination.pageNumber - 1" (page)="handlePageEvent($event)"
                         [pageSize]="pagination.pageSize" [pageSizeOptions]="[50, 100,200,300,400]"
                         [showFirstLastButtons]="true">
                     </mat-paginator>
@@ -129,7 +122,7 @@
             </ng-container>
         </div>
     </div>
-    <ng-template #noCategories>
+    <ng-template #noAccountCharts>
         <div class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">{{ t('financial.noCategories') }}
         </div>
     </ng-template>
@@ -137,32 +130,21 @@
 </div>
 <mat-menu #infoMenu="matMenu" xPosition="before">
     <div class="p-2">
-        <h4 class="mb-1 text-gray-900 font-bold text-xl	">{{selectedInfoRow.financialCategoryName}}</h4>
+        <h4 class="mb-1 text-gray-900 font-bold text-xl	">{{selectedInfoRow.accountChartName}}</h4>
         <div class="flex flex-col mb-1">
             <span class="text-gray-400 text-sm">{{ t('common.creatorUserName') }}</span>
-            <p>{{selectedInfoRow.registerUserName}}</p>
-        </div>
-        <div class="flex flex-col mb-1">
-            <span class="text-gray-400 text-sm">{{ t('common.creatorIP') }}</span>
-            <p class="text-gray-900">{{selectedInfoRow.clientIP}}</p>
+            <p>{{selectedInfoRow.userFullName}}</p>
         </div>
         <div class="flex flex-col mb-1">
             <span class="text-gray-400 text-sm">{{ t('common.updateDateTime') }}</span>
-            <p class="text-gray-900">{{selectedInfoRow.localChangeDate + ' ' + selectedInfoRow.localChangeTime}}</p>
+            <p class="text-gray-900">{{selectedInfoRow.changeDate | date:'yyyy-MM-dd HH:mm'}}</p>
         </div>
     </div>
 
 </mat-menu>
 
-<mat-menu #contextMenu="matMenu">
-    <ng-template matMenuContent>
-        <button mat-menu-item [routerLink]="['../details',selectedInfoRow.financialCategoryId]">{{ t('common.edit') }}
-        </button>
-    </ng-template>
-</mat-menu>
-
 <fuse-drawer class="w-screen min-w-screen sm:w-80 sm:min-w-80" fixed transparentOverlay [mode]="'over'"
-    [name]="'categoriesAdvancedSearch'" [position]="'left'" #categoriesAdvancedSearch>
+    [name]="'accountChartsAdvancedSearch'" [position]="'left'" #accountChartsAdvancedSearch>
     <div class="flex flex-col w-full" fuseScrollbar>
         <div class="bg-gray-900 relative h-14 max-h-14 z-10 w-full">
             <div class="inset-y-0 left-0 flex w-1/2">
@@ -173,7 +155,7 @@
             </div>
             <div class="inline-block">
                 <mat-icon class="mt-3 mr-2 absolute inset-y-0 right-0 cursor-pointer text-white"
-                    (click)="categoriesAdvancedSearch.toggle()">close
+                    (click)="accountChartsAdvancedSearch.toggle()">close
                 </mat-icon>
             </div>
         </div>
@@ -185,7 +167,7 @@
                     <div>
                         <mat-form-field appearance="outline" class="w-full">
                             <mat-label>{{ t('common.status') }}</mat-label>
-                            <mat-select [(value)]="categoryInfo.statusIdList" [placeholder]="t('common.status')"
+                            <mat-select [(value)]="accountChartFilter.statusIdList" [placeholder]="t('common.status')"
                                 formControlName="status" multiple>
                                 <mat-option (onSelectionChange)="setStatusValue($event)" *ngFor="let status of statuses"
                                     [value]="status.statusId" [checked]="status.isDefault===1">
@@ -209,27 +191,10 @@
                             </mat-icon>
                         </mat-form-field>
                     </div>
-                    <div>
-                        <mat-form-field appearance="outline" class="w-full">
-                            <mat-label>{{ t('financial.parentCode') }}%</mat-label>
-                            <input [autocomplete]="'off'" matInput value="" formControlName="parentCode" maxlength="50">
-                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
-                            </mat-icon>
-                        </mat-form-field>
-                    </div>
-                    <div>
-                        <mat-form-field appearance="outline" class="w-full">
-                            <mat-label>{{ t('financial.parentName') }}%</mat-label>
-                            <input [autocomplete]="'off'" matInput value="" formControlName="parentName" maxlength="50">
-                            <mat-icon matSuffix class="secondary-text" svgIcon="mat_outline:drive_file_rename_outline">
-                            </mat-icon>
-                        </mat-form-field>
-                    </div>
-
                 </div>
                 <div class="flex flex-row w-full">
                     <div class="py-2 w-1/2 pl-10 items-center align-middle">
-                        <button mat-raised-button style="color: darkgreen" (click)="categoriesSearch()">{{ t('common.apply') }}
+                        <button mat-raised-button style="color: darkgreen" (click)="accountChartsSearch()">{{ t('common.apply') }}
                         </button>
                     </div>
                     <div class="py-2 w-1/2 items-center align-middle">

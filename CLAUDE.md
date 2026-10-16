@@ -48,3 +48,21 @@ in this system. There's already an empty `configuration/supplier/` folder reserv
 the eventual rename. Don't rename unprompted — it touches a lot of surface area — but
 be aware of this when working on supplier/purchase-invoice features so naming decisions
 in new code aren't built on the wrong term without discussion.
+
+# Project Instructions
+
+## Efficiency
+- Read only files relevant to the current task.
+- Search for symbols before opening large files.
+- Do not explore unrelated directories.
+- Prefer minimal changes over broad refactoring.
+- Do not repeat unchanged code in responses.
+- Summarize results in 3-5 bullets.
+- Run only relevant tests.
+- Ask before expanding the task scope.
+
+## Workflow
+- For complex tasks, propose a short plan first.
+- Reuse existing project patterns.
+- Do not modify unrelated files.
+- Report changed files and remaining issues.

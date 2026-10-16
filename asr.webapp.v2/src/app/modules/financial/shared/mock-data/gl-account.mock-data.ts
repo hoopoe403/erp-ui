@@ -1,6 +1,6 @@
-// Mirrors the shape of FinancialCategory (financial/category/category.types.ts),
+// Mirrors the shape of the old FinancialCategory type, kept by the purchase invoice form,
 // flattened to leaf accounts only. Dev/demo seed data — real mode reuses
-// FinancialCategoryService.getCategoryTree() flattened the same way.
+// GlAccountLookupService, which maps the account chart dropdown (drp/list) to this shape.
 export interface MockGlAccount {
     financialCategoryId: number;
     financialCategoryCode: string;

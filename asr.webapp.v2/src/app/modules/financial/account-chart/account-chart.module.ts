@@ -14,10 +14,10 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FuseFindByKeyPipeModule } from '@fuse/pipes/find-by-key';
 import { SharedModule } from 'app/shared/shared.module';
-import { CategoryRoutes } from './category.routing';
-import { CategoryComponent } from './category.component';
-import { CategroyDetailsComponent } from './details/details.component';
-import { CategoryListComponent } from './list/list.component';
+import { AccountChartRoutes } from './account-chart.routing';
+import { AccountChartComponent } from './account-chart.component';
+import { AccountChartDetailsComponent } from './details/details.component';
+import { AccountChartListComponent } from './list/list.component';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatMenuModule } from "@angular/material/menu";
 import { FuseAlertModule } from '@fuse/components/alert';
@@ -31,9 +31,9 @@ import { MatTreeModule } from "@angular/material/tree";
 import { MatCheckboxModule } from '@angular/material/checkbox';
 @NgModule({
     declarations: [
-        CategoryComponent,
-        CategroyDetailsComponent,
-        CategoryListComponent
+        AccountChartComponent,
+        AccountChartDetailsComponent,
+        AccountChartListComponent
     ],
     imports: [
         MatCheckboxModule,
@@ -41,7 +41,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
         NgxMatSelectSearchModule,
         NgxJDatePickerModule,
         NgxPrintModule,
-        RouterModule.forChild(CategoryRoutes),
+        RouterModule.forChild(AccountChartRoutes),
         MatButtonModule,
         MatFormFieldModule,
         MatIconModule,
@@ -64,5 +64,5 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
         MatAutocompleteModule
     ]
 })
-export class CategoryModule {
+export class AccountChartModule {
 }

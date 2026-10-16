@@ -2,23 +2,23 @@ import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, E
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { SelectionModel } from '@angular/cdk/collections';
-import { Subject, merge, Observable, forkJoin } from 'rxjs';
+import { Subject, merge, Observable } from 'rxjs';
 import { debounceTime, switchMap, map } from 'rxjs/operators';
 import { takeUntil } from 'rxjs/operators';
 import { fuseAnimations } from "../../../../../@fuse/animations";
-import { FinancialCategoryService } from "../category.service";
-import { FinancialCategory } from "../category.types";
+import { AccountChartService } from "../account-chart.service";
+import { AccountChart, AccountChartFilter, AccountChartListResponse } from "../account-chart.types";
 import { Paging } from 'app/core/type/paging/paging.type';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatMenuTrigger } from '@angular/material/menu';
 
 @Component({
-    selector: 'categories-list',
+    selector: 'account-chart-list',
     templateUrl: './list.component.html',
     styles: [
         /* language=SCSS */
         `
-            .categories-grid {
+            .account-charts-grid {
                 grid-template-columns:112px auto 40px;
 
                 @screen sm {
@@ -42,20 +42,18 @@ import { MatMenuTrigger } from '@angular/material/menu';
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CategoryListComponent implements OnInit, OnDestroy {
+export class AccountChartListComponent implements OnInit, OnDestroy {
     protected _onDestroy = new Subject<void>();
     @ViewChild(MatPaginator) private _paginator: MatPaginator;
     @ViewChild(MatSort) private _sort: MatSort;
     pagination: Paging;
     selection = new SelectionModel<any>(true, []);
-    categoryInfo: FinancialCategory;
+    accountChartFilter: AccountChartFilter = { statusIdList: [] };
     statuses = [];
     defaultStatuses = [];
     frmAdvancedSearch = new FormGroup({
         code: new FormControl(),
         name: new FormControl(),
-        parentCode: new FormControl(),
-        parentName: new FormControl(),
         status: new FormControl(),
     });
 
@@ -68,22 +66,19 @@ export class CategoryListComponent implements OnInit, OnDestroy {
     private _unsubscribeAll: Subject<any> = new Subject<any>();
     isLoading: boolean;
 
-    constructor(private service: FinancialCategoryService,
+    constructor(private service: AccountChartService,
         private cdr: ChangeDetectorRef,
         private _changeDetectorRef: ChangeDetectorRef) {
         //this._unsubscribeAll = new Subject();
-
-        this.categoryInfo = new FinancialCategory;
     }
 
     // -----------------------------------------------------------------------------------------------------
     // @ Lifecycle hooks
     // -----------------------------------------------------------------------------------------------------
     isOverlayOpen: boolean = true;
-    selectedInfoRow: FinancialCategory = new FinancialCategory();
+    selectedInfoRow: AccountChart = {} as AccountChart;
 
-    categories$: Observable<FinancialCategory[]> = new Observable<FinancialCategory[]>();
-    categories: Array<FinancialCategory> = [];
+    accountCharts$: Observable<AccountChart[]> = new Observable<AccountChart[]>();
     /**
      * On init
      */
@@ -100,15 +95,13 @@ export class CategoryListComponent implements OnInit, OnDestroy {
                 this._changeDetectorRef.markForCheck();
             });
 
-        //this.categories$ = this.service.categories$;
-
         this.searchInputControl.valueChanges
             .pipe(
                 takeUntil(this._unsubscribeAll),
                 debounceTime(300),
                 switchMap((query) => {
                     this.isLoading = true;
-                    return this.service.getCategories(this.categoryInfo);
+                    return this.service.getAccountCharts(this.accountChartFilter);
                 }),
                 map(() => {
                     this.isLoading = false;
@@ -123,7 +116,7 @@ export class CategoryListComponent implements OnInit, OnDestroy {
             // Set the initial sort
             this._sort.sort({
                 id: '',
-                start: 'desc',
+                start: 'asc',
                 disableClear: true
             });
 
@@ -146,8 +139,8 @@ export class CategoryListComponent implements OnInit, OnDestroy {
                     this.isLoading = true;
                     this.pagination.order = this._sort.direction;
                     this.pagination.sort = this._sort.active;
-                    this.categoryInfo.page = this.pagination;
-                    return this.service.getCategories(this.categoryInfo);
+                    this.accountChartFilter.page = this.pagination;
+                    return this.service.getAccountCharts(this.accountChartFilter);
                 }),
                 map(() => {
                     this.isLoading = false;
@@ -163,41 +156,37 @@ export class CategoryListComponent implements OnInit, OnDestroy {
         // Unsubscribe from all subscriptions
         this._unsubscribeAll.next();
         this._unsubscribeAll.complete();
-        this.service.disposeCategories$();
+        this.service.disposeAccountCharts$();
         this.service.disponsePaginator$();
 
     }
-    private setForkJoinValues(values: Array<any>): void {
-        this.statuses = values[0].data;
+
+    /** Loads the statuses first: the first list call filters on the statuses flagged as default. */
+    private loadData(): void {
+        this.service.getAccountChartStatuses().pipe(
+            switchMap((statuses: any[]) => {
+                this.setStatuses(statuses);
+                return this.getAccountChartsOnInit();
+            })
+        ).subscribe(() => {
+            this.accountCharts$ = this.service.accountCharts$;
+            this.isLoading = false;
+            this._changeDetectorRef.markForCheck();
+            this.cdr.detectChanges();
+            this.setPaginatorAndSort();
+        });
+    }
+
+    private setStatuses(statuses: any[]): void {
+        this.statuses = statuses;
         this.defaultStatuses = [];
         this.statuses.forEach(element => {
             if (element.isDefault === 1)
                 this.defaultStatuses.push(element.statusId);
         });
         this.frmAdvancedSearch.controls["status"].setValue(this.defaultStatuses);
-        this.categoryInfo.statusIdList = this.defaultStatuses;
-        this.categories = values[1].data.categories;
-        this.categories$ = this.service.categories$;
-        this._changeDetectorRef.markForCheck();
-        this.cdr.detectChanges();
-        this.setPaginatorAndSort();
+        this.accountChartFilter.statusIdList = this.defaultStatuses;
     }
-    private loadData(): void {
-        forkJoin(
-            this.getStatuses(),
-            this.getCategoriesOnInit(),
-        ).subscribe(res => {
-            this.setForkJoinValues(res);
-            this.isLoading = false;
-            this.cdr.detectChanges();
-        });
-    }
-
-    private getStatuses(): Observable<any> {
-        return this.service.getStatuses();
-    }
-
-
 
     setStatusValue(event: {
         isUserInput: any;
@@ -206,64 +195,59 @@ export class CategoryListComponent implements OnInit, OnDestroy {
 
         if (event.isUserInput) {
             if (event.source.value != 0 && event.source.selected) {
-                this.categoryInfo.statusIdList.push(event.source.value);
+                this.accountChartFilter.statusIdList.push(event.source.value);
 
             }
             else if (event.source.value != 0 && !event.source.selected) {
-                const index: number = this.categoryInfo.statusIdList.indexOf(event.source.value);
+                const index: number = this.accountChartFilter.statusIdList.indexOf(event.source.value);
                 if (index !== -1)
-                    this.categoryInfo.statusIdList.splice(index, 1);
-                this.frmAdvancedSearch.controls["status"].setValue(this.categoryInfo.statusIdList);
+                    this.accountChartFilter.statusIdList.splice(index, 1);
+                this.frmAdvancedSearch.controls["status"].setValue(this.accountChartFilter.statusIdList);
             }
         }
 
 
     }
-    private getCategories(categoryInfo: FinancialCategory) {
+    private getAccountCharts(accountChartFilter: AccountChartFilter) {
         this.isLoading = true;
-        this.service.getCategories(categoryInfo)
+        this.service.getAccountCharts(accountChartFilter)
             .pipe(takeUntil(this._unsubscribeAll))
-            .subscribe((categories: any) => {
-                this.categories = categories.data.categories;
-                this.categories$ = this.service.categories$;
+            .subscribe(() => {
+                this.accountCharts$ = this.service.accountCharts$;
                 this._changeDetectorRef.markForCheck();
                 this.cdr.detectChanges();
                 this.isLoading = false;
             });
     }
 
-    private getCategoriesOnInit(): Observable<any> {
+    private getAccountChartsOnInit(): Observable<AccountChartListResponse> {
         this.pagination = new Paging();
         this.pagination.flag = true;
         this.pagination.length = 0;
-        this.pagination.order = 'desc';
+        // No sort column + ascending = the backend's default FULL_CODE order: parents before their children.
+        this.pagination.order = 'asc';
         this.pagination.pageNumber = 1;
         this.pagination.pageSize = 100;
         this.pagination.sort = '';
-        this.categoryInfo.page = this.pagination;
-        return this.service.getCategoriesInOnInit(this.categoryInfo);
+        this.accountChartFilter.page = this.pagination;
+        return this.service.getAccountCharts(this.accountChartFilter);
     }
-    public categoriesSearch() {
+    public accountChartsSearch() {
 
-        // this.expenseInfo.financialCategoryId = this.selectedCat;
-        this.categoryInfo.financialCategoryCode = this.frmAdvancedSearch.controls["code"].value;
-        this.categoryInfo.financialCategoryName = this.frmAdvancedSearch.controls["name"].value;
-        this.categoryInfo.parentCode = this.frmAdvancedSearch.controls["parentCode"].value;
-        this.categoryInfo.parentName = this.frmAdvancedSearch.controls["parentName"].value;
-        this.categoryInfo.statusIdList = this.frmAdvancedSearch.controls["status"].value;
+        this.accountChartFilter.accountChartCode = this.frmAdvancedSearch.controls["code"].value;
+        this.accountChartFilter.accountChartName = this.frmAdvancedSearch.controls["name"].value;
+        this.accountChartFilter.statusIdList = this.frmAdvancedSearch.controls["status"].value;
         this.pagination.flag = true;
         this.pagination.pageNumber = 1;
         this.pagination.length = 0;
-        this.categoryInfo.page = this.pagination;
-        this.getCategories(this.categoryInfo);
+        this.accountChartFilter.page = this.pagination;
+        this.getAccountCharts(this.accountChartFilter);
     }
 
 
     public resetAdvancedSearch() {
         this.frmAdvancedSearch.controls["code"].setValue(null);
         this.frmAdvancedSearch.controls["name"].setValue(null);
-        this.frmAdvancedSearch.controls["parentCode"].setValue(null);
-        this.frmAdvancedSearch.controls["parentName"].setValue(null);
         this.frmAdvancedSearch.controls["status"].setValue(this.defaultStatuses);
 
     }
@@ -276,9 +260,7 @@ export class CategoryListComponent implements OnInit, OnDestroy {
         this.pagination.flag = false;
     }
     trackByFn(index: number, item: any): any {
-        return item.id || index;
+        return item.accountChartId || index;
     }
 
 }
-
-

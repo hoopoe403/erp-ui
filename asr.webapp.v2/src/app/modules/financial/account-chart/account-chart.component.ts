@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
 
 @Component({
-    selector: 'category',
-    templateUrl: './category.component.html',
+    selector: 'account-chart',
+    templateUrl: './account-chart.component.html',
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CategoryComponent {
+export class AccountChartComponent {
     /**
      * Constructor
      */

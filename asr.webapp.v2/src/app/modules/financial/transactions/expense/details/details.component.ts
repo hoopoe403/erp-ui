@@ -11,7 +11,6 @@ import { map, startWith } from 'rxjs/operators';
 import { OpResult } from 'app/core/type/result/result.types';
 import { ActivatedRoute } from '@angular/router';
 import { MatMenuTrigger } from '@angular/material/menu';
-import { FinancialCategory } from 'app/modules/financial/category/category.types';
 import { fuseAnimations } from '@fuse/animations';
 import { FinancialResource, FinancialResourceDetail } from 'app/modules/financial/resource/resource.types';
 
@@ -31,7 +30,7 @@ export class ExpenseDetailsComponent implements OnInit, OnDestroy {
     selectButtonText: string = 'Select';
     financialResourceDetailFilterValue: string = '';
     menuArray = [];
-    financialCategories: Array<FinancialCategory>;
+    financialCategories: Array<any>;
     financialResourceDetails: Array<FinancialResourceDetail>;
     financialResourceDetails$: Array<FinancialResourceDetail>;
     financialResourceDetailInfo: FinancialResourceDetail;

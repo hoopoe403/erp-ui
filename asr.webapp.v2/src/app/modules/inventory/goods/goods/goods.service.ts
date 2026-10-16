@@ -177,8 +177,8 @@ export class GoodsService {
     }
 
     /**
-     * The active accounts of the chart of accounts. This endpoint has no {succeed, data} envelope: the body
-     * is the list itself, and a failure is an HTTP error.
+     * The accounts a goods can use: active leaf accounts of the chart of accounts (the backend rejects any
+     * other). This endpoint has no {succeed, data} envelope: the body is the list itself, and a failure is an HTTP error.
      */
     getAccounts(): Observable<AccountOption[]> {
         return this._httpClient.get<AccountOption[]>(ApiHelperService.BASE_URL + 'financial/accountChart/drp/list');
