@@ -29,6 +29,7 @@ import { FuseDrawerModule } from '@fuse/components/drawer';
 import { NgxPrintModule } from 'ngx-print';
 import { MatTreeModule } from "@angular/material/tree";
 import { UnitPropertiesDialogModule } from 'app/modules/configuration/shared/unit-properties-dialog/unit-properties-dialog.module';
+import { LookupSelectModule } from 'app/modules/financial/shared/lookup-select/lookup-select.module';
 
 @NgModule({
     declarations: [
@@ -60,7 +61,8 @@ import { UnitPropertiesDialogModule } from 'app/modules/configuration/shared/uni
         MatCheckboxModule,
         FuseAlertModule,
         FuseScrollbarModule, FuseDrawerModule, MatTreeModule,
-        UnitPropertiesDialogModule
+        UnitPropertiesDialogModule,
+        LookupSelectModule
     ]
 })
 export class GoodsModule {

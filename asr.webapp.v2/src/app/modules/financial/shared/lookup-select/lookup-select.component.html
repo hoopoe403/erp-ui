@@ -1,7 +1,7 @@
-<mat-form-field appearance="legacy" class="w-full">
+<mat-form-field [appearance]="appearance" class="w-full">
     <mat-label *ngIf="label">{{label}}</mat-label>
     <input matInput [formControl]="searchCtrl" [placeholder]="placeholder" [matAutocomplete]="lookupPanel"
-        [required]="required" [autocomplete]="'off'" (blur)="onBlur()">
+        [required]="required" [autocomplete]="'off'" (blur)="onBlur()" [errorStateMatcher]="errorStateMatcher">
     <mat-progress-spinner *ngIf="isLoading" matSuffix diameter="16" mode="indeterminate"></mat-progress-spinner>
     <button *ngIf="searchCtrl.value && !isLoading" matSuffix mat-icon-button type="button"
         matTooltip="Clear selection" (click)="clear($event)" tabindex="-1">
@@ -29,6 +29,7 @@
             </mat-option>
         </ng-container>
     </mat-autocomplete>
+    <mat-error *ngIf="errorMessage">{{errorMessage}}</mat-error>
 </mat-form-field>
 
 <style>

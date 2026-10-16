@@ -20,6 +20,8 @@ export class Goods {
   dimensionsUnitName: string;
   materialList: Array<number>;
   unitList: Array<GoodsUnit>;
+  /** The goods' account in the chart of accounts. */
+  accountChartId: number;
   orderDeadline: number;
   criticalPoint: number;
   measurementMetricId: number;
@@ -60,6 +62,13 @@ export interface GoodsUnit {
   unitCode?: string;
   isPrimary: boolean;
   conversionRate: number;
+}
+
+/** An active account from the chart of accounts, as its dropdown endpoint returns it. */
+export interface AccountOption {
+  accountChartId: number;
+  accountChartCode: string;
+  accountChartName: string;
 }
 
 export class OrgProducts {

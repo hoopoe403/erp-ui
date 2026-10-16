@@ -9,7 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import { catchError, map, takeUntil, switchMap } from 'rxjs/operators';
 import { BehaviorSubject, Observable, Subject, merge, forkJoin, of } from 'rxjs';
 import { FuseAlertService } from '@fuse/components/alert';
-import { Goods } from '../goods.types';
+import { AccountOption, Goods } from '../goods.types';
 import { HierarchicalKeyValue, Measure, KeyValue, GoodsMeasure } from 'app/core/type/key-value/key-value.type';
 import { Units } from 'app/modules/configuration/measurement/unit/unit.types';
 import { Paging } from 'app/core/type/paging/paging.type';
@@ -137,6 +137,7 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
     goodsAdSearchInfo: Goods;
     goodsInfo: Goods = new Goods();
     organizations: Array<{ key: number, value: string }> = [];
+    accounts: AccountOption[] = [];
     goodsMixtureInfo: Goods = new Goods();
     productInfo: Product = new Product();
     pageType: string;
@@ -334,7 +335,8 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
             this.getUnits(),
             this.getBrands(),
             this.getProductOnInit(),
-            this.goodsService.getOrganizations()
+            this.goodsService.getOrganizations(),
+            this.getAccounts()
         ).subscribe(res => {
             this.setForkJoinValues(res);
             this.isLoading = false;
@@ -381,6 +383,8 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
         if (this.organizations.length === 1)
             this.goodsInfo.organizationId = this.organizations[0].key;
 
+        this.accounts = values[8];
+
         this.setPaginatorAndSort();
         this.setProductPaginatorAndSort();
         this.setValues();
@@ -416,6 +420,7 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
 
         this.brands = values[7].data;
         this.organizations = values[8].data || [];
+        this.accounts = values[9];
 
         this.setPaginatorAndSort();
         this.setProductPaginatorAndSort();
@@ -441,7 +446,8 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
             this.getNames(),
             this.getUnits(),
             this.getBrands(),
-            this.goodsService.getOrganizations()
+            this.goodsService.getOrganizations(),
+            this.getAccounts()
         ).subscribe(res => {
             this.setForkJoinValuesEditMode(res);
             this.isLoading = false;
@@ -452,6 +458,14 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
 
 
     }
+    /**
+     * The accounts the goods can be assigned to. A failure leaves the list empty instead of failing the whole
+     * page load; the account is required, so the goods just can't be saved until the accounts load.
+     */
+    private getAccounts(): Observable<AccountOption[]> {
+        return this.goodsService.getAccounts().pipe(catchError(() => of([])));
+    }
+
     private initialPaginations() {
         this.pagination = new Paging();
         this.pagination.flag = true;
@@ -572,6 +586,7 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
             criticalPoint: [this.goodsInfo.criticalPoint],
             reductionTiming: [this.goodsInfo.reductionTimingId],
             organization: [this.goodsInfo.organizationId],
+            account: [this.goodsInfo.accountChartId, Validators.required],
 
         });
     }
@@ -924,6 +939,7 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
         this.frmGoods.controls['cover'].setValue(this.goodsInfo.hasGoodsCover);
         this.frmGoods.controls['reductionTiming'].setValue(this.goodsInfo.reductionTimingId);
         this.frmGoods.controls['organization'].setValue(this.goodsInfo.organizationId);
+        this.frmGoods.controls['account'].setValue(this.goodsInfo.accountChartId ?? null);
         this.setGoodsMixture();
         this.setGoodsProducts();
 
@@ -1554,7 +1570,7 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
     private readonly goodsFieldLabels: { [control: string]: string } = {
         name: 'Name', code: 'Code', cover: 'Has Cover', orderDeadline: 'Order Deadline',
         criticalPoint: 'Critical Point', technicalNumber: 'Technical Number', status: 'Status',
-        reductionTiming: 'Reduction Timing', organization: 'Organization'
+        reductionTiming: 'Reduction Timing', organization: 'Organization', account: 'Account'
     };
 
     /** Checks every tab and names each missing field, so the user knows exactly what to fill. */
@@ -1806,6 +1822,7 @@ export class GoodsDetailsComponent implements OnInit, OnDestroy, AfterViewInit {
         this.goodsInfo.hasGoodsCover = this.frmGoods.controls['cover'].value;
         this.goodsInfo.reductionTimingId = this.frmGoods.controls['reductionTiming'].value;
         this.goodsInfo.organizationId = this.frmGoods.controls['organization'].value;
+        this.goodsInfo.accountChartId = this.frmGoods.controls['account'].value;
         this.goodsInfo.language = 'EN';
 
 

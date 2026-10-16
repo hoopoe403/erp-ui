@@ -2,15 +2,20 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
+    DoCheck,
     EventEmitter,
     forwardRef,
+    Injector,
     Input,
     OnChanges,
+    OnInit,
     Output,
     SimpleChanges,
     ViewEncapsulation
 } from '@angular/core';
-import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, NgControl } from '@angular/forms';
+import { ErrorStateMatcher } from '@angular/material/core';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 
@@ -36,7 +41,7 @@ import { map, startWith } from 'rxjs/operators';
         }
     ]
 })
-export class LookupSelectComponent implements ControlValueAccessor, OnChanges {
+export class LookupSelectComponent implements ControlValueAccessor, OnChanges, OnInit, DoCheck {
     @Input() options: any[] = [];
     @Input() idKey = 'id';
     @Input() codeKey: string | null = 'code';
@@ -56,6 +61,13 @@ export class LookupSelectComponent implements ControlValueAccessor, OnChanges {
      *  list (e.g. every vendor) from opening as one huge dropdown. Typing
      *  searches the full list regardless of this cap. */
     @Input() defaultVisibleCount = 5;
+    /** The field's look. The default ('legacy', underline only) is what the invoice line tables use; forms
+     *  whose other fields are outlined pass 'outline' to match them. */
+    @Input() appearance: MatFormFieldAppearance = 'legacy';
+    /** When given, the field turns red and shows this text once its form control is invalid and touched -
+     *  like the other fields of a form. Left empty, the field never shows an error state (the invoice
+     *  line tables mark their invalid cells themselves). */
+    @Input() errorMessage: string | null = null;
 
     @Output() optionSelected = new EventEmitter<any>();
     @Output() addRequested = new EventEmitter<string>();
@@ -66,13 +78,20 @@ export class LookupSelectComponent implements ControlValueAccessor, OnChanges {
     filteredOptions$: Observable<any[]>;
 
     private _selectedOption: any = null;
-    /** The id last passed to writeValue(), even when no match was found in
-     *  options at the time (e.g. options is still `[]`, loading over HTTP) -
-     *  lets ngOnChanges retry the match once options actually arrives. */
-    private _pendingId: any = null;
+    /** The control's current id - from writeValue() or the user's pick - even when
+     *  options has no match for it yet (e.g. options is still `[]`, loading over
+     *  HTTP). Every time options changes, the selection is resolved from it again. */
+    private _value: any = null;
     private _onChange: (value: any) => void = () => { };
     private _onTouched: () => void = () => { };
     disabled = false;
+
+    /** The outer form control (formControlName) - read for the error state only. */
+    private _ngControl: NgControl | null = null;
+    private _lastErrorState = false;
+    readonly errorStateMatcher: ErrorStateMatcher = {
+        isErrorState: () => this._isErrorState()
+    };
 
     // `options` is almost always still `[]` when this component first renders — the
     // real data (vendors, GL accounts, ...) loads over HTTP a moment later. The old
@@ -82,7 +101,7 @@ export class LookupSelectComponent implements ControlValueAccessor, OnChanges {
     // This subject gives `options` arriving/changing its own trigger to re-filter.
     private _optionsChanged = new BehaviorSubject<void>(undefined);
 
-    constructor(private _cdr: ChangeDetectorRef) {
+    constructor(private _cdr: ChangeDetectorRef, private _injector: Injector) {
         this.filteredOptions$ = combineLatest([
             this.searchCtrl.valueChanges.pipe(startWith('')),
             this._optionsChanged
@@ -91,25 +110,30 @@ export class LookupSelectComponent implements ControlValueAccessor, OnChanges {
         );
     }
 
+    ngOnInit(): void {
+        // Read lazily: this component is the control's value accessor, so the
+        // NgControl can't be a constructor dependency (it would be circular).
+        this._ngControl = this._injector.get(NgControl, null);
+    }
+
+    ngDoCheck(): void {
+        // markAllAsTouched() on the parent form emits no event, and this component
+        // is OnPush - re-render whenever the outer control's error state flips.
+        const errorState = this._isErrorState();
+        if (errorState !== this._lastErrorState) {
+            this._lastErrorState = errorState;
+            this._cdr.markForCheck();
+        }
+    }
+
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['options']) {
-            if (this._selectedOption) {
-                // Re-sync display in case the just-selected option's identity changed (e.g. after a quick-add refresh)
-                const match = this.options.find((o) => o[this.idKey] === this._selectedOption[this.idKey]);
-                if (match) {
-                    this._selectedOption = match;
-                }
-            } else if (this._pendingId !== null && this._pendingId !== undefined) {
-                // writeValue() ran before options had loaded (e.g. options is fed by
-                // an async HTTP call and the form's initial value arrived first) - no
-                // match was found then, so the field was left showing blank even
-                // though the control's value was already correct. Retry now that
-                // options has actually arrived.
-                const match = this.options.find((o) => o[this.idKey] === this._pendingId);
-                if (match) {
-                    this._selectedOption = match;
-                    this.searchCtrl.setValue(this._display(match), { emitEvent: false });
-                }
+            // The control's value may have arrived before options did (options is
+            // usually fed by an HTTP call), or options may have been refreshed
+            // (e.g. after a quick-add) - resolve the selection from the value again.
+            // With no value, a search the user is typing is left alone.
+            if (this._hasValue()) {
+                this._resolveSelection();
             }
             this._optionsChanged.next();
         }
@@ -120,15 +144,8 @@ export class LookupSelectComponent implements ControlValueAccessor, OnChanges {
     // ---------------------------------------------------------------------
 
     writeValue(id: any): void {
-        this._pendingId = id;
-        if (id === null || id === undefined) {
-            this._selectedOption = null;
-            this.searchCtrl.setValue('', { emitEvent: false });
-            return;
-        }
-        const match = this.options.find((o) => o[this.idKey] === id);
-        this._selectedOption = match || null;
-        this.searchCtrl.setValue(match ? this._display(match) : '', { emitEvent: false });
+        this._value = id;
+        this._resolveSelection();
     }
 
     registerOnChange(fn: (value: any) => void): void {
@@ -168,7 +185,8 @@ export class LookupSelectComponent implements ControlValueAccessor, OnChanges {
             return;
         }
         this._selectedOption = value;
-        this._onChange(value ? value[this.idKey] : null);
+        this._value = value ? value[this.idKey] : null;
+        this._onChange(this._value);
         this.optionSelected.emit(value);
     }
 
@@ -193,6 +211,7 @@ export class LookupSelectComponent implements ControlValueAccessor, OnChanges {
     clear(event?: Event): void {
         event?.stopPropagation();
         this._selectedOption = null;
+        this._value = null;
         this.searchCtrl.setValue('');
         this._onChange(null);
         this.optionSelected.emit(null);
@@ -202,12 +221,40 @@ export class LookupSelectComponent implements ControlValueAccessor, OnChanges {
      *  are more options than the default cap) — used to show a "type to search
      *  more" hint under the truncated list. */
     get isTruncated(): boolean {
-        return !this._rawSearchText() && this.options.length > this.defaultVisibleCount;
+        return !this._rawSearchText() && this._options().length > this.defaultVisibleCount;
     }
 
     // ---------------------------------------------------------------------
     // Internal
     // ---------------------------------------------------------------------
+
+    private _options(): any[] {
+        return this.options || [];
+    }
+
+    private _hasValue(): boolean {
+        return this._value !== null && this._value !== undefined && this._value !== '';
+    }
+
+    /** Ids are compared as text: the same id can arrive as 5 from one endpoint and "5" from another. */
+    private _sameId(a: any, b: any): boolean {
+        return a !== null && a !== undefined && b !== null && b !== undefined && String(a) === String(b);
+    }
+
+    /** Shows the option matching the current value, or nothing when there is no match (yet). */
+    private _resolveSelection(): void {
+        const match = this._hasValue()
+            ? this._options().find((o) => this._sameId(o[this.idKey], this._value)) || null
+            : null;
+        this._selectedOption = match;
+        this.searchCtrl.setValue(match ? this._display(match) : '', { emitEvent: false });
+        this._cdr.markForCheck();
+    }
+
+    private _isErrorState(): boolean {
+        const control = this._ngControl;
+        return !!this.errorMessage && !!control && !!control.invalid && !!control.touched;
+    }
 
     private _rawSearchText(): string {
         const value = this.searchCtrl.value;
@@ -231,9 +278,9 @@ export class LookupSelectComponent implements ControlValueAccessor, OnChanges {
     private _filter(search: string): any[] {
         const filterValue = (search || '').toLowerCase().trim();
         if (!filterValue) {
-            return this.options.slice(0, this.defaultVisibleCount);
+            return this._options().slice(0, this.defaultVisibleCount);
         }
-        return this.options.filter((option) => {
+        return this._options().filter((option) => {
             const code = this.codeKey ? (option[this.codeKey] || '').toString().toLowerCase() : '';
             const name = (option[this.nameKey] || '').toString().toLowerCase();
             const extra = this.extraKey ? (option[this.extraKey] || '').toString().toLowerCase() : '';

@@ -203,6 +203,16 @@
 
                         </div>
 
+                        <div class="flex flex-row gt-xs:flex-col w-full items-center flex-wrap content-center">
+
+                            <app-lookup-select class="block w-1/2 px-3" formControlName="account" [options]="accounts"
+                                idKey="accountChartId" codeKey="accountChartCode" nameKey="accountChartName"
+                                label="Account" placeholder="Select account..." [required]="true"
+                                appearance="outline" errorMessage="Account is required!">
+                            </app-lookup-select>
+
+                        </div>
+
 
 
 
