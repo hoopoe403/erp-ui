@@ -147,4 +147,14 @@ export class PurchaseInvoiceService {
     getStatuses(): Observable<any[]> {
         return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'drp/statuses');
     }
+
+    /** Goods (id/code/name only) for an item line's "Raw Material" picker. */
+    getGoods(): Observable<any[]> {
+        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'drp/goods');
+    }
+
+    /** The units a goods can be counted in, primary unit first. 404 for an unknown goods. */
+    getGoodsUnits(goodsId: number): Observable<any[]> {
+        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'drp/goods/' + goodsId + '/units');
+    }
 }
