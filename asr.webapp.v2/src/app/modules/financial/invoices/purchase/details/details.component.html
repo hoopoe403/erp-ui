@@ -118,7 +118,7 @@
                             codeKey="ownerCode" nameKey="ownerName" extraKey="currencyAbbreviation" label="Vendor"
                             placeholder="Search vendor..."
                             [showAddOption]="true" addOptionLabel="+ Add new vendor" [required]="true"
-                            (optionSelected)="onVendorSelected($event)" (addRequested)="openContractorRegisterTab()">
+                            (optionSelected)="onVendorSelected($event)" (addRequested)="openVendorRegisterTab()">
                         </app-lookup-select>
 
                         <mat-form-field appearance="legacy" class="fuse-mat-dense w-full">
@@ -126,7 +126,7 @@
                             <input matInput formControlName="creditorCode">
                         </mat-form-field>
 
-                        <!-- Defaults from the selected vendor's Contractor.currencyId
+                        <!-- Defaults from the selected vendor's currencyId
                              (see onVendorSelected()) but stays fully editable. -->
                         <app-lookup-select formControlName="currencyId" [options]="currencies" idKey="currencyId"
                             codeKey="currencyAbbreviation" nameKey="currencyName" label="Currency"
@@ -159,7 +159,7 @@
                             [codeKey]="null" nameKey="name" label="Reviewed By" placeholder="Search reviewer...">
                         </app-lookup-select>
 
-                        <!-- Defaults from the selected vendor's Contractor.paymentTypeId
+                        <!-- Defaults from the selected vendor's paymentTypeId
                              (see onVendorSelected()) but stays fully editable. -->
                         <app-lookup-select formControlName="paymentTypeId" [options]="paymentTypes"
                             idKey="paymentTypeId" [codeKey]="null" nameKey="paymentTypeName" label="Payment Type"
@@ -174,7 +174,8 @@
                         <app-line-items-table [linesFormArray]="lines" [glAccountOptions]="glAccountOptions"
                             [fixedAssetOptions]="fixedAssetOptions" [costCenters]="costCenters"
                             [vatPostingGroups]="vatPostingGroups" [vatProductPostingGroups]="vatProductPostingGroups"
-                            [unitOptions]="unitOptions" [showRequiredHighlight]="reviewValidationAttempted"
+                            [unitOptions]="unitOptions" [rawMaterialOptions]="rawMaterialOptions"
+                            [goodsUnitOptions]="goodsUnitOptions" [showRequiredHighlight]="reviewValidationAttempted"
                             [currencyAbbreviation]="invoiceInfo.currencyAbbreviation" (addRowRequested)="addNewItem()"
                             (removeRowRequested)="removeItem($event)"
                             (addCostCenterRequested)="openAddCostCenterDialog($event.searchText, $event.lineIndex)"

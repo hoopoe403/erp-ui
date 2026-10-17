@@ -184,16 +184,18 @@ export class PurchaseInvoiceService {
         return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'mock/fixed-assets');
     }
 
-    getMockVatPostingGroups(): Observable<any[]> {
-        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'mock/vat-posting-groups');
+    /** Real VAT master data (TBL_VAT_GROUP / TBL_VAT_PRODUCT_GROUP / TBL_VAT_RATE), shared by every invoice type. */
+    getVatGroups(): Observable<any[]> {
+        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + 'financial/invoice/base/vat-groups');
     }
 
-    getMockVatProductPostingGroups(): Observable<any[]> {
-        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'mock/vat-product-posting-groups');
+    getVatProductGroups(): Observable<any[]> {
+        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + 'financial/invoice/base/vat-product-groups');
     }
 
-    getMockVatPostingSetup(): Observable<any[]> {
-        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'mock/vat-posting-setup');
+    /** The rate currently in force for every VAT group x VAT product group combination. */
+    getCurrentVatRates(): Observable<any[]> {
+        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + 'financial/vatRate/drp/current');
     }
 
     /**
@@ -205,6 +207,16 @@ export class PurchaseInvoiceService {
      */
     getUnits(): Observable<any[]> {
         return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'drp/units');
+    }
+
+    /** Goods (id/code/name only) for an item line's "Raw Material" picker. */
+    getGoods(): Observable<any[]> {
+        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'drp/goods');
+    }
+
+    /** The units a goods can be counted in, primary unit first. 404 for an unknown goods. */
+    getGoodsUnits(goodsId: number): Observable<any[]> {
+        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'drp/goods/' + goodsId + '/units');
     }
 
     /** 201 - emits the created unit. */

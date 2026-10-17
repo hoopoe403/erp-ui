@@ -27,7 +27,7 @@ export interface AddUnitRequest {
 }
 
 /**
- * Reusable accounting line-items table (G/L Account or Fixed Asset, Cost Center,
+ * Reusable accounting line-items table (G/L Account, Fixed Asset or Raw Material, Cost Center,
  * Description, VAT Posting Group / VAT Product Posting Group, Qty, Unit, Unit
  * Price, Net Amount, Gross Amount). Built for Purchase Invoice first; designed
  * to be dropped into Sales Invoice / Expense screens later — it only needs a
@@ -54,6 +54,11 @@ export class LineItemsTableComponent implements OnInit, OnDestroy {
     @Input() vatPostingGroups: MockVatGroup[] = [];
     @Input() vatProductPostingGroups: MockVatGroup[] = [];
     @Input() unitOptions: LookupOption[] = [];
+    /** Goods for 'IT' (item) lines - labelled "Raw Material" in the UI. */
+    @Input() rawMaterialOptions: LookupOption[] = [];
+    /** An item line's Unit dropdown only offers its goods' own units, keyed by goods id
+     *  (the line's accountId). Replaced, never mutated, so OnPush sees new entries. */
+    @Input() goodsUnitOptions: { [goodsId: number]: LookupOption[] } = {};
     @Input() currencyAbbreviation = '';
     /** Set once the parent's Send for Review validation has been attempted -
      *  turns on red highlighting for any required field left empty on a
@@ -82,7 +87,38 @@ export class LineItemsTableComponent implements OnInit, OnDestroy {
     }
 
     getAccountOptions(lineGroup: FormGroup): LookupOption[] {
-        return lineGroup.get('lineType').value === 'FA' ? this.fixedAssetOptions : this.glAccountOptions;
+        switch (lineGroup.get('lineType').value) {
+            case 'FA':
+                return this.fixedAssetOptions;
+            case 'IT':
+                return this.rawMaterialOptions;
+            default:
+                return this.glAccountOptions;
+        }
+    }
+
+    getAccountPlaceholder(lineGroup: FormGroup): string {
+        switch (lineGroup.get('lineType').value) {
+            case 'FA':
+                return 'Select fixed asset...';
+            case 'IT':
+                return 'Select raw material...';
+            default:
+                return 'Select account...';
+        }
+    }
+
+    isItemLine(lineGroup: FormGroup): boolean {
+        return lineGroup.get('lineType').value === 'IT';
+    }
+
+    /** An item line can only be counted in its goods' units (none until a goods is picked). */
+    getUnitOptions(lineGroup: FormGroup): LookupOption[] {
+        if (!this.isItemLine(lineGroup)) {
+            return this.unitOptions;
+        }
+        const goodsId = lineGroup.get('accountId').value;
+        return (goodsId && this.goodsUnitOptions[goodsId]) || [];
     }
 
     onRemove(index: number): void {

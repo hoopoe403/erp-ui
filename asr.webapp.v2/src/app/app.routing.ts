@@ -116,8 +116,9 @@ export const appRoutes: Route[] = [
                         { path: 'customerType', loadChildren: () => import('app/modules/configuration/customer/customer-type/customer-type.module').then(m => m.CustomerTypeModule) }
                     ]
                 },
-                { path: 'contractor', loadChildren: () => import('app/modules/configuration/contractor/contractor.module').then(m => m.ContractorModule) }
-                ,
+                { path: 'vendor', loadChildren: () => import('app/modules/configuration/vendor/vendor.module').then(m => m.VendorModule) },
+                // Formerly "Contractor" - keeps existing menu links and bookmarks working.
+                { path: 'contractor', redirectTo: 'vendor' },
                 { path: 'personnel', loadChildren: () => import('app/modules/configuration/personnel/personnel.module').then(m => m.PersonnelModule) },
                 {
                     path: 'reports', children: [{ path: 'productSubset', loadChildren: () => import('app/modules/configuration/reports/product-subset/product-subset.module').then(m => m.ProductSubsetModule) },

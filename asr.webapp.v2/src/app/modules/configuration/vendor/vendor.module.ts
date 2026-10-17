@@ -21,20 +21,20 @@ import { MatSnackBarModule } from "@angular/material/snack-bar";
 import { NgxPrintModule } from "ngx-print";
 import { MatFormFieldModule } from "@angular/material/form-field";
 
-import { contractorsRoutes } from "./contractor.routing";
-import { ContractorsComponent } from "./contractors.component";
-import { ContractorsDetailsComponent } from "./details/details.component";
-import { ContractorsListComponent } from "./list/list.component";
+import { vendorsRoutes } from "./vendor.routing";
+import { VendorsComponent } from "./vendors.component";
+import { VendorsDetailsComponent } from "./details/details.component";
+import { VendorsListComponent } from "./list/list.component";
 import { BankAccountModule } from '../shared/bank-account/bank-account.module';
 
 @NgModule({
   declarations: [
-    ContractorsComponent,
-    ContractorsDetailsComponent,
-    ContractorsListComponent,
+    VendorsComponent,
+    VendorsDetailsComponent,
+    VendorsListComponent,
   ],
   imports: [
-    RouterModule.forChild(contractorsRoutes),
+    RouterModule.forChild(vendorsRoutes),
     CommonModule,
     BankAccountModule,
     MatIconModule,
@@ -55,4 +55,4 @@ import { BankAccountModule } from '../shared/bank-account/bank-account.module';
     MatSnackBarModule,
   ],
 })
-export class ContractorModule {}
+export class VendorModule {}

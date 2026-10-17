@@ -579,14 +579,15 @@
       "product": "Ürün",
       "products": "Ürünler"
     },
-    "contractor": {
-      "title": "Yükleniciler",
-      "contractor": "Yüklenici",
-      "contractors": "Yükleniciler",
-      "registerSuccess": "Yüklenici başarıyla kaydedildi",
-      "registerError": "Yüklenici kaydedilemedi. Lütfen tekrar deneyin",
-      "updateSuccess": "Yüklenici başarıyla güncellendi",
-      "updateError": "Yüklenici güncellenemedi. Lütfen tekrar deneyin"
+    "vendor": {
+      "title": "Tedarikçiler",
+      "vendor": "Tedarikçi",
+      "vendors": "Tedarikçiler",
+      "registerSuccess": "Tedarikçi başarıyla kaydedildi",
+      "registerError": "Tedarikçi kaydedilemedi. Lütfen tekrar deneyin",
+      "updateSuccess": "Tedarikçi başarıyla güncellendi",
+      "updateError": "Tedarikçi güncellenemedi. Lütfen tekrar deneyin",
+      "loadError": "Tedarikçi yüklenemedi. Lütfen tekrar deneyin"
     },
     "customer": {
       "title": "Müşteri Yönetimi",

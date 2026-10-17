@@ -579,14 +579,15 @@
       "product": "Product",
       "products": "Products"
     },
-    "contractor": {
-      "title": "Contractors",
-      "contractor": "Contractor",
-      "contractors": "Contractors",
-      "registerSuccess": "Contractor registered successfully",
-      "registerError": "Failed to register contractor. Please try again",
-      "updateSuccess": "Contractor updated successfully",
-      "updateError": "Failed to update contractor. Please try again"
+    "vendor": {
+      "title": "Vendors",
+      "vendor": "Vendor",
+      "vendors": "Vendors",
+      "registerSuccess": "Vendor registered successfully",
+      "registerError": "Failed to register vendor. Please try again",
+      "updateSuccess": "Vendor updated successfully",
+      "updateError": "Failed to update vendor. Please try again",
+      "loadError": "Failed to load vendor. Please try again"
     },
     "customer": {
       "title": "Customer Management",

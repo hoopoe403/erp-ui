@@ -79,13 +79,17 @@ export class PurchaseInvoiceDetail extends BaseModel {
     page: Paging;
 
     // --- New fields (UI-only for now, no backend column yet — see CLAUDE.md / plan) ---
-    lineType: 'GL' | 'FA';
+    // GL = G/L account, FA = fixed asset, IT = item - a goods, labelled "Raw Material" in the UI.
+    lineType: 'GL' | 'FA' | 'IT';
     accountId: number | null;
     accountCode: string;
     accountName: string;
     fixedAssetId: number | null;
     fixedAssetCode: string;
     fixedAssetName: string;
+    goodsId: number | null;
+    goodsCode: string;
+    goodsName: string;
     costCenterId: number | null;
     costCenterCode: string;
     costCenterName: string;

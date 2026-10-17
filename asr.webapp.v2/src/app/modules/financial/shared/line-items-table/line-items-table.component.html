@@ -37,12 +37,13 @@
                         <mat-select formControlName="lineType">
                             <mat-option value="GL">G/L Account</mat-option>
                             <mat-option value="FA">Fixed Asset</mat-option>
+                            <mat-option value="IT">Raw Material</mat-option>
                         </mat-select>
                     </mat-form-field>
                 </td>
                 <td [class.cell-invalid]="isFieldMissing(lineGroup, 'accountId')">
                     <app-lookup-select formControlName="accountId" [options]="getAccountOptions(lineGroup)"
-                        idKey="id" codeKey="code" nameKey="name" placeholder="Select account / asset...">
+                        idKey="id" codeKey="code" nameKey="name" [placeholder]="getAccountPlaceholder(lineGroup)">
                     </app-lookup-select>
                 </td>
                 <td>
@@ -69,9 +70,10 @@
                     </app-lookup-select>
                 </td>
                 <td [class.cell-invalid]="isFieldMissing(lineGroup, 'unitId')">
-                    <app-lookup-select formControlName="unitId" [options]="unitOptions" idKey="id" codeKey="code"
-                        nameKey="name" placeholder="Unit..." [showAddOption]="true" addOptionLabel="+ Add new unit"
-                        (addRequested)="onAddUnit($event, i)">
+                    <!-- An item line's units come from its raw material's own definition, so no quick-add there. -->
+                    <app-lookup-select formControlName="unitId" [options]="getUnitOptions(lineGroup)" idKey="id"
+                        codeKey="code" nameKey="name" placeholder="Unit..." [showAddOption]="!isItemLine(lineGroup)"
+                        addOptionLabel="+ Add new unit" (addRequested)="onAddUnit($event, i)">
                     </app-lookup-select>
                 </td>
                 <td [class.cell-invalid]="isFieldMissing(lineGroup, 'quantity')">

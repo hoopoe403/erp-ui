@@ -10,7 +10,7 @@ import { PurchaseInvoice, PurchaseInvoiceDetail } from '../purchase-invoice.type
 import { OpResult } from 'app/core/type/result/result.types';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Owner } from 'app/modules/configuration/owner/owner.types';
-import { ContractorService } from 'app/modules/configuration/contractor/contractor.service';
+import { VendorService } from 'app/modules/configuration/vendor/vendor.service';
 import { BankAccountService } from 'app/modules/configuration/shared/bank-account/bank-account.service';
 import { Currency } from 'app/modules/configuration/shared/bank-account/bank-account.types';
 import { formatDate, Location } from '@angular/common';
@@ -23,6 +23,7 @@ import { CostCenterLookupService } from '../../../shared/lookup/cost-center-look
 import { VatLookupService } from '../../../shared/lookup/vat-lookup.service';
 import { ReviewedByLookupService, ReviewerOption } from '../../../shared/lookup/reviewed-by-lookup.service';
 import { UnitLookupService, UnitOption } from '../../../shared/lookup/unit-lookup.service';
+import { GoodsLookupService, GoodsOption, GoodsUnitOption } from '../../../shared/lookup/goods-lookup.service';
 import { PaymentTypeLookupService, PaymentTypeOption } from '../../../shared/lookup/payment-type-lookup.service';
 import { MockCostCenter, MockFixedAsset, MockGlAccount, MockVatGroup } from '../../../shared/mock-data';
 import {
@@ -71,6 +72,11 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
     reviewers: ReviewerOption[] = [];
     units: UnitOption[] = [];
     unitOptions: LookupOption[] = [];
+    /** Goods for 'IT' lines - "Raw Material" in the UI. */
+    goods: GoodsOption[] = [];
+    rawMaterialOptions: LookupOption[] = [];
+    /** Each picked goods' own units (primary first), keyed by goods id - fetched once per goods. */
+    goodsUnitOptions: { [goodsId: number]: LookupOption[] } = {};
     paymentTypes: PaymentTypeOption[] = [];
     currencies: Currency[] = [];
 
@@ -103,13 +109,14 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         private _fuseAlertService: FuseAlertService,
         private _fuseDataEntryDialogService: FuseDataEntryDialogService,
         private _vendorLookupService: VendorLookupService,
-        private _contractorService: ContractorService,
+        private _vendorService: VendorService,
         private _glAccountLookupService: GlAccountLookupService,
         private _fixedAssetLookupService: FixedAssetLookupService,
         private _costCenterLookupService: CostCenterLookupService,
         private _vatLookupService: VatLookupService,
         private _reviewedByLookupService: ReviewedByLookupService,
         private _unitLookupService: UnitLookupService,
+        private _goodsLookupService: GoodsLookupService,
         private _paymentTypeLookupService: PaymentTypeLookupService,
         private _bankAccountService: BankAccountService
     ) {
@@ -213,6 +220,11 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
             this.unitOptions = v.map((u) => ({ id: u.unitId, code: u.unitCode, name: u.unitName }));
             this.cdr.detectChanges();
         });
+        this._goodsLookupService.getGoods().subscribe((v) => {
+            this.goods = v;
+            this.rawMaterialOptions = v.map((g) => ({ id: g.goodsId, code: g.goodsCode, name: g.goodsName }));
+            this.cdr.detectChanges();
+        });
         this._paymentTypeLookupService.getPaymentTypes().subscribe((v) => {
             this.paymentTypes = v;
             this.cdr.detectChanges();
@@ -281,6 +293,9 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
                 line.grossAmount = line.netAmount;
             }
             this.lines.push(this.createLineGroup(line));
+            if (line.lineType === 'IT' && line.goodsId) {
+                this._loadGoodsUnits(line.goodsId).subscribe();
+            }
         });
         // Always keep one blank row ready at the end, Excel/Business-Central style.
         this.addNewItem();
@@ -331,49 +346,44 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
 
         this.checkAutoCreateDraft();
 
-        // ASSUMPTION (unverified — could not confirm via a real login): Owner.ownerId
-        // for a Contractor-type owner equals Contractor.contractorId. The lightweight
-        // owners list (obj/owners/1000613) has no currency/VAT group, so a second call
-        // fetches the full record. Fails gracefully if the id doesn't resolve.
-        this._contractorService.getContractor(owner.ownerId).subscribe({
-            next: (res: any) => {
-                const contractor = res?.data;
-                if (!contractor) {
-                    return;
+        // A vendor owner's ownerId is its TBL_VENDOR.VENDOR_ID (checked against ERPTEST).
+        // The lightweight owners list (obj/owners/1000613) has no currency/VAT group, so a
+        // second call fetches the full vendor. Fails gracefully if the id doesn't resolve.
+        this._vendorService.getVendor(owner.ownerId).subscribe({
+            next: (vendor) => {
+                if (vendor.currencyId) {
+                    this.invoiceInfo.currencyId = vendor.currencyId;
+                    this.invoiceInfo.currencyName = vendor.currencyName || DEFAULT_CURRENCY_NAME;
+                    this.invoiceInfo.currencyAbbreviation = vendor.currencyAbbreviation || DEFAULT_CURRENCY_ABBREVIATION;
+                    this.frmInvoice.controls['currencyId'].setValue(vendor.currencyId);
                 }
-                if (contractor.currencyId) {
-                    this.invoiceInfo.currencyId = contractor.currencyId;
-                    this.invoiceInfo.currencyName = contractor.currencyName || DEFAULT_CURRENCY_NAME;
-                    this.invoiceInfo.currencyAbbreviation = contractor.currencyAbbreviation || DEFAULT_CURRENCY_ABBREVIATION;
-                    this.frmInvoice.controls['currencyId'].setValue(contractor.currencyId);
+                if (vendor.vatGroupId) {
+                    this._selectedVendorVatGroupId = vendor.vatGroupId;
+                    this._applyVendorVatGroupToUnsetLines(vendor.vatGroupId);
                 }
-                if (contractor.vatGroupId) {
-                    this._selectedVendorVatGroupId = contractor.vatGroupId;
-                    this._applyVendorVatGroupToUnsetLines(contractor.vatGroupId);
+                if (vendor.paymentTypeId) {
+                    this.invoiceInfo.paymentTypeId = vendor.paymentTypeId;
+                    this.invoiceInfo.paymentTypeName = vendor.paymentTypeName || null;
+                    this.frmInvoice.controls['paymentTypeId'].setValue(vendor.paymentTypeId);
                 }
-                if (contractor.paymentTypeId) {
-                    this.invoiceInfo.paymentTypeId = contractor.paymentTypeId;
-                    this.invoiceInfo.paymentTypeName = contractor.paymentTypeName || null;
-                    this.frmInvoice.controls['paymentTypeId'].setValue(contractor.paymentTypeId);
-                }
-                if (contractor.paymentTermDays) {
-                    this._applyDueDateFromPaymentTerm(contractor.paymentTermDays);
+                if (vendor.dueDate) {
+                    this._applyDueDateFromPaymentTerm(vendor.dueDate);
                 }
                 this.cdr.detectChanges();
             },
             error: (err) => {
-                console.warn('Vendor currency/VAT-group enrichment failed (owner id -> contractor id assumption?)', err);
+                console.warn('Vendor currency/VAT-group enrichment failed', err);
             }
         });
     }
 
-    openContractorRegisterTab(): void {
-        const url = this._router.serializeUrl(this._router.createUrlTree(['/configuration/contractor/register']));
+    openVendorRegisterTab(): void {
+        const url = this._router.serializeUrl(this._router.createUrlTree(['/configuration/vendor/register']));
         window.open(url, '_blank');
     }
 
     /**
-     * "+ Add new vendor" opens the real Contractor form in a separate tab, so this
+     * "+ Add new vendor" opens the Vendor form in a separate tab, so this
      * tab's vendor list can go stale. Silently refresh it whenever the user comes
      * back to this tab/window, rather than making them find a manual refresh button.
      */
@@ -402,7 +412,7 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
-    /** Due Date defaults to Posting Date + the vendor's Contractor.paymentTermDays
+    /** Due Date defaults to Posting Date + the vendor's payment term (Vendor.dueDate, in days)
      *  (e.g. "Net 30") when a vendor is selected - a one-time default, same as
      *  currency/VAT group above, not a formula kept in sync afterwards. Stays
      *  fully editable. No-ops if Posting Date isn't set yet (shouldn't normally
@@ -520,7 +530,7 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
     private createLineGroup(line: PurchaseInvoiceDetail): FormGroup {
         const group = this._formBuilder.group({
             lineType: [line.lineType || 'GL'],
-            accountId: [line.lineType === 'FA' ? line.fixedAssetId : line.accountId],
+            accountId: [this._lineReferenceId(line)],
             costCenterId: [line.costCenterId],
             itemDesc: [line.itemDesc || ''],
             vatPostingGroupId: [line.vatPostingGroupId],
@@ -535,24 +545,57 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         return group;
     }
 
+    /** The one id the line's "Account / Item" column holds - which one depends on the line type. */
+    private _lineReferenceId(line: PurchaseInvoiceDetail): number | null {
+        switch (line.lineType) {
+            case 'FA':
+                return line.fixedAssetId;
+            case 'IT':
+                return line.goodsId;
+            default:
+                return line.accountId;
+        }
+    }
+
     private onLineChanged(line: PurchaseInvoiceDetail, value: any): void {
+        const group = this.lines.at(this.invoiceInfo.purchaseInvoiceDetailList.indexOf(line)) as FormGroup;
+        const previousType = line.lineType;
+        const previousGoodsId = line.goodsId;
         line.lineType = value.lineType;
+        // The "Account / Item" column means something else per type - an account id isn't a
+        // goods id - so a type change clears it. The cleared value re-enters here.
+        if (group && previousType && previousType !== value.lineType && value.accountId != null) {
+            group.controls['accountId'].setValue(null);
+            return;
+        }
+
+        line.accountId = null;
+        line.accountCode = '';
+        line.accountName = '';
+        line.fixedAssetId = null;
+        line.fixedAssetCode = '';
+        line.fixedAssetName = '';
+        line.goodsId = null;
+        line.goodsCode = '';
+        line.goodsName = '';
         if (value.lineType === 'FA') {
             const fa = this.fixedAssets.find((a) => a.fixedAssetId === value.accountId);
             line.fixedAssetId = value.accountId;
             line.fixedAssetCode = fa ? fa.assetCode : '';
             line.fixedAssetName = fa ? fa.assetName : '';
-            line.accountId = null;
-            line.accountCode = '';
-            line.accountName = '';
+        } else if (value.lineType === 'IT') {
+            const goods = this.goods.find((g) => g.goodsId === value.accountId);
+            line.goodsId = value.accountId ?? null;
+            line.goodsCode = goods ? goods.goodsCode : '';
+            line.goodsName = goods ? goods.goodsName : '';
+            if (group && line.goodsId && line.goodsId !== previousGoodsId) {
+                this._applyPrimaryUnit(line.goodsId, group);
+            }
         } else {
             const acc = this.glAccounts.find((a) => a.financialCategoryId === value.accountId);
             line.accountId = value.accountId;
             line.accountCode = acc ? acc.financialCategoryCode : '';
             line.accountName = acc ? acc.financialCategoryName : '';
-            line.fixedAssetId = null;
-            line.fixedAssetCode = '';
-            line.fixedAssetName = '';
         }
         const cc = this.costCenters.find((c) => c.costCenterId === value.costCenterId);
         line.costCenterId = value.costCenterId;
@@ -580,7 +623,6 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         line.netAmount = netAmount;
         line.grossAmount = grossAmount;
 
-        const group = this.lines.at(this.invoiceInfo.purchaseInvoiceDetailList.indexOf(line)) as FormGroup;
         if (group && group.controls['netAmount'].value !== netAmount) {
             group.controls['netAmount'].setValue(netAmount, { emitEvent: false });
         }
@@ -588,6 +630,35 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
             group.controls['grossAmount'].setValue(grossAmount, { emitEvent: false });
         }
         this.recomputeHeaderTotals();
+    }
+
+    /**
+     * Fetches a goods' units once and caches them for the line-items table's Unit dropdown.
+     * Primary unit first, as erp-be sends them.
+     */
+    private _loadGoodsUnits(goodsId: number): Observable<GoodsUnitOption[]> {
+        return this._goodsLookupService.getGoodsUnits(goodsId).pipe(
+            tap((units) => {
+                this.goodsUnitOptions = {
+                    ...this.goodsUnitOptions,
+                    [goodsId]: units.map((u) => ({ id: u.unitId, code: u.unitCode, name: u.unitName }))
+                };
+                this.cdr.detectChanges();
+            })
+        );
+    }
+
+    /** Picking a raw material sets the line's unit to that goods' primary unit (e.g. gram); its
+     *  other units (e.g. kilo) stay selectable in the dropdown. */
+    private _applyPrimaryUnit(goodsId: number, group: FormGroup): void {
+        this._loadGoodsUnits(goodsId).subscribe((units) => {
+            // The user may have picked another raw material while this was loading.
+            if (group.controls['accountId'].value !== goodsId) {
+                return;
+            }
+            const primary = units.find((u) => u.isPrimary) ?? units[0];
+            group.controls['unitId'].setValue(primary ? primary.unitId : null);
+        });
     }
 
     private recomputeHeaderTotals(): void {
@@ -663,7 +734,7 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
      * saved payload (see toBackendPayload()).
      */
     private _isLineBlank(line: PurchaseInvoiceDetail): boolean {
-        return !line.accountId && !line.fixedAssetId && !line.costCenterId
+        return !line.accountId && !line.fixedAssetId && !line.goodsId && !line.costCenterId
             && !(line.itemDesc && line.itemDesc.trim())
             && !((line.netAmount || 0) > 0);
     }
@@ -691,7 +762,7 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         });
         if (!linesValid) {
             this._result.succeed = false;
-            this._result.message = "Each line needs an account or fixed asset, a quantity greater than zero, and a valid unit price";
+            this._result.message = "Each line needs an account, fixed asset or raw material, a quantity greater than zero, and a valid unit price";
             this.showAlert('errorMessage');
             return false;
         }
@@ -818,7 +889,7 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         this.reviewValidationAttempted = true;
         if (!this._hasValidLinesForReview()) {
             this._result.succeed = false;
-            this._result.message = 'Each line (except Cost Center) needs an account or fixed asset, a description, VAT group, VAT product group, unit, a quantity greater than zero, and a valid unit price before sending for review';
+            this._result.message = 'Each line (except Cost Center) needs an account, fixed asset or raw material, a description, VAT group, VAT product group, unit, a quantity greater than zero, and a valid unit price before sending for review';
             this.showAlert('errorMessage');
             this.cdr.detectChanges();
             return;

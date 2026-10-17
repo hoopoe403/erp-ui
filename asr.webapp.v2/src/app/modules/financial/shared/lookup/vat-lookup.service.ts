@@ -5,9 +5,9 @@ import { PurchaseInvoiceService } from '../../invoices/purchase/purchase-invoice
 import { MockVatGroup, VatPostingSetupEntry } from '../mock-data';
 
 /**
- * VAT Posting Group / VAT Product Posting Group / VAT Posting Setup have no
- * real DB table yet — erp-be serves them from local JSON files instead (see
- * PurchaseInvoiceMasterDataService), gated by application.local-mock-data.enabled.
+ * VAT Posting Group / VAT Product Posting Group / VAT Posting Setup (the rate
+ * matrix) - real erp-be master data (TBL_VAT_GROUP, TBL_VAT_PRODUCT_GROUP,
+ * TBL_VAT_RATE), mapped onto the id/code/name shapes the forms already use.
  * <p>
  * getRate()/getDefaultVatProductPostingGroupId() are used synchronously while
  * calculating line amounts, so this service eagerly fetches and caches all
@@ -40,11 +40,12 @@ export class VatLookupService {
     /**
      * "Standard" (19%) is the most common VAT product posting group for EU goods/
      * services, so new invoice lines default to it rather than starting blank —
-     * the accountant can still change it per line. Looked up by code rather than a
-     * hardcoded id so it keeps working if the backend's ids ever change.
+     * the accountant can still change it per line. Looked up by code or name rather
+     * than a hardcoded id so it keeps working if the backend's ids ever change.
      */
     getDefaultVatProductPostingGroupId(): number | null {
-        return this._vatProductPostingGroups.find((g) => g.code === 'STANDARD')?.id ?? null;
+        const isStandard = (value: string): boolean => (value || '').toUpperCase() === 'STANDARD';
+        return this._vatProductPostingGroups.find((g) => isStandard(g.code) || isStandard(g.name))?.id ?? null;
     }
 
     /**
@@ -64,22 +65,26 @@ export class VatLookupService {
     }
 
     private _fetchVatPostingGroups(): Observable<MockVatGroup[]> {
-        return this._purchaseInvoiceService.getMockVatPostingGroups().pipe(
-            map((res: any) => (res || []) as MockVatGroup[]),
+        return this._purchaseInvoiceService.getVatGroups().pipe(
+            map((res: any[]) => (res || []).map((g): MockVatGroup => ({ id: g.vatGroupId, code: g.vatGroupCode, name: g.vatGroupName }))),
             catchError(() => of([] as MockVatGroup[]))
         );
     }
 
     private _fetchVatProductPostingGroups(): Observable<MockVatGroup[]> {
-        return this._purchaseInvoiceService.getMockVatProductPostingGroups().pipe(
-            map((res: any) => (res || []) as MockVatGroup[]),
+        return this._purchaseInvoiceService.getVatProductGroups().pipe(
+            map((res: any[]) => (res || []).map((g): MockVatGroup => ({
+                id: g.vatProductGroupId, code: g.vatProductGroupCode, name: g.vatProductGroupName
+            }))),
             catchError(() => of([] as MockVatGroup[]))
         );
     }
 
     private _fetchVatPostingSetup(): Observable<VatPostingSetupEntry[]> {
-        return this._purchaseInvoiceService.getMockVatPostingSetup().pipe(
-            map((res: any) => (res || []) as VatPostingSetupEntry[]),
+        return this._purchaseInvoiceService.getCurrentVatRates().pipe(
+            map((res: any[]) => (res || []).map((r): VatPostingSetupEntry => ({
+                vatPostingGroupId: r.vatGroupId, vatProductPostingGroupId: r.vatProductGroupId, ratePercent: Number(r.ratePercent) || 0
+            }))),
             catchError(() => of([] as VatPostingSetupEntry[]))
         );
     }
