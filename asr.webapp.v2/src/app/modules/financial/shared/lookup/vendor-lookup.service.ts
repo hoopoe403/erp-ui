@@ -1,72 +1,47 @@
 import { Injectable } from '@angular/core';
-import { forkJoin, Observable, of } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { Owner } from 'app/modules/configuration/owner/owner.types';
-import { PurchaseInvoiceService } from '../../invoices/purchase/purchase-invoice.service';
-import { VENDOR_OWNER_TYPE_ID } from '../financial-constants';
-import { VendorService } from 'app/modules/configuration/vendor/vendor.service';
-import { Vendor } from 'app/modules/configuration/vendor/vendor.types';
-import { Paging } from 'app/core/type/paging/paging.type';
+import { ApiHelperService } from '../../../../../environments/api-helper.service';
+import { VendorOption } from '../master-data.types';
+
+/** erp-be's Active status for master data (vendors, banks...). */
+const ACTIVE_STATUS = 1000001;
 
 /**
- * Vendor (supplier, TBL_VENDOR - formerly "Contractor" in this UI). Always loads
- * real data — vendors are never mocked, unlike the other lookups in this folder.
+ * Active vendors from erp-be's vendor module (`/shared/vendor`), each with the defaults a
+ * purchase invoice takes from it (currency, VAT group, payment type, due days) - so picking
+ * a vendor needs no second request.
  */
 @Injectable({
     providedIn: 'root'
 })
 export class VendorLookupService {
 
-    constructor(
-        private _purchaseInvoiceService: PurchaseInvoiceService,
-        private _vendorService: VendorService
-    ) {
+    private readonly _url = ApiHelperService.BASE_URL + 'shared/vendor/findByObj';
+
+    constructor(private _httpClient: HttpClient) {
     }
 
-    /**
-     * The invoice's vendor picker needs a real, human-recognizable code, but the
-     * lightweight owners list (obj/owners/{typeId} — the endpoint that actually
-     * supplies the id sent as the invoice's creditorId) doesn't return one, only
-     * ownerId/ownerName. The Vendor list has the real vendorCode, so fetch both and
-     * merge the code in by id - a vendor owner's ownerId is its VENDOR_ID.
-     * An owner with no matching vendor just keeps its id as code; this merge never
-     * changes which id is used as creditorId.
-     */
-    getVendors(): Observable<Owner[]> {
-        return forkJoin([
-            this._purchaseInvoiceService.getCreditors(VENDOR_OWNER_TYPE_ID).pipe(
-                map((res: any) => (res && res.data ? res.data : []) as Owner[])
-            ),
-            this._getAllVendors()
-        ]).pipe(
-            map(([owners, vendors]: [Owner[], Vendor[]]) => {
-                const vendorById = new Map<number, Vendor>(vendors.map((v) => [v.vendorId, v]));
-                return owners.map((owner) => {
-                    const vendor = vendorById.get(owner.ownerId);
-                    return {
-                        ...owner,
-                        // Falls back to the raw owner id (always present, and unique)
-                        // rather than an empty string, so duplicate vendor names are
-                        // always distinguishable even when the id match above misses.
-                        ownerCode: vendor?.vendorCode || (owner as any).ownerCode || String(owner.ownerId),
-                        currencyAbbreviation: vendor?.currencyAbbreviation ?? null
-                    };
-                });
-            })
-        );
-    }
-
-    private _getAllVendors(): Observable<Vendor[]> {
-        const paging = new Paging();
-        paging.flag = true;
-        paging.length = 0;
-        paging.order = 'asc';
-        paging.pageNumber = 1;
-        paging.pageSize = 1000;
-        paging.sort = '';
-        return this._vendorService.getVendors({ statusIdList: [1000001], page: paging }).pipe(
-            map((res) => (res && res.vendors ? res.vendors : [])),
-            catchError(() => of([] as Vendor[]))
+    getVendors(): Observable<VendorOption[]> {
+        const search = {
+            statusIdList: [ACTIVE_STATUS],
+            page: { pageNumber: 1, pageSize: 1000, flag: true }
+        };
+        return this._httpClient.post<any>(this._url, search).pipe(
+            map((res) => ((res && res.vendors) || []).map((v: any): VendorOption => ({
+                vendorId: v.vendorId,
+                vendorCode: v.vendorCode,
+                vendorName: v.vendorName,
+                currencyId: v.currencyId ?? null,
+                currencyCode: v.currencyAbbreviation ?? null,
+                currencyName: v.currencyName ?? null,
+                vatGroupId: v.vatGroupId ?? null,
+                paymentTypeId: v.paymentTypeId ?? null,
+                paymentTypeName: v.paymentTypeName ?? null,
+                dueDays: v.dueDate ?? null
+            }))),
+            catchError(() => of([] as VendorOption[]))
         );
     }
 }

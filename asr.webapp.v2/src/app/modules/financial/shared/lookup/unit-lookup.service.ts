@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { PurchaseInvoiceService } from '../../invoices/purchase/purchase-invoice.service';
+import { ApiHelperService } from '../../../../../environments/api-helper.service';
+import { LookupOption } from '../lookup-option.type';
 
 export interface UnitOption {
     unitId: number;
@@ -11,32 +13,46 @@ export interface UnitOption {
 }
 
 /**
- * Unit of measure (qty/kg/pcs/...) — already real master data elsewhere in this
- * system (see erp-be's UnitRepository, reused by Product/Warehouse/Factory Order
- * etc.), unlike Cost Center/Fixed Asset/VAT groups. Both methods below hit the
- * same erp-be endpoint regardless of application.local-mock-data.enabled — the
- * backend decides whether to serve/store local mock data or go through the real
- * UnitRepository, so this service (and its caller) never needs to know which.
+ * A unit as a dropdown entry: its abbreviation ("pcs", "h") as the short code, since erp-be's
+ * unit code is just a number - falls back to that number for a unit without an abbreviation.
  */
+export function toUnitLookupOption(unit: UnitOption): LookupOption {
+    return { id: unit.unitId, code: unit.abbreviation || unit.unitCode, name: unit.unitName };
+}
+
+/** Active units (erp-be `shared/unit`), plus the line-items table's quick add. */
 @Injectable({
     providedIn: 'root'
 })
 export class UnitLookupService {
 
-    constructor(private _purchaseInvoiceService: PurchaseInvoiceService) {
+    private readonly _url = ApiHelperService.BASE_URL + 'shared/unit/';
+
+    constructor(private _httpClient: HttpClient) {
     }
 
     getUnits(): Observable<UnitOption[]> {
-        return this._purchaseInvoiceService.getUnits().pipe(
-            map((res: any) => (res || []) as UnitOption[]),
+        return this._httpClient.get<any[]>(this._url + 'drp/active').pipe(
+            map((list) => (list || []).map((u) => this._toOption(u))),
             catchError(() => of([] as UnitOption[]))
         );
     }
 
+    /** 201 - emits the created unit; null if erp-be refused it. erp-be unit codes are numbers. */
     addQuickUnit(code: string, name: string): Observable<UnitOption> {
-        return this._purchaseInvoiceService.addUnit({ unitCode: code, unitName: name }).pipe(
-            map((res: any) => (res || null) as UnitOption),
+        const numericCode = code && /^\d+$/.test(code.trim()) ? Number(code.trim()) : null;
+        return this._httpClient.post<any>(this._url + 'create', { unitCode: numericCode, unitName: name }).pipe(
+            map((created) => (created ? this._toOption(created) : null)),
             catchError(() => of(null as UnitOption))
         );
+    }
+
+    private _toOption(u: any): UnitOption {
+        return {
+            unitId: u.unitId,
+            unitCode: u.unitCode != null ? String(u.unitCode) : '',
+            unitName: u.unitName,
+            abbreviation: u.abbreviation
+        };
     }
 }

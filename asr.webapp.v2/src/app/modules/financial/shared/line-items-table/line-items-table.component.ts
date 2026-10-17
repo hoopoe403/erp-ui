@@ -14,7 +14,7 @@ import { FormArray, FormGroup } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { LookupOption } from '../lookup-option.type';
-import { MockCostCenter, MockVatGroup } from '../mock-data';
+import { CostCenterOption, VatGroupOption } from '../master-data.types';
 
 export interface AddCostCenterRequest {
     searchText: string;
@@ -26,13 +26,29 @@ export interface AddUnitRequest {
     lineIndex: number;
 }
 
+export interface LineTypeOption {
+    value: string;
+    label: string;
+}
+
+/** Purchase Invoice's line types (the default, unless a caller overrides
+ *  `lineTypes`) - a purchase invoice line posts to a G/L account, capitalizes
+ *  a Fixed Asset, or buys a Raw Material (an 'IT' item line, picked from
+ *  `itemOptions`). */
+const DEFAULT_LINE_TYPES: LineTypeOption[] = [
+    { value: 'GL', label: 'G/L Account' },
+    { value: 'FA', label: 'Fixed Asset' },
+    { value: 'IT', label: 'Raw Material' },
+];
+
 /**
- * Reusable accounting line-items table (G/L Account, Fixed Asset or Raw Material, Cost Center,
- * Description, VAT Posting Group / VAT Product Posting Group, Qty, Unit, Unit
- * Price, Net Amount, Gross Amount). Built for Purchase Invoice first; designed
- * to be dropped into Sales Invoice / Expense screens later — it only needs a
- * `FormArray` of row `FormGroup`s (each with the fields above) and the lookup
- * option lists.
+ * Reusable accounting line-items table (an "Account/Item" column whose picker
+ * swaps by line type, Cost Center, Description, VAT Posting Group / VAT
+ * Product Posting Group, Qty, Unit, Unit Price, Net Amount, Gross Amount).
+ * Built for Purchase Invoice first (G/L Account, Fixed Asset or Raw Material), now also used
+ * by Sales Invoice (G/L Account or Item - see `lineTypes`/`itemOptions`
+ * below) - it only needs a `FormArray` of row `FormGroup`s (each with the
+ * fields above) and the lookup option lists.
  *
  * Owns one piece of UX on its own: it always keeps a trailing blank row ready —
  * as soon as the last row gets any data, it asks the parent (via
@@ -48,17 +64,24 @@ export interface AddUnitRequest {
 })
 export class LineItemsTableComponent implements OnInit, OnDestroy {
     @Input() linesFormArray: FormArray;
+    /** The "Type" column's options, and which options list (see
+     *  getAccountOptions()) each value's "Account/Item" picker uses. Defaults
+     *  to Purchase Invoice's G/L Account / Fixed Asset / Raw Material; Sales Invoice
+     *  passes G/L Account / Item instead - see sales details.component.html. */
+    @Input() lineTypes: LineTypeOption[] = DEFAULT_LINE_TYPES;
     @Input() glAccountOptions: LookupOption[] = [];
     @Input() fixedAssetOptions: LookupOption[] = [];
-    @Input() costCenters: MockCostCenter[] = [];
-    @Input() vatPostingGroups: MockVatGroup[] = [];
-    @Input() vatProductPostingGroups: MockVatGroup[] = [];
+    /** 'IT' lines' picker options (inventory Goods) - Sales Invoice's Item,
+     *  Purchase Invoice's Raw Material. See getAccountOptions(). */
+    @Input() itemOptions: LookupOption[] = [];
+    @Input() costCenters: CostCenterOption[] = [];
+    @Input() vatPostingGroups: VatGroupOption[] = [];
+    @Input() vatProductPostingGroups: VatGroupOption[] = [];
     @Input() unitOptions: LookupOption[] = [];
-    /** Goods for 'IT' (item) lines - labelled "Raw Material" in the UI. */
-    @Input() rawMaterialOptions: LookupOption[] = [];
-    /** An item line's Unit dropdown only offers its goods' own units, keyed by goods id
-     *  (the line's accountId). Replaced, never mutated, so OnPush sees new entries. */
-    @Input() goodsUnitOptions: { [goodsId: number]: LookupOption[] } = {};
+    /** When set, an 'IT' line's Unit dropdown only offers its goods' own units, keyed by goods id
+     *  (the line's accountId) - Purchase Invoice's Raw Material. Left null, item lines use
+     *  `unitOptions` like any other line. Replaced, never mutated, so OnPush sees new entries. */
+    @Input() goodsUnitOptions: { [goodsId: number]: LookupOption[] } | null = null;
     @Input() currencyAbbreviation = '';
     /** Set once the parent's Send for Review validation has been attempted -
      *  turns on red highlighting for any required field left empty on a
@@ -87,34 +110,29 @@ export class LineItemsTableComponent implements OnInit, OnDestroy {
     }
 
     getAccountOptions(lineGroup: FormGroup): LookupOption[] {
-        switch (lineGroup.get('lineType').value) {
-            case 'FA':
-                return this.fixedAssetOptions;
-            case 'IT':
-                return this.rawMaterialOptions;
-            default:
-                return this.glAccountOptions;
+        const type = lineGroup.get('lineType').value;
+        if (type === 'FA') {
+            return this.fixedAssetOptions;
         }
+        if (type === 'IT') {
+            return this.itemOptions;
+        }
+        return this.glAccountOptions;
     }
 
     getAccountPlaceholder(lineGroup: FormGroup): string {
-        switch (lineGroup.get('lineType').value) {
-            case 'FA':
-                return 'Select fixed asset...';
-            case 'IT':
-                return 'Select raw material...';
-            default:
-                return 'Select account...';
-        }
+        const type = this.lineTypes.find((lt) => lt.value === lineGroup.get('lineType').value);
+        return type ? 'Select ' + type.label.toLowerCase() + '...' : 'Select account...';
     }
 
-    isItemLine(lineGroup: FormGroup): boolean {
-        return lineGroup.get('lineType').value === 'IT';
+    /** Whether the line's units come from its goods (see goodsUnitOptions) rather than `unitOptions`. */
+    hasGoodsUnits(lineGroup: FormGroup): boolean {
+        return !!this.goodsUnitOptions && lineGroup.get('lineType').value === 'IT';
     }
 
-    /** An item line can only be counted in its goods' units (none until a goods is picked). */
+    /** Such a line can only be counted in its goods' units (none until a goods is picked). */
     getUnitOptions(lineGroup: FormGroup): LookupOption[] {
-        if (!this.isItemLine(lineGroup)) {
+        if (!this.hasGoodsUnits(lineGroup)) {
             return this.unitOptions;
         }
         const goodsId = lineGroup.get('accountId').value;

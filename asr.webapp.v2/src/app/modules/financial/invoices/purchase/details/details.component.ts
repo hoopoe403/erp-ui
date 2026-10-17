@@ -4,15 +4,12 @@ import { FormArray, FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { PurchaseInvoiceService } from "../purchase-invoice.service";
 import { FuseAlertService } from '@fuse/components/alert';
+import { FuseConfirmationService } from '@fuse/services/confirmation';
 import { Observable, Subject, of } from 'rxjs';
-import { catchError, map, take, takeUntil, tap } from 'rxjs/operators';
-import { PurchaseInvoice, PurchaseInvoiceDetail } from '../purchase-invoice.types';
+import { catchError, map, switchMap, take, takeUntil, tap } from 'rxjs/operators';
+import { PurchaseInvoice, PurchaseInvoiceAction, PurchaseInvoiceDetail, PurchaseInvoiceReviewer } from '../purchase-invoice.types';
 import { OpResult } from 'app/core/type/result/result.types';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Owner } from 'app/modules/configuration/owner/owner.types';
-import { VendorService } from 'app/modules/configuration/vendor/vendor.service';
-import { BankAccountService } from 'app/modules/configuration/shared/bank-account/bank-account.service';
-import { Currency } from 'app/modules/configuration/shared/bank-account/bank-account.types';
 import { formatDate, Location } from '@angular/common';
 import { FuseDataEntryDialogService } from '@fuse/services/data-entry-dialog/data-entry-dialog.service';
 import { FuseDataEntryDialogFormControls } from '@fuse/services/data-entry-dialog/data-entry-dialog.types';
@@ -21,15 +18,14 @@ import { GlAccountLookupService } from '../../../shared/lookup/gl-account-lookup
 import { FixedAssetLookupService } from '../../../shared/lookup/fixed-asset-lookup.service';
 import { CostCenterLookupService } from '../../../shared/lookup/cost-center-lookup.service';
 import { VatLookupService } from '../../../shared/lookup/vat-lookup.service';
-import { ReviewedByLookupService, ReviewerOption } from '../../../shared/lookup/reviewed-by-lookup.service';
-import { UnitLookupService, UnitOption } from '../../../shared/lookup/unit-lookup.service';
+import { toUnitLookupOption, UnitLookupService, UnitOption } from '../../../shared/lookup/unit-lookup.service';
 import { GoodsLookupService, GoodsOption, GoodsUnitOption } from '../../../shared/lookup/goods-lookup.service';
 import { PaymentTypeLookupService, PaymentTypeOption } from '../../../shared/lookup/payment-type-lookup.service';
-import { MockCostCenter, MockFixedAsset, MockGlAccount, MockVatGroup } from '../../../shared/mock-data';
+import { CurrencyLookupService } from '../../../shared/lookup/currency-lookup.service';
 import {
-    DEFAULT_CURRENCY_ABBREVIATION, DEFAULT_CURRENCY_NAME,
-    PURCHASE_INVOICE_STATUS_DRAFT, PURCHASE_INVOICE_STATUS_PENDING_REVIEW, PURCHASE_INVOICE_STATUS_POSTED
-} from '../../../shared/financial-constants';
+    AccountOption, CostCenterOption, CurrencyOption, FixedAssetOption, VatGroupOption, VendorOption
+} from '../../../shared/master-data.types';
+import { PURCHASE_INVOICE_STATUS_DRAFT, PURCHASE_INVOICE_STATUS_POSTED } from '../../../shared/financial-constants';
 import { LookupOption } from '../../../shared/lookup-option.type';
 
 /** Shown in the success alert - the same text erp-be's envelope used to send. */
@@ -61,15 +57,15 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
      *  / LineItemsTableComponent.showRequiredHighlight). */
     reviewValidationAttempted: boolean = false;
     frmInvoice: FormGroup;
-    vendors: Owner[] = [];
-    glAccounts: MockGlAccount[] = [];
-    fixedAssets: MockFixedAsset[] = [];
+    vendors: VendorOption[] = [];
+    glAccounts: AccountOption[] = [];
+    fixedAssets: FixedAssetOption[] = [];
     glAccountOptions: LookupOption[] = [];
     fixedAssetOptions: LookupOption[] = [];
-    costCenters: MockCostCenter[] = [];
-    vatPostingGroups: MockVatGroup[] = [];
-    vatProductPostingGroups: MockVatGroup[] = [];
-    reviewers: ReviewerOption[] = [];
+    costCenters: CostCenterOption[] = [];
+    vatPostingGroups: VatGroupOption[] = [];
+    vatProductPostingGroups: VatGroupOption[] = [];
+    reviewers: PurchaseInvoiceReviewer[] = [];
     units: UnitOption[] = [];
     unitOptions: LookupOption[] = [];
     /** Goods for 'IT' lines - "Raw Material" in the UI. */
@@ -78,23 +74,31 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
     /** Each picked goods' own units (primary first), keyed by goods id - fetched once per goods. */
     goodsUnitOptions: { [goodsId: number]: LookupOption[] } = {};
     paymentTypes: PaymentTypeOption[] = [];
-    currencies: Currency[] = [];
+    currencies: CurrencyOption[] = [];
 
     readonly STATUS_DRAFT = PURCHASE_INVOICE_STATUS_DRAFT;
-    readonly STATUS_PENDING_REVIEW = PURCHASE_INVOICE_STATUS_PENDING_REVIEW;
     readonly STATUS_POSTED = PURCHASE_INVOICE_STATUS_POSTED;
 
-    /** Draft (0) / Pending Review (1) / Posted (2) - drives which action buttons
-     *  are enabled. A brand-new, not-yet-saved invoice reads as stage 0 too -
-     *  that's what it becomes on first save. */
-    get statusStageIndex(): number {
-        if (this.invoiceInfo.status === this.STATUS_POSTED) {
-            return 2;
+    /**
+     * Whether the current user may take a workflow step now. erp-be decides it for every
+     * invoice it returns (allowedActions: status + who you are - e.g. only the assigned
+     * approver gets APPROVE/REJECT); a brand-new, unsaved invoice can be edited, sent or posted.
+     */
+    can(action: PurchaseInvoiceAction): boolean {
+        if (!this.invoiceInfo.purchaseInvoiceId) {
+            return action === 'EDIT' || action === 'SEND_FOR_APPROVAL' || action === 'POST';
         }
-        if (this.invoiceInfo.status === this.STATUS_PENDING_REVIEW) {
-            return 1;
-        }
-        return 0;
+        return (this.invoiceInfo.allowedActions || []).includes(action);
+    }
+
+    /** Draft or Rejected: the content can change. Pending Approval, Approved and Posted are locked. */
+    get isEditable(): boolean {
+        return this.can('EDIT');
+    }
+
+    /** Documents can be attached once the invoice has an id (first draft save). */
+    get attachmentsPath(): string | null {
+        return this.invoiceInfo.purchaseInvoiceId ? this.service.filesPath(this.invoiceInfo.purchaseInvoiceId) : null;
     }
 
     private _selectedVendorVatGroupId: number | null = null;
@@ -109,16 +113,15 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         private _fuseAlertService: FuseAlertService,
         private _fuseDataEntryDialogService: FuseDataEntryDialogService,
         private _vendorLookupService: VendorLookupService,
-        private _vendorService: VendorService,
         private _glAccountLookupService: GlAccountLookupService,
         private _fixedAssetLookupService: FixedAssetLookupService,
         private _costCenterLookupService: CostCenterLookupService,
         private _vatLookupService: VatLookupService,
-        private _reviewedByLookupService: ReviewedByLookupService,
         private _unitLookupService: UnitLookupService,
         private _goodsLookupService: GoodsLookupService,
         private _paymentTypeLookupService: PaymentTypeLookupService,
-        private _bankAccountService: BankAccountService
+        private _currencyLookupService: CurrencyLookupService,
+        private _fuseConfirmationService: FuseConfirmationService
     ) {
         this._unsubscribeAll = new Subject();
         this.invoiceInfo.purchaseInvoiceDetailList = [];
@@ -147,12 +150,9 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
             this.invoiceInfo.totalNetAmount = 0;
             this.invoiceInfo.totalVatAmount = 0;
             this.invoiceInfo.totalGrossAmount = 0;
-            this.invoiceInfo.currencyAbbreviation = DEFAULT_CURRENCY_ABBREVIATION;
-            this.invoiceInfo.currencyName = DEFAULT_CURRENCY_NAME;
             this.titleInfo = 'Register New Purchase Invoice';
             this.pageType = 'new';
             this.isLoading = false;
-            this.frmInvoice.controls['currencyId'].setValue(this.invoiceInfo.currencyId);
             this.frmInvoice.controls['jdatepicker'].setValue(new Date());
             // Added immediately, not gated on any lookup finishing — the line-items
             // table only knows how to auto-add a *replacement* row once the last one
@@ -174,16 +174,17 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
     private loadLookups(): void {
         this._vendorLookupService.getVendors().subscribe((v) => {
             this.vendors = v;
+            this._rememberLoadedVendorDefaults();
             this.cdr.detectChanges();
         });
         this._glAccountLookupService.getGlAccounts().subscribe((v) => {
             this.glAccounts = v;
-            this.glAccountOptions = v.map((a) => ({ id: a.financialCategoryId, code: a.financialCategoryCode, name: a.financialCategoryName }));
+            this.glAccountOptions = v.map((a) => ({ id: a.accountId, code: a.accountCode, name: a.accountName }));
             this.cdr.detectChanges();
         });
         this._fixedAssetLookupService.getFixedAssets().subscribe((v) => {
             this.fixedAssets = v;
-            this.fixedAssetOptions = v.map((a) => ({ id: a.fixedAssetId, code: a.assetCode, name: a.assetName }));
+            this.fixedAssetOptions = v.map((a) => ({ id: a.fixedAssetId, code: a.fixedAssetCode, name: a.fixedAssetName }));
             this.cdr.detectChanges();
         });
         this._costCenterLookupService.getCostCenters().subscribe((v) => {
@@ -203,21 +204,22 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
             if (defaultId != null) {
                 this.lines.controls.forEach((group: FormGroup, index) => {
                     const line = this.invoiceInfo.purchaseInvoiceDetailList[index];
-                    if (line && !line.vatProductPostingGroupId && this._isLineBlank(line)) {
-                        line.vatProductPostingGroupId = defaultId;
+                    if (line && !line.vatProductGroupId && this._isLineBlank(line)) {
+                        line.vatProductGroupId = defaultId;
                         group.controls['vatProductPostingGroupId'].setValue(defaultId);
                     }
                 });
             }
             this.cdr.detectChanges();
         });
-        this._reviewedByLookupService.getReviewers().subscribe((v) => {
+        // Only users with the PI_REVIEWER role (erp-be filters by role).
+        this.service.getReviewers().pipe(catchError(() => of([] as PurchaseInvoiceReviewer[]))).subscribe((v) => {
             this.reviewers = v;
             this.cdr.detectChanges();
         });
         this._unitLookupService.getUnits().subscribe((v) => {
             this.units = v;
-            this.unitOptions = v.map((u) => ({ id: u.unitId, code: u.unitCode, name: u.unitName }));
+            this.unitOptions = v.map(toUnitLookupOption);
             this.cdr.detectChanges();
         });
         this._goodsLookupService.getGoods().subscribe((v) => {
@@ -229,9 +231,23 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
             this.paymentTypes = v;
             this.cdr.detectChanges();
         });
-        this._bankAccountService.getCurrencies().subscribe((res: any) => {
-            this.currencies = (res && res.data ? res.data : []) as Currency[];
+        this._currencyLookupService.getCurrencies().subscribe((v) => {
+            this.currencies = v;
             this.cdr.detectChanges();
+        });
+        // The whole VAT setup in one request, kept in memory by VatLookupService - every
+        // group x product group change on a line is then looked up locally (getRate()).
+        // Lines entered before it arrived are recalculated once it does - only while the
+        // invoice is editable: what was sent, approved or posted keeps its amounts.
+        this._vatLookupService.loadVatRates().subscribe(() => {
+            if (this.isEditable) {
+                this.lines.controls.forEach((group: FormGroup, index) => {
+                    const line = this.invoiceInfo.purchaseInvoiceDetailList[index];
+                    if (line) {
+                        this.onLineChanged(line, group.getRawValue());
+                    }
+                });
+            }
         });
     }
 
@@ -243,12 +259,10 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
                 if (!this.invoiceInfo.purchaseInvoiceDetailList) {
                     this.invoiceInfo.purchaseInvoiceDetailList = [];
                 }
-                if (!this.invoiceInfo.currencyAbbreviation) {
-                    this.invoiceInfo.currencyAbbreviation = DEFAULT_CURRENCY_ABBREVIATION;
-                    this.invoiceInfo.currencyName = DEFAULT_CURRENCY_NAME;
-                }
                 this.titleInfo = this.invoiceInfo.creditorName || 'Purchase Invoice';
                 this.setFormValues();
+                this._applyLock();
+                this._rememberLoadedVendorDefaults();
                 this.isLoading = false;
                 this.cdr.detectChanges();
             },
@@ -281,7 +295,10 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         this.frmInvoice.controls['jdatepicker'].setValue(this._parseDate(this.invoiceInfo.postingDate));
         this.frmInvoice.controls['dueDatepicker'].setValue(this._parseDate(this.invoiceInfo.dueDate));
 
-        this.lines.clear();
+        // Lines are added silently: the line-items table adds a blank row whenever the last
+        // row has data, and it would do that on every saved line pushed here - on top of the
+        // one blank row added below, leaving two empty rows at the end of a loaded invoice.
+        this.lines.clear({ emitEvent: false });
         this.invoiceInfo.purchaseInvoiceDetailList.forEach((line) => {
             if (!line.lineType) {
                 line.lineType = 'GL';
@@ -292,13 +309,16 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
             if (line.grossAmount === undefined || line.grossAmount === null) {
                 line.grossAmount = line.netAmount;
             }
-            this.lines.push(this.createLineGroup(line));
+            this.lines.push(this.createLineGroup(line), { emitEvent: false });
             if (line.lineType === 'IT' && line.goodsId) {
                 this._loadGoodsUnits(line.goodsId).subscribe();
             }
         });
-        // Always keep one blank row ready at the end, Excel/Business-Central style.
-        this.addNewItem();
+        // Keep exactly one blank row ready at the end, Excel/Business-Central style - only
+        // while the invoice can still be changed.
+        if (this.isEditable) {
+            this.addNewItem();
+        }
         this.recomputeHeaderTotals();
     }
 
@@ -321,60 +341,50 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
     // @ Vendor
     // -----------------------------------------------------------------------------------------------------
 
-    onVendorSelected(owner: Owner | null): void {
-        this.invoiceInfo.creditorId = owner ? owner.ownerId : null;
-        this.invoiceInfo.creditorName = owner ? owner.ownerName : '';
-        this.invoiceInfo.creditorCode = owner ? owner.ownerCode : '';
+    /**
+     * The vendor brings its defaults straight from erp-be's vendor record (no second
+     * request): currency, VAT group, payment type and due date = posting date + the
+     * vendor's due days. They are defaults, not locks - every field stays editable - and a
+     * vendor without a value leaves the current one alone instead of clearing it.
+     *
+     * Changing the vendor of a draft (a wrong vendor picked) re-applies the new vendor's
+     * defaults the same way; lines still carrying the previous vendor's VAT group move to
+     * the new one (their VAT is recalculated), lines whose VAT group was picked by hand keep it.
+     * Runs the draft auto-create check last, so a new draft gets the defaults already in place.
+     */
+    onVendorSelected(vendor: VendorOption | null): void {
+        this.invoiceInfo.creditorId = vendor ? vendor.vendorId : null;
+        this.invoiceInfo.creditorName = vendor ? vendor.vendorName : '';
+        this.invoiceInfo.creditorCode = vendor ? vendor.vendorCode : '';
         this.frmInvoice.controls['creditorCode'].setValue(this.invoiceInfo.creditorCode);
+        const previousVendorVatGroupId = this._selectedVendorVatGroupId;
+        this._selectedVendorVatGroupId = vendor ? vendor.vatGroupId : null;
 
-        // Reset to defaults; overwritten by the enrichment call below if it succeeds.
-        // Still just a default, not a lock — the user can pick any currency from
-        // the dropdown regardless of what the vendor defaults to.
-        const defaultCurrency = this.currencies.find((c) => c.currencyAbbreviation === DEFAULT_CURRENCY_ABBREVIATION);
-        this.invoiceInfo.currencyId = defaultCurrency ? defaultCurrency.currencyId : null;
-        this.invoiceInfo.currencyName = DEFAULT_CURRENCY_NAME;
-        this.invoiceInfo.currencyAbbreviation = DEFAULT_CURRENCY_ABBREVIATION;
-        this._selectedVendorVatGroupId = null;
-        this.invoiceInfo.paymentTypeId = null;
-        this.invoiceInfo.paymentTypeName = null;
-        this.frmInvoice.controls['paymentTypeId'].setValue(null);
-        this.frmInvoice.controls['currencyId'].setValue(this.invoiceInfo.currencyId);
-
-        if (!owner) {
+        if (!vendor) {
             return;
         }
 
+        if (vendor.currencyId) {
+            const currency = this.currencies.find((c) => c.currencyId === vendor.currencyId);
+            this._applyCurrency(currency || {
+                currencyId: vendor.currencyId, currencyCode: vendor.currencyCode, currencyName: vendor.currencyName
+            });
+            this.frmInvoice.controls['currencyId'].setValue(vendor.currencyId);
+        }
+        if (vendor.vatGroupId) {
+            this._applyVendorVatGroup(vendor.vatGroupId, previousVendorVatGroupId);
+        }
+        if (vendor.paymentTypeId) {
+            const paymentType = this.paymentTypes.find((p) => p.paymentTypeId === vendor.paymentTypeId);
+            this.invoiceInfo.paymentTypeId = vendor.paymentTypeId;
+            this.invoiceInfo.paymentTypeName = paymentType ? paymentType.paymentTypeName : vendor.paymentTypeName;
+            this.frmInvoice.controls['paymentTypeId'].setValue(vendor.paymentTypeId);
+        }
+        if (vendor.dueDays != null) {
+            this._applyDueDateFromPaymentTerm(vendor.dueDays);
+        }
+        this.cdr.detectChanges();
         this.checkAutoCreateDraft();
-
-        // A vendor owner's ownerId is its TBL_VENDOR.VENDOR_ID (checked against ERPTEST).
-        // The lightweight owners list (obj/owners/1000613) has no currency/VAT group, so a
-        // second call fetches the full vendor. Fails gracefully if the id doesn't resolve.
-        this._vendorService.getVendor(owner.ownerId).subscribe({
-            next: (vendor) => {
-                if (vendor.currencyId) {
-                    this.invoiceInfo.currencyId = vendor.currencyId;
-                    this.invoiceInfo.currencyName = vendor.currencyName || DEFAULT_CURRENCY_NAME;
-                    this.invoiceInfo.currencyAbbreviation = vendor.currencyAbbreviation || DEFAULT_CURRENCY_ABBREVIATION;
-                    this.frmInvoice.controls['currencyId'].setValue(vendor.currencyId);
-                }
-                if (vendor.vatGroupId) {
-                    this._selectedVendorVatGroupId = vendor.vatGroupId;
-                    this._applyVendorVatGroupToUnsetLines(vendor.vatGroupId);
-                }
-                if (vendor.paymentTypeId) {
-                    this.invoiceInfo.paymentTypeId = vendor.paymentTypeId;
-                    this.invoiceInfo.paymentTypeName = vendor.paymentTypeName || null;
-                    this.frmInvoice.controls['paymentTypeId'].setValue(vendor.paymentTypeId);
-                }
-                if (vendor.dueDate) {
-                    this._applyDueDateFromPaymentTerm(vendor.dueDate);
-                }
-                this.cdr.detectChanges();
-            },
-            error: (err) => {
-                console.warn('Vendor currency/VAT-group enrichment failed', err);
-            }
-        });
     }
 
     openVendorRegisterTab(): void {
@@ -383,9 +393,9 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * "+ Add new vendor" opens the Vendor form in a separate tab, so this
-     * tab's vendor list can go stale. Silently refresh it whenever the user comes
-     * back to this tab/window, rather than making them find a manual refresh button.
+     * Vendors may be added or changed elsewhere (e.g. "+ Add new vendor" opens the Vendor form
+     * in another tab, or another user) while this form is open. Silently refresh the list whenever the user comes back to this
+     * tab/window, rather than making them find a manual refresh button.
      */
     @HostListener('window:focus')
     private refreshVendors(): void {
@@ -397,23 +407,42 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
 
     /** Defaults from the selected vendor (see onVendorSelected()) but stays
      *  editable — this only fires when the user picks a different one by hand. */
-    onCurrencySelected(currency: Currency | null): void {
-        this.invoiceInfo.currencyId = currency ? currency.currencyId : null;
-        this.invoiceInfo.currencyName = currency ? currency.currencyName : DEFAULT_CURRENCY_NAME;
-        this.invoiceInfo.currencyAbbreviation = currency ? currency.currencyAbbreviation : DEFAULT_CURRENCY_ABBREVIATION;
+    onCurrencySelected(currency: CurrencyOption | null): void {
+        this._applyCurrency(currency);
         this.checkAutoCreateDraft();
     }
 
-    private _applyVendorVatGroupToUnsetLines(vatGroupId: number): void {
+    /** erp-be currencies have a code but no separate abbreviation - the code is shown as one. */
+    private _applyCurrency(currency: CurrencyOption | null): void {
+        this.invoiceInfo.currencyId = currency ? currency.currencyId : null;
+        this.invoiceInfo.currencyName = currency ? currency.currencyName : null;
+        this.invoiceInfo.currencyAbbreviation = currency ? currency.currencyCode : null;
+    }
+
+    /** For a loaded invoice: which VAT group is its vendor's default, so changing the vendor
+     *  later moves the lines that still carry it (see onVendorSelected()). Needs both the
+     *  invoice and the vendor list, whichever arrives last. */
+    private _rememberLoadedVendorDefaults(): void {
+        if (this._selectedVendorVatGroupId != null || !this.invoiceInfo.creditorId) {
+            return;
+        }
+        const vendor = this.vendors.find((v) => v.vendorId === this.invoiceInfo.creditorId);
+        this._selectedVendorVatGroupId = vendor ? vendor.vatGroupId : null;
+    }
+
+    /** Sets the vendor's VAT group on lines that have none, or still have the previous
+     *  vendor's default; a VAT group the user picked by hand is kept. */
+    private _applyVendorVatGroup(vatGroupId: number, previousVendorVatGroupId: number | null): void {
         this.lines.controls.forEach((group: FormGroup) => {
-            if (!group.controls['vatPostingGroupId'].value) {
+            const current = group.controls['vatPostingGroupId'].value;
+            if (!current || (previousVendorVatGroupId != null && current === previousVendorVatGroupId)) {
                 group.controls['vatPostingGroupId'].setValue(vatGroupId);
             }
         });
     }
 
-    /** Due Date defaults to Posting Date + the vendor's payment term (Vendor.dueDate, in days)
-     *  (e.g. "Net 30") when a vendor is selected - a one-time default, same as
+    /** Due Date defaults to Posting Date + the vendor's due days (erp-be vendor
+     *  `dueDate`, e.g. 30) when a vendor is selected - a one-time default, same as
      *  currency/VAT group above, not a formula kept in sync afterwards. Stays
      *  fully editable. No-ops if Posting Date isn't set yet (shouldn't normally
      *  happen - see the "today by default" fill in ngOnInit). */
@@ -431,9 +460,9 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
     // @ Reviewed by
     // -----------------------------------------------------------------------------------------------------
 
-    onReviewerSelected(reviewer: ReviewerOption | null): void {
+    onReviewerSelected(reviewer: PurchaseInvoiceReviewer | null): void {
         this.invoiceInfo.reviewedByUserId = reviewer ? reviewer.userId : null;
-        this.invoiceInfo.reviewedByUserName = reviewer ? reviewer.name : null;
+        this.invoiceInfo.reviewedByUserName = reviewer ? reviewer.fullName : null;
     }
 
     // -----------------------------------------------------------------------------------------------------
@@ -463,13 +492,16 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         detail.netAmount = 0;
         detail.grossAmount = 0;
         detail.itemDesc = '';
-        detail.vatPostingGroupId = this._selectedVendorVatGroupId ?? null;
-        detail.vatProductPostingGroupId = this._vatLookupService.getDefaultVatProductPostingGroupId();
+        detail.vatGroupId = this._selectedVendorVatGroupId ?? null;
+        detail.vatProductGroupId = this._vatLookupService.getDefaultVatProductPostingGroupId();
         this.invoiceInfo.purchaseInvoiceDetailList.push(detail);
         this.lines.push(this.createLineGroup(detail));
     }
 
     removeItem(index: number): void {
+        if (!this.isEditable) {
+            return;
+        }
         // The invoice always needs at least one line to submit — keep the last
         // remaining row in place rather than letting the table go empty.
         if (this.invoiceInfo.purchaseInvoiceDetailList.length <= 1) {
@@ -520,7 +552,7 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
                     return;
                 }
                 this.units = [...this.units, unit];
-                this.unitOptions = [...this.unitOptions, { id: unit.unitId, code: unit.unitCode, name: unit.unitName }];
+                this.unitOptions = [...this.unitOptions, toUnitLookupOption(unit)];
                 (this.lines.at(lineIndex) as FormGroup).controls['unitId'].setValue(unit.unitId);
                 this.cdr.detectChanges();
             });
@@ -533,8 +565,10 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
             accountId: [this._lineReferenceId(line)],
             costCenterId: [line.costCenterId],
             itemDesc: [line.itemDesc || ''],
-            vatPostingGroupId: [line.vatPostingGroupId],
-            vatProductPostingGroupId: [line.vatProductPostingGroupId],
+            // Control names are the shared line-items table's; the line itself uses erp-be's
+            // field names (vatGroupId / vatProductGroupId).
+            vatPostingGroupId: [line.vatGroupId],
+            vatProductPostingGroupId: [line.vatProductGroupId],
             unitId: [line.unitId],
             quantity: [line.quantity ?? 1, [Validators.required, Validators.min(0.0001)]],
             unitPrice: [line.unitPrice ?? 0, [Validators.required, Validators.min(0)]],
@@ -581,8 +615,8 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         if (value.lineType === 'FA') {
             const fa = this.fixedAssets.find((a) => a.fixedAssetId === value.accountId);
             line.fixedAssetId = value.accountId;
-            line.fixedAssetCode = fa ? fa.assetCode : '';
-            line.fixedAssetName = fa ? fa.assetName : '';
+            line.fixedAssetCode = fa ? fa.fixedAssetCode : '';
+            line.fixedAssetName = fa ? fa.fixedAssetName : '';
         } else if (value.lineType === 'IT') {
             const goods = this.goods.find((g) => g.goodsId === value.accountId);
             line.goodsId = value.accountId ?? null;
@@ -592,18 +626,18 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
                 this._applyPrimaryUnit(line.goodsId, group);
             }
         } else {
-            const acc = this.glAccounts.find((a) => a.financialCategoryId === value.accountId);
+            const acc = this.glAccounts.find((a) => a.accountId === value.accountId);
             line.accountId = value.accountId;
-            line.accountCode = acc ? acc.financialCategoryCode : '';
-            line.accountName = acc ? acc.financialCategoryName : '';
+            line.accountCode = acc ? acc.accountCode : '';
+            line.accountName = acc ? acc.accountName : '';
         }
         const cc = this.costCenters.find((c) => c.costCenterId === value.costCenterId);
         line.costCenterId = value.costCenterId;
         line.costCenterCode = cc ? cc.costCenterCode : '';
         line.costCenterName = cc ? cc.costCenterName : '';
         line.itemDesc = value.itemDesc || '';
-        line.vatPostingGroupId = value.vatPostingGroupId;
-        line.vatProductPostingGroupId = value.vatProductPostingGroupId;
+        line.vatGroupId = value.vatPostingGroupId;
+        line.vatProductGroupId = value.vatProductPostingGroupId;
 
         const unit = this.units.find((u) => u.unitId === value.unitId);
         line.unitId = value.unitId ?? null;
@@ -682,7 +716,7 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
 
     // -----------------------------------------------------------------------------------------------------
     // @ Quick-add dialog (reuses the FuseDataEntryDialogService pattern from
-    // financial/account-chart/details/details.component.ts) — still used by Cost Center.
+    // financial/category/details/details.component.ts) — still used by Cost Center.
     // -----------------------------------------------------------------------------------------------------
 
     private buildQuickAddDialog(title: string, prefillName: string): FormGroup {
@@ -864,18 +898,18 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Requires a reviewer to be picked (in the "Reviewed By" field above),
+     * Requires an approver to be picked (in the "Approver" field above),
      * at least one line item, and - stricter than a plain Save/Draft - every
      * non-blank line filled in except Cost Center (see
-     * _hasValidLinesForReview()), then saves with status advanced to Pending
-     * Review. There's no backend workflow yet to route the invoice to that
-     * person or notify them, so this only records who's meant to review it
-     * and marks the invoice as awaiting review.
+     * _hasValidLinesForReview()), then saves the invoice and sends it for approval:
+     * it becomes Pending Approval and is locked until the reviewer approves or
+     * rejects it, or the sender withdraws it. erp-be re-checks the rules (a reviewer
+     * from the reviewer role, not yourself, at least one line).
      */
     sendForReview() {
         if (!this.invoiceInfo.reviewedByUserId) {
             this._result.succeed = false;
-            this._result.message = 'Please select a reviewer first';
+            this._result.message = 'Please select an approver first';
             this.showAlert('errorMessage');
             return;
         }
@@ -894,8 +928,23 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
             this.cdr.detectChanges();
             return;
         }
-        this.invoiceInfo.status = this.STATUS_PENDING_REVIEW;
-        this.save();
+        if (!this.getFormInfo()) {
+            return;
+        }
+        this.dismissAlert('successMessage');
+        this.dismissAlert('errorMessage');
+        this.isLoading = true;
+        this.actionDisable = true;
+        const save$: Observable<PurchaseInvoice> = this.invoiceInfo.purchaseInvoiceId
+            ? this.service.edit(this.toBackendPayload())
+            : this._createInvoice();
+        save$.pipe(
+            tap(() => this.frmInvoice.markAsPristine()),
+            switchMap(() => this.service.sendForApproval(this.invoiceInfo.purchaseInvoiceId))
+        ).subscribe({
+            next: () => this._afterWorkflowStep('Sent for approval'),
+            error: (err) => this._onRequestError(err)
+        });
     }
 
     create() {
@@ -1012,7 +1061,7 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
      * per invoice.
      */
     checkAutoCreateDraft(): void {
-        if (this.invoiceInfo.purchaseInvoiceId || this.isLoading || !this._hasMinimumDraftFields()) {
+        if (this.invoiceInfo.purchaseInvoiceId || this.isLoading || !this.isEditable || !this._hasMinimumDraftFields()) {
             return;
         }
         this._applyMinimumDraftFields();
@@ -1043,7 +1092,7 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
      * see the conversation this was designed in for why that's an accepted gap.
      */
     canDeactivate(): Observable<boolean> {
-        if (!this.frmInvoice || !this.frmInvoice.dirty) {
+        if (!this.frmInvoice || !this.frmInvoice.dirty || !this.isEditable) {
             return of(true);
         }
         if (this.invoiceInfo.purchaseInvoiceId) {
@@ -1097,31 +1146,157 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         this.invoiceInfo.status = created.status;
         this.invoiceInfo.statusDescription = created.statusDescription;
         this.invoiceInfo.statusColor = created.statusColor;
+        this.invoiceInfo.allowedActions = created.allowedActions;
         this.cdr.detectChanges();
     }
 
-    confirm() {
+    // -----------------------------------------------------------------------------------------------------
+    // @ Approval workflow (Draft -> Pending Approval -> Approved -> Posted, Rejected back for rework)
+    // -----------------------------------------------------------------------------------------------------
+
+    /** Pending Approval -> Draft: the sender takes it back, e.g. to fix a mistake. */
+    withdraw(): void {
+        this._runWorkflowStep(this.service.withdraw(this.invoiceInfo.purchaseInvoiceId), 'Withdrawn - the invoice is a draft again');
+    }
+
+    /** Pending Approval -> Approved, by the assigned approver, with an optional comment. */
+    approve(): void {
+        this._askForComment('Approve invoice', 'Approve', 'Comment (optional)').subscribe((comment) => {
+            if (comment !== undefined) {
+                this._runWorkflowStep(this.service.approve(this.invoiceInfo.purchaseInvoiceId, comment), 'Invoice approved');
+            }
+        });
+    }
+
+    /** Pending Approval -> Rejected, by the assigned approver, with an optional reason. */
+    reject(): void {
+        this._askForComment('Reject invoice', 'Reject', 'Reason (optional)').subscribe((comment) => {
+            if (comment !== undefined) {
+                this._runWorkflowStep(this.service.reject(this.invoiceInfo.purchaseInvoiceId, comment), 'Invoice rejected');
+            }
+        });
+    }
+
+    /** Approved -> Draft, to change something; it needs approving again. */
+    reopen(): void {
+        this._runWorkflowStep(this.service.reopen(this.invoiceInfo.purchaseInvoiceId), 'Reopened - the invoice is a draft again');
+    }
+
+    /**
+     * Approved -> Posted; or a Draft posted straight away, for an invoice that needs no approval -
+     * then it is validated and saved first (like Send for Approval) and the user confirms skipping approval.
+     */
+    post(): void {
+        if (!this.isEditable) {
+            this._runWorkflowStep(this.service.post(this.invoiceInfo.purchaseInvoiceId), 'Invoice posted');
+            return;
+        }
+        if (!this.getFormInfo()) {
+            return;
+        }
+        this.reviewValidationAttempted = true;
+        if (!this._hasValidLinesForReview()) {
+            this._result.succeed = false;
+            this._result.message = 'Each line (except Cost Center) needs an account, fixed asset or raw material, a description, VAT group, VAT product group, unit, a quantity greater than zero, and a valid unit price before posting';
+            this.showAlert('errorMessage');
+            this.cdr.detectChanges();
+            return;
+        }
+        this._confirm('Post invoice', 'Post this invoice without sending it for approval?', 'Post').subscribe((confirmed) => {
+            if (!confirmed) {
+                return;
+            }
+            const save$: Observable<PurchaseInvoice> = this.invoiceInfo.purchaseInvoiceId
+                ? this.service.edit(this.toBackendPayload())
+                : this._createInvoice();
+            this._runWorkflowStep(save$.pipe(
+                tap(() => this.frmInvoice.markAsPristine()),
+                switchMap(() => this.service.post(this.invoiceInfo.purchaseInvoiceId))
+            ), 'Invoice posted');
+        });
+    }
+
+    private _runWorkflowStep(step$: Observable<PurchaseInvoice>, message: string): void {
         this.dismissAlert('successMessage');
         this.dismissAlert('errorMessage');
-        this.service.confirm(this.toBackendPayload()).subscribe({
-            next: () => {
-                this.isLoading = false;
-                this._result.succeed = true;
-                this._result.message = SAVE_SUCCEEDED_MESSAGE;
-                this.showAlert('successMessage');
-                this.cdr.detectChanges();
-            },
+        this.isLoading = true;
+        this.actionDisable = true;
+        step$.subscribe({
+            next: () => this._afterWorkflowStep(message),
             error: (err) => this._onRequestError(err)
         });
     }
 
-    /** Not wired up yet - the backend has no cancelled status or endpoint for
-     *  it yet. Placeholder so the button can be in the UI now and get real
-     *  behavior later without another round of layout changes. */
+    /** Reloads the invoice after a step: its status, what the user may do now and the lock all change. */
+    private _afterWorkflowStep(message: string): void {
+        this.isLoading = false;
+        this.actionDisable = false;
+        this.reviewValidationAttempted = false;
+        this._result.succeed = true;
+        this._result.message = message;
+        this.showAlert('successMessage');
+        this.getById(this.invoiceInfo.purchaseInvoiceId);
+    }
+
+    /** Header fields and line inputs follow the invoice's lock; the derived amounts stay read-only. */
+    private _applyLock(): void {
+        const locked = !this.isEditable;
+        ['vendorId', 'currencyId', 'jdatepicker', 'vendorInvoiceNumber', 'dueDatepicker', 'reviewedByUserId', 'paymentTypeId']
+            .forEach((name) => locked
+                ? this.frmInvoice.controls[name].disable({ emitEvent: false })
+                : this.frmInvoice.controls[name].enable({ emitEvent: false }));
+        this.lines.controls.forEach((group: FormGroup) => Object.keys(group.controls)
+            .filter((name) => name !== 'netAmount' && name !== 'grossAmount')
+            .forEach((name) => locked
+                ? group.controls[name].disable({ emitEvent: false })
+                : group.controls[name].enable({ emitEvent: false })));
+        this.cdr.detectChanges();
+    }
+
+    /** Emits the comment (null when left empty), or undefined when the dialog was cancelled. */
+    private _askForComment(title: string, confirmLabel: string, label: string): Observable<string | null | undefined> {
+        const formControls: Array<FuseDataEntryDialogFormControls> = [
+            { formControlName: 'comment', index: 0, label, placeHolder: label, type: 'text', disabled: false, value: '' },
+        ];
+        const config = this._formBuilder.group({
+            title,
+            message: '',
+            formControls: this._formBuilder.group(formControls),
+            icon: this._formBuilder.group({ show: true, name: 'heroicons_outline:chat-alt', color: 'info' }),
+            actions: this._formBuilder.group({
+                confirm: this._formBuilder.group({ show: true, label: confirmLabel, color: 'primary' }),
+                cancel: this._formBuilder.group({ show: true, label: 'Cancel' })
+            }),
+            dismissible: true
+        });
+        return this._fuseDataEntryDialogService.open(config.value).afterClosed().pipe(
+            map((result) => {
+                if (!result || result === 'cancelled') {
+                    return undefined;
+                }
+                const value = (result.filter((x) => x.index === 0)[0] || {}).value;
+                return value && String(value).trim() ? String(value).trim().substring(0, 500) : null;
+            })
+        );
+    }
+
+    /** Posted -> Cancelled, for good - after a confirmation. */
     cancel(): void {
-        this._result.succeed = false;
-        this._result.message = "Cancelling a purchase invoice isn't available yet";
-        this.showAlert('errorMessage');
+        this._confirm('Cancel invoice', 'Cancel this posted invoice? This is final - it can\'t be posted again.', 'Cancel invoice')
+            .subscribe((confirmed) => confirmed
+                && this._runWorkflowStep(this.service.cancel(this.invoiceInfo.purchaseInvoiceId), 'Invoice cancelled'));
+    }
+
+    /** Posted -> Draft: cancels the posting and reopens this invoice to be changed and posted again. */
+    correct(): void {
+        this._confirm('Correct invoice', 'Cancel the posting and reopen this invoice as a draft, to change it and post it again?', 'Correct')
+            .subscribe((confirmed) => confirmed
+                && this._runWorkflowStep(this.service.correct(this.invoiceInfo.purchaseInvoiceId), 'Posting cancelled - the invoice is a draft again'));
+    }
+
+    private _confirm(title: string, message: string, confirmLabel: string): Observable<boolean> {
+        return this._fuseConfirmationService.open({ title, message, actions: { confirm: { label: confirmLabel } } })
+            .afterClosed().pipe(map((result) => result === 'confirmed'));
     }
 
     trackByFn(index: number, item: any): any {

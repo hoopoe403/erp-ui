@@ -1,0 +1,55 @@
+<div class="p-3 rounded-2xl shadow bg-card flex flex-col gap-2">
+
+    <div class="flex items-center justify-between">
+        <div class="font-medium">{{title}}</div>
+        <div *ngIf="files.length" class="text-sm text-secondary">{{files.length}}</div>
+    </div>
+
+    <!-- Not saved yet: there is no record id to attach to. -->
+    <div *ngIf="!filesPath"
+        class="p-3 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 text-center text-sm text-secondary">
+        <mat-icon class="icon-size-8 mb-1" svgIcon="heroicons_outline:paper-clip"></mat-icon>
+        <div>Save the draft to attach documents</div>
+    </div>
+
+    <!-- Drop zone / picker -->
+    <div *ngIf="filesPath && !readonly"
+        class="p-3 rounded-xl border-2 border-dashed text-center text-sm cursor-pointer transition-colors"
+        [ngClass]="isDragOver ? 'border-primary bg-primary-50 dark:bg-primary-900' : 'border-gray-300 dark:border-gray-600 text-secondary'"
+        (click)="canUpload && picker.click()" (dragover)="onDragOver($event)" (dragleave)="isDragOver = false"
+        (drop)="onDrop($event)">
+        <mat-icon class="icon-size-8 mb-1" svgIcon="heroicons_outline:cloud-upload"></mat-icon>
+        <div>Drop or click to upload</div>
+        <div class="text-xs">PDF, PNG, JPG · max 10 MB</div>
+        <input #picker type="file" class="hidden" multiple [accept]="accept" (change)="onFilesPicked(picker)">
+    </div>
+
+    <mat-progress-bar *ngIf="isLoading || isUploading" mode="indeterminate"></mat-progress-bar>
+
+    <div *ngIf="errorMessage" class="flex items-start gap-1 text-sm text-warn">
+        <span class="flex-1 min-w-0 break-words">{{errorMessage}}</span>
+        <button mat-icon-button class="w-6 h-6 min-h-6" (click)="errorMessage = null" matTooltip="Dismiss">
+            <mat-icon class="icon-size-4" svgIcon="heroicons_outline:x"></mat-icon>
+        </button>
+    </div>
+
+    <!-- Files -->
+    <div *ngFor="let file of files" class="flex items-center gap-2 min-w-0 py-1 border-t first:border-t-0">
+        <mat-icon class="icon-size-5 flex-shrink-0 text-secondary"
+            [svgIcon]="isImage(file) ? 'heroicons_outline:photograph' : 'heroicons_outline:document-text'"></mat-icon>
+        <div class="flex-1 min-w-0">
+            <a class="block truncate text-sm cursor-pointer hover:underline" [matTooltip]="file.originalName"
+                (click)="open(file)">{{file.originalName}}</a>
+            <div class="text-xs text-secondary truncate">{{formatSize(file.sizeBytes)}} · {{file.createdAt | date:'dd.MM.yyyy'}}</div>
+        </div>
+        <button mat-icon-button class="w-7 h-7 min-h-7 flex-shrink-0" matTooltip="Download" (click)="download(file)">
+            <mat-icon class="icon-size-4" svgIcon="heroicons_outline:download"></mat-icon>
+        </button>
+        <button *ngIf="!readonly" mat-icon-button class="w-7 h-7 min-h-7 flex-shrink-0" matTooltip="Delete"
+            (click)="delete(file)">
+            <mat-icon class="icon-size-4" svgIcon="heroicons_outline:trash"></mat-icon>
+        </button>
+    </div>
+
+    <div *ngIf="filesPath && !isLoading && !files.length && readonly" class="text-sm text-secondary">No documents</div>
+</div>

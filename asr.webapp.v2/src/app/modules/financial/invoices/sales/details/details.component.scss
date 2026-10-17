@@ -1,0 +1,42 @@
+// Intentionally no fixed-height/scroll-containment rules here — see
+// purchase-invoice's details.component.scss for the full rationale (the app's
+// layout shell gives routed pages no viewport-bound height to pin against).
+// The whole form scrolls as one normal page, like every other screen in this app.
+
+// Lighter/flatter field look for the header grid, same treatment as Purchase
+// Invoice's voucher page (see its details.component.scss). Deliberately scoped
+// to .sales-invoice-fields (this component has ViewEncapsulation.None, so
+// nothing scopes these rules automatically) rather than touching
+// app-lookup-select's own template/styles, which are shared by several other
+// unrelated pages - this only affects the lookup-select fields (Customer,
+// Reviewed By) when they happen to render inside this specific page's grid.
+.sales-invoice-fields {
+    .mat-form-field-appearance-legacy .mat-form-field-label {
+        font-size: 12px;
+        color: rgba(0, 0, 0, 0.5);
+    }
+
+    .dark & .mat-form-field-appearance-legacy .mat-form-field-label {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .mat-form-field-appearance-legacy .mat-form-field-underline {
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .dark & .mat-form-field-appearance-legacy .mat-form-field-underline {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    // Extra breathing room between the input text and the underline below it -
+    // without this the underline (especially the thicker, colored focus/active
+    // ripple) sits right against the text's descenders and reads as a strike
+    // through the value rather than an underline.
+    .mat-form-field-appearance-legacy .mat-form-field-infix {
+        padding-bottom: 10px;
+    }
+
+    .mat-form-field-wrapper {
+        padding-bottom: 0.5em;
+    }
+}

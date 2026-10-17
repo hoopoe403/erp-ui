@@ -10,8 +10,19 @@ export const PERSONNEL_OWNER_TYPE_ID = 1000614; // Personnel
 export const DEFAULT_CURRENCY_ABBREVIATION = 'EUR';
 export const DEFAULT_CURRENCY_NAME = 'Euro';
 
-// Purchase Invoice workflow statuses — must match erp-be's
-// LocalMockPurchaseInvoiceRepository.STATUS_* constants exactly.
-export const PURCHASE_INVOICE_STATUS_DRAFT = 1000001;
-export const PURCHASE_INVOICE_STATUS_PENDING_REVIEW = 1000002;
-export const PURCHASE_INVOICE_STATUS_POSTED = 1000003;
+// Purchase Invoice statuses — must match erp-be's PurchaseInvoiceStatus (the
+// TBL_TABLE_STATUS rows for TBL_PURCHASE_INVOICE): the approval workflow
+// Draft -> Pending Approval -> Approved -> Posted, with Rejected back for rework.
+export const PURCHASE_INVOICE_STATUS_DRAFT = 1000007;
+export const PURCHASE_INVOICE_STATUS_PENDING_APPROVAL = 1000093;
+export const PURCHASE_INVOICE_STATUS_APPROVED = 1000094;
+export const PURCHASE_INVOICE_STATUS_REJECTED = 1000095;
+export const PURCHASE_INVOICE_STATUS_POSTED = 1000092;
+export const PURCHASE_INVOICE_STATUS_CANCELLED = 1000096;
+
+// Sales Invoice workflow statuses — must match erp-be's SalesInvoiceStatus
+// constants exactly. Deliberately a different range from the Purchase Invoice
+// ids above so the two invented status sets can never collide.
+export const SALES_INVOICE_STATUS_DRAFT = 2000001;
+export const SALES_INVOICE_STATUS_PENDING_REVIEW = 2000002;
+export const SALES_INVOICE_STATUS_POSTED = 2000003;

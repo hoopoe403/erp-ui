@@ -35,9 +35,7 @@
                 <td>
                     <mat-form-field appearance="legacy">
                         <mat-select formControlName="lineType">
-                            <mat-option value="GL">G/L Account</mat-option>
-                            <mat-option value="FA">Fixed Asset</mat-option>
-                            <mat-option value="IT">Raw Material</mat-option>
+                            <mat-option *ngFor="let lt of lineTypes" [value]="lt.value">{{lt.label}}</mat-option>
                         </mat-select>
                     </mat-form-field>
                 </td>
@@ -70,9 +68,9 @@
                     </app-lookup-select>
                 </td>
                 <td [class.cell-invalid]="isFieldMissing(lineGroup, 'unitId')">
-                    <!-- An item line's units come from its raw material's own definition, so no quick-add there. -->
+                    <!-- A raw material line's units come from its goods' own definition, so no quick-add there. -->
                     <app-lookup-select formControlName="unitId" [options]="getUnitOptions(lineGroup)" idKey="id"
-                        codeKey="code" nameKey="name" placeholder="Unit..." [showAddOption]="!isItemLine(lineGroup)"
+                        codeKey="code" nameKey="name" placeholder="Unit..." [showAddOption]="!hasGoodsUnits(lineGroup)"
                         addOptionLabel="+ Add new unit" (addRequested)="onAddUnit($event, i)">
                     </app-lookup-select>
                 </td>

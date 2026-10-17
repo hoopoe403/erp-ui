@@ -9,7 +9,7 @@ import { VendorService } from "../vendor.service";
 import { BankAccount, Currency } from "../../shared/bank-account/bank-account.types";
 import { BankAccountService } from "../../shared/bank-account/bank-account.service";
 import { VatLookupService } from "app/modules/financial/shared/lookup/vat-lookup.service";
-import { MockVatGroup } from "app/modules/financial/shared/mock-data";
+import { VatGroupOption } from "app/modules/financial/shared/master-data.types";
 import { PaymentTypeLookupService, PaymentTypeOption } from "app/modules/financial/shared/lookup/payment-type-lookup.service";
 
 /** erp-be's VendorRequest.PHONE_PATTERN: optional +, then digits, spaces and ( ) / - */
@@ -27,7 +27,7 @@ export class VendorsDetailsComponent implements OnInit {
   formVendor: FormGroup;
   vendorTypes: VendorType[] = [];
   currencies: Currency[] = [];
-  vatGroups: MockVatGroup[] = [];
+  vatGroups: VatGroupOption[] = [];
   paymentTypes: PaymentTypeOption[] = [];
 
   // Bank accounts for this vendor, in the shared <app-bank-account> component's shape

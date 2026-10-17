@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
-import { PurchaseInvoice, PurchaseInvoiceList } from './purchase-invoice.types';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { PurchaseInvoice, PurchaseInvoiceList, PurchaseInvoiceReviewer } from './purchase-invoice.types';
 import { ApiHelperService } from '../../../../../environments/api-helper.service';
 import { Paging } from 'app/core/type/paging/paging.type';
 
@@ -12,7 +12,8 @@ import { Paging } from 'app/core/type/paging/paging.type';
  * lookup array - and any failure is an HTTP error (400 invalid request, 404 not found,
  * 409 duplicate vendor invoice number) whose RFC 7807 `detail` holds the readable text.
  * Callers handle failures in `error`, not by checking a flag on the response.
- * The `legacyUrl` calls further down still hit the old Result-envelope controller.
+ * Dropdown data (vendors, accounts, VAT...) comes from erp-be's master-data modules
+ * through the shared lookups (financial/shared/lookup), not from here.
  */
 @Injectable({
     providedIn: 'root'
@@ -21,10 +22,6 @@ export class PurchaseInvoiceService {
 
 
     private url: string = 'financial/purchaseInvoice/';
-    // Real Oracle-backed reference data (GL account tree, vendor/owner lookups) that
-    // has nothing to do with where invoice *records* live — stays on the old,
-    // untouched ManualInvoiceController rather than following the mock-backed move.
-    private legacyUrl: string = 'financial/manualInvoice/';
     private _pagination: BehaviorSubject<Paging | null> = new BehaviorSubject(null);
     private _purchaseInvoices: BehaviorSubject<PurchaseInvoice[] | null> = new BehaviorSubject(null);
     /**
@@ -83,9 +80,52 @@ export class PurchaseInvoiceService {
         );
     }
 
-    /** Posts the invoice; emits the stored invoice. 404 if it doesn't exist. */
-    confirm(purchaseInvoice: PurchaseInvoice): Observable<PurchaseInvoice> {
-        return this._httpClient.post<PurchaseInvoice>(ApiHelperService.BASE_URL + this.url + 'confirm', purchaseInvoice);
+    // ---- approval workflow: each emits the updated invoice (status, allowedActions...). 409 when
+    // the invoice's status doesn't allow the step, 403 when the current user may not take it.
+
+    /** Draft/Rejected -> Pending Approval, to the invoice's reviewer. */
+    sendForApproval(id: number): Observable<PurchaseInvoice> {
+        return this._httpClient.post<PurchaseInvoice>(ApiHelperService.BASE_URL + this.url + id + '/send-for-approval', null);
+    }
+
+    /** Pending Approval -> Draft (only whoever sent it). */
+    withdraw(id: number): Observable<PurchaseInvoice> {
+        return this._httpClient.post<PurchaseInvoice>(ApiHelperService.BASE_URL + this.url + id + '/withdraw', null);
+    }
+
+    /** Pending Approval -> Approved (only the assigned reviewer); the comment is optional. */
+    approve(id: number, comment: string | null): Observable<PurchaseInvoice> {
+        return this._httpClient.post<PurchaseInvoice>(ApiHelperService.BASE_URL + this.url + id + '/approve', { comment });
+    }
+
+    /** Pending Approval -> Rejected (only the assigned reviewer); the comment (why) is optional. */
+    reject(id: number, comment: string | null): Observable<PurchaseInvoice> {
+        return this._httpClient.post<PurchaseInvoice>(ApiHelperService.BASE_URL + this.url + id + '/reject', { comment });
+    }
+
+    /** Approved -> Draft, to change something (needs approving again). */
+    reopen(id: number): Observable<PurchaseInvoice> {
+        return this._httpClient.post<PurchaseInvoice>(ApiHelperService.BASE_URL + this.url + id + '/reopen', null);
+    }
+
+    /** Approved -> Posted. */
+    post(id: number): Observable<PurchaseInvoice> {
+        return this._httpClient.post<PurchaseInvoice>(ApiHelperService.BASE_URL + this.url + id + '/post', null);
+    }
+
+    /** Posted -> Cancelled, for good (will reverse the posting once posting creates ledger entries). */
+    cancel(id: number): Observable<PurchaseInvoice> {
+        return this._httpClient.post<PurchaseInvoice>(ApiHelperService.BASE_URL + this.url + id + '/cancel', null);
+    }
+
+    /** Posted -> Draft: cancels the posting and reopens the same invoice to be changed and posted again. */
+    correct(id: number): Observable<PurchaseInvoice> {
+        return this._httpClient.post<PurchaseInvoice>(ApiHelperService.BASE_URL + this.url + id + '/correct', null);
+    }
+
+    /** Users who may be picked as reviewer (the PI_REVIEWER role). */
+    getReviewers(): Observable<PurchaseInvoiceReviewer[]> {
+        return this._httpClient.get<PurchaseInvoiceReviewer[]>(ApiHelperService.BASE_URL + this.url + 'drp/reviewers');
     }
 
     /** 201 - emits the stored invoice with its server-assigned id, number and status. 409 for a duplicate. */
@@ -98,129 +138,13 @@ export class PurchaseInvoiceService {
         return this._httpClient.post<PurchaseInvoice>(ApiHelperService.BASE_URL + this.url + 'edit', purchaseInvoice);
     }
 
+    /** The invoice's documents endpoints, for `<app-file-attachments [filesPath]>`. */
+    filesPath(purchaseInvoiceId: number): string {
+        return this.url + purchaseInvoiceId + '/files';
+    }
+
     /** A plain array of statuses ({statusId, statusDescription, color, isDefault...}). */
     getStatuses(): Observable<any[]> {
         return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'drp/statuses');
-    }
-
-
-    getFinancialCategories(): any {
-        return this._httpClient.get(ApiHelperService.BASE_URL + this.legacyUrl + 'tree/financialCategory').pipe(
-            map((financialCategories) => {
-                return financialCategories;
-            }),
-            switchMap((financialCategories) => {
-
-                if (!financialCategories) {
-                    return throwError('Could not found course with id of ' + '!');
-                }
-
-                return of(financialCategories);
-            })
-        );
-    }
-    getDebtors(payerTypeId: number): any {
-        return this._httpClient.get(ApiHelperService.BASE_URL + this.legacyUrl + 'obj/owners/' + payerTypeId).pipe(
-            map((data) => {
-                return data;
-            }),
-            switchMap((data) => {
-
-                if (!data) {
-                    return throwError('Could not found course with id of ' + '!');
-                }
-
-                return of(data);
-            })
-        );
-    }
-    getCreditors(issuerTypeId: number): any {
-        return this._httpClient.get(ApiHelperService.BASE_URL + this.legacyUrl + 'obj/owners/' + issuerTypeId).pipe(
-            map((data) => {
-                return data;
-            }),
-            switchMap((data) => {
-
-                if (!data) {
-                    return throwError('Could not found course with id of ' + '!');
-                }
-
-                return of(data);
-            })
-        );
-    }
-    getOwnerTypes(): any {
-        return this._httpClient.get(ApiHelperService.BASE_URL + this.legacyUrl + 'drp/ownerType').pipe(
-            map((data) => {
-                return data;
-            }),
-            switchMap((data) => {
-
-                if (!data) {
-                    return throwError('Could not found course with id of ' + '!');
-                }
-
-                return of(data);
-            })
-        );
-    }
-
-    // -----------------------------------------------------------------------------------------------------
-    // Local-mock-data lookups (Cost Center, Fixed Asset, VAT groups) — none of these
-    // have a real DB table yet; erp-be serves them from a local JSON file instead
-    // (see InvoiceMasterDataService / application.local-mock-data.enabled).
-    // -----------------------------------------------------------------------------------------------------
-
-    getMockCostCenters(): Observable<any[]> {
-        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'mock/cost-centers');
-    }
-
-    /** 201 - emits the created cost center. 501 when local mock data is off. */
-    addMockCostCenter(costCenter: { costCenterCode: string; costCenterName: string }): Observable<any> {
-        return this._httpClient.post<any>(ApiHelperService.BASE_URL + this.url + 'mock/cost-centers', costCenter);
-    }
-
-    getMockFixedAssets(): Observable<any[]> {
-        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'mock/fixed-assets');
-    }
-
-    /** Real VAT master data (TBL_VAT_GROUP / TBL_VAT_PRODUCT_GROUP / TBL_VAT_RATE), shared by every invoice type. */
-    getVatGroups(): Observable<any[]> {
-        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + 'financial/invoice/base/vat-groups');
-    }
-
-    getVatProductGroups(): Observable<any[]> {
-        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + 'financial/invoice/base/vat-product-groups');
-    }
-
-    /** The rate currently in force for every VAT group x VAT product group combination. */
-    getCurrentVatRates(): Observable<any[]> {
-        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + 'financial/vatRate/drp/current');
-    }
-
-    /**
-     * Unit already exists as real, Oracle-backed master data elsewhere in this
-     * system. Unlike the mock/* lookups above, this single endpoint serves both
-     * reads and quick-adds — erp-be decides mock vs. real internally based on
-     * application.local-mock-data.enabled, so this service never needs to know
-     * which one is active.
-     */
-    getUnits(): Observable<any[]> {
-        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'drp/units');
-    }
-
-    /** Goods (id/code/name only) for an item line's "Raw Material" picker. */
-    getGoods(): Observable<any[]> {
-        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'drp/goods');
-    }
-
-    /** The units a goods can be counted in, primary unit first. 404 for an unknown goods. */
-    getGoodsUnits(goodsId: number): Observable<any[]> {
-        return this._httpClient.get<any[]>(ApiHelperService.BASE_URL + this.url + 'drp/goods/' + goodsId + '/units');
-    }
-
-    /** 201 - emits the created unit. */
-    addUnit(unit: { unitCode: string; unitName: string }): Observable<any> {
-        return this._httpClient.post<any>(ApiHelperService.BASE_URL + this.url + 'drp/units', unit);
     }
 }

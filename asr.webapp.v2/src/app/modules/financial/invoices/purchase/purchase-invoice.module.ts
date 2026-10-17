@@ -34,6 +34,7 @@ import { DecimalPipe } from '@angular/common';
 import { ExcelService } from '../../../../shared/excel/excel.service';
 import { LookupSelectModule } from '../../shared/lookup-select/lookup-select.module';
 import { LineItemsTableModule } from '../../shared/line-items-table/line-items-table.module';
+import { FileAttachmentsModule } from '../../shared/file-attachments/file-attachments.module';
 @NgModule({
     declarations: [
         PurchaseInvoiceComponent,
@@ -69,7 +70,8 @@ import { LineItemsTableModule } from '../../shared/line-items-table/line-items-t
         FuseScrollbarModule,
         FuseDrawerModule,
         LookupSelectModule,
-        LineItemsTableModule
+        LineItemsTableModule,
+        FileAttachmentsModule
     ],
     providers: [
         DecimalPipe, ExcelService

@@ -1,40 +1,39 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { AccountChartService } from '../../account-chart/account-chart.service';
-import { AccountChart } from '../../account-chart/account-chart.types';
-import { MockGlAccount } from '../mock-data';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { ApiHelperService } from '../../../../../environments/api-helper.service';
+import { AccountOption } from '../master-data.types';
 
+/**
+ * The postable accounts of the chart of accounts (erp-be `accountChart`). The chart is a
+ * tree; only its leaves can carry an invoice line, so parent accounts are left out. Each
+ * account shows its full code (parent codes included) so similar child codes stay apart.
+ */
 @Injectable({
     providedIn: 'root'
 })
 export class GlAccountLookupService {
 
-    constructor(private _accountChartService: AccountChartService) {
+    private readonly _url = ApiHelperService.BASE_URL + 'financial/accountChart/drp/active';
+
+    constructor(private _httpClient: HttpClient) {
     }
 
-    /**
-     * Always the real account dropdown (financial/accountChart/drp/list) - the same data as goods,
-     * regardless of `useMockMasterData`, which only applies to master data that has no real API yet.
-     */
-    getGlAccounts(): Observable<MockGlAccount[]> {
-        return this._accountChartService.getDropdownAccountCharts().pipe(
-            map((accounts) => this._toGlAccounts(accounts || []))
+    getGlAccounts(): Observable<AccountOption[]> {
+        return this._httpClient.get<any[]>(this._url).pipe(
+            map((accounts) => {
+                const list = accounts || [];
+                const parentIds = new Set(list.map((a) => a.parentId).filter((id) => id != null));
+                return list
+                    .filter((a) => !parentIds.has(a.accountChartId))
+                    .map((a): AccountOption => ({
+                        accountId: a.accountChartId,
+                        accountCode: a.fullCode || a.accountChartCode,
+                        accountName: a.accountChartName
+                    }));
+            }),
+            catchError(() => of([] as AccountOption[]))
         );
-    }
-
-    /**
-     * The backend dropdown (financial/accountChart/drp/list) already returns only active leaf
-     * accounts. The id is the account chart id, which is what the purchase
-     * invoice backend validates a line's account against.
-     */
-    private _toGlAccounts(accounts: AccountChart[]): MockGlAccount[] {
-        return accounts
-            .map((a) => ({
-                financialCategoryId: a.accountChartId,
-                financialCategoryCode: a.accountChartCode,
-                financialCategoryName: a.accountChartName,
-                nature: 1
-            }));
     }
 }
