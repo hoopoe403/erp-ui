@@ -25,7 +25,7 @@ import { CurrencyLookupService } from '../../../shared/lookup/currency-lookup.se
 import {
     AccountOption, CostCenterOption, CurrencyOption, FixedAssetOption, VatGroupOption, VendorOption
 } from '../../../shared/master-data.types';
-import { PURCHASE_INVOICE_STATUS_DRAFT, PURCHASE_INVOICE_STATUS_POSTED } from '../../../shared/financial-constants';
+import { DEFAULT_CURRENCY_ABBREVIATION, PURCHASE_INVOICE_STATUS_DRAFT, PURCHASE_INVOICE_STATUS_POSTED } from '../../../shared/financial-constants';
 import { LookupOption } from '../../../shared/lookup-option.type';
 
 /** Shown in the success alert - the same text erp-be's envelope used to send. */
@@ -233,6 +233,14 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
         });
         this._currencyLookupService.getCurrencies().subscribe((v) => {
             this.currencies = v;
+            // A new invoice starts in the default currency (EUR) until a vendor brings its own.
+            if (this.pageType === 'new' && !this.invoiceInfo.currencyId) {
+                const defaultCurrency = v.find((c) => c.currencyCode === DEFAULT_CURRENCY_ABBREVIATION);
+                if (defaultCurrency) {
+                    this._applyCurrency(defaultCurrency);
+                    this.frmInvoice.controls['currencyId'].setValue(defaultCurrency.currencyId);
+                }
+            }
             this.cdr.detectChanges();
         });
         // The whole VAT setup in one request, kept in memory by VatLookupService - every
