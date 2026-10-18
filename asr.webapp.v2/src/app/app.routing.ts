@@ -216,6 +216,9 @@ export const appRoutes: Route[] = [
                 { path: 'invoice', loadChildren: () => import('./modules/financial/invoices/purchase/purchase-invoice.module').then(m => m.PurchaseInvoiceModule) },
                 // VAT Setup - backend menu row 10000482 (Invoice > VAT Setup) links to /vat-setup/list.
                 { path: 'vat-setup', loadChildren: () => import('./modules/financial/invoices/vat-setup/vat-setup.module').then(m => m.VatSetupModule) },
+                // Creditor / Debtor Posting Setup - one module, the side comes from the route data (Invoice menu rows).
+                { path: 'creditor-posting-setup', data: { invoiceSide: 'PURCHASE' }, loadChildren: () => import('./modules/financial/invoices/payment-posting-setup/payment-posting-setup.module').then(m => m.PaymentPostingSetupModule) },
+                { path: 'debtor-posting-setup', data: { invoiceSide: 'SALES' }, loadChildren: () => import('./modules/financial/invoices/payment-posting-setup/payment-posting-setup.module').then(m => m.PaymentPostingSetupModule) },
                 // Alias for the backend-stored menu link, which points at the old folder
                 // path ('financial/invoices/manual') rather than the registered route
                 // above ('invoice'). This predates the Purchase Invoice rename — the
