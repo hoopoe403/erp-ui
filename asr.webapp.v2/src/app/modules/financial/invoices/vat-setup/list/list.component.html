@@ -1,0 +1,79 @@
+<div class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-hidden bg-card dark:bg-transparent">
+
+    <!-- Header -->
+    <div class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4 px-6 md:px-8 border-b">
+        <div class="absolute inset-x-0 bottom-0" *ngIf="isLoading">
+            <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+        </div>
+        <div class="flex flex-col">
+            <div class="text-4xl font-extrabold tracking-tight">VAT Setup</div>
+            <div class="text-secondary mt-1">The VAT rate of each VAT group and product group, and the GL accounts its VAT is posted to.</div>
+        </div>
+        <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+            <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript w-56">
+                <mat-select [formControl]="statusControl" placeholder="Status" multiple>
+                    <mat-option *ngFor="let status of statuses" [value]="status.statusId">{{status.statusDescription}}</mat-option>
+                </mat-select>
+            </mat-form-field>
+            <button class="ml-4" mat-flat-button [color]="'primary'" [routerLink]="['details']" [relativeTo]="moduleRoute">
+                <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                <span class="ml-2 mr-1">New VAT rate</span>
+            </button>
+        </div>
+    </div>
+
+    <div *ngIf="errorMessage" class="px-6 md:px-8 py-3 text-warn">{{errorMessage}}</div>
+
+    <!-- List -->
+    <div class="flex flex-auto overflow-hidden">
+        <div class="flex flex-col flex-auto overflow-hidden sm:overflow-y-auto">
+            <ng-container *ngIf="vatRates.length > 0; else noVatRates">
+                <div class="grid">
+                    <div class="vat-setup-grid z-10 sticky top-0 grid gap-4 py-4 px-6 md:px-8 shadow text-md font-semibold text-secondary bg-gray-50 dark:bg-black dark:bg-opacity-5">
+                        <div>VAT group</div>
+                        <div>VAT product group</div>
+                        <div class="text-right">Rate</div>
+                        <div class="hidden md:block">Effective from</div>
+                        <div class="hidden md:block">Purchase VAT account</div>
+                        <div class="hidden md:block">Sales VAT account</div>
+                        <div class="hidden md:block">Status</div>
+                        <div></div>
+                    </div>
+                    <div *ngFor="let vatRate of vatRates; trackBy: trackByFn"
+                        class="vat-setup-grid grid items-center gap-4 py-3 px-6 md:px-8 border-b cursor-pointer hover:bg-hover"
+                        (click)="open(vatRate)">
+                        <div class="truncate">{{vatRate.vatGroupName}}</div>
+                        <div class="truncate">{{vatRate.vatProductGroupName}}</div>
+                        <div class="text-right font-medium">{{vatRate.ratePercent}}%</div>
+                        <div class="hidden md:block">{{vatRate.effectiveDateTime | date:'yyyy-MM-dd'}}</div>
+                        <div class="hidden md:block truncate"
+                            [class.text-secondary]="!vatRate.purchaseVatAccountCode">
+                            {{account(vatRate.purchaseVatAccountCode, vatRate.purchaseVatAccountName)}}
+                        </div>
+                        <div class="hidden md:block truncate"
+                            [class.text-secondary]="!vatRate.salesVatAccountCode">
+                            {{account(vatRate.salesVatAccountCode, vatRate.salesVatAccountName)}}
+                        </div>
+                        <div class="hidden md:block">
+                            <p style="width: fit-content;" class="p-1 rounded block truncate text-white"
+                                [ngClass]="vatRate.statusColor">{{vatRate.statusDescription}}</p>
+                        </div>
+                        <div class="flex items-center justify-end">
+                            <button mat-icon-button matTooltip="Edit" (click)="$event.stopPropagation(); open(vatRate)">
+                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:pencil'"></mat-icon>
+                            </button>
+                            <button mat-icon-button matTooltip="Delete" color="warn" (click)="$event.stopPropagation(); delete(vatRate)">
+                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </ng-container>
+            <ng-template #noVatRates>
+                <div *ngIf="!isLoading" class="p-8 sm:p-16 border-t text-4xl font-semibold tracking-tight text-center">
+                    No VAT rates
+                </div>
+            </ng-template>
+        </div>
+    </div>
+</div>

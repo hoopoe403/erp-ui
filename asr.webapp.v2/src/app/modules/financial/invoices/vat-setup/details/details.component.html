@@ -1,0 +1,92 @@
+<div class="sm:absolute sm:inset-0 flex flex-col flex-auto min-w-0 sm:overflow-y-auto bg-card dark:bg-transparent">
+
+    <!-- Header -->
+    <div class="relative flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between py-4 px-6 md:px-8 border-b">
+        <div class="absolute inset-x-0 bottom-0" *ngIf="isLoading">
+            <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+        </div>
+        <div class="flex flex-col">
+            <div class="flex flex-wrap items-center font-medium">
+                <a [routerLink]="['list']" [relativeTo]="moduleRoute" class="whitespace-nowrap text-primary-500 cursor-pointer">VAT Setup</a>
+                <mat-icon class="icon-size-5 text-secondary mx-1" [svgIcon]="'heroicons_solid:chevron-right'"></mat-icon>
+                <span>{{isEdit ? vatRate.vatGroupName + ' / ' + vatRate.vatProductGroupName : 'New VAT rate'}}</span>
+            </div>
+            <div class="text-3xl font-extrabold tracking-tight mt-2">{{isEdit ? 'Edit VAT rate' : 'New VAT rate'}}</div>
+        </div>
+        <div class="flex flex-shrink-0 items-center mt-6 sm:mt-0 sm:ml-4">
+            <button *ngIf="isEdit" class="mr-3" mat-stroked-button color="warn" [disabled]="isLoading" (click)="delete()">
+                <mat-icon [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                <span class="ml-2 mr-1">Delete</span>
+            </button>
+            <button mat-flat-button [color]="'primary'" [disabled]="isLoading" (click)="save()">
+                <mat-icon [svgIcon]="'heroicons_outline:check'"></mat-icon>
+                <span class="ml-2 mr-1">Save</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="px-6 md:px-8 pt-4">
+        <fuse-alert [appearance]="'soft'" [dismissible]="true" [dismissed]="true" [name]="'successMessage'" [type]="'success'">
+            {{resultMessage}}
+        </fuse-alert>
+        <fuse-alert [appearance]="'soft'" [dismissible]="true" [dismissed]="true" [name]="'errorMessage'" [type]="'error'">
+            {{resultMessage}}
+        </fuse-alert>
+    </div>
+
+    <form [formGroup]="form" class="flex flex-col px-6 md:px-8 py-6 max-w-4xl">
+
+        <!-- Rate -->
+        <div class="text-lg font-semibold mb-2">Rate</div>
+        <div class="flex flex-col md:flex-row md:gap-4">
+            <app-lookup-select class="block w-full md:w-1/2" formControlName="vatGroupId" [options]="vatGroups"
+                idKey="id" codeKey="code" nameKey="name" label="VAT group" placeholder="Select VAT group..."
+                [required]="true" appearance="outline" errorMessage="Please select a VAT group">
+            </app-lookup-select>
+            <app-lookup-select class="block w-full md:w-1/2" formControlName="vatProductGroupId" [options]="vatProductGroups"
+                idKey="id" codeKey="code" nameKey="name" label="VAT product group" placeholder="Select VAT product group..."
+                [required]="true" appearance="outline" errorMessage="Please select a VAT product group">
+            </app-lookup-select>
+        </div>
+        <div class="flex flex-col md:flex-row md:gap-4">
+            <mat-form-field appearance="outline" class="w-full md:w-1/4">
+                <mat-label>Rate %</mat-label>
+                <input matInput type="number" min="0" max="100" step="0.01" formControlName="ratePercent" required>
+                <mat-error>Enter a rate between 0 and 100</mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="w-full md:w-1/4">
+                <mat-label>Effective from</mat-label>
+                <input matInput [matDatepicker]="effectivePicker" formControlName="effectiveDateTime" required>
+                <mat-datepicker-toggle matSuffix [for]="effectivePicker"></mat-datepicker-toggle>
+                <mat-datepicker #effectivePicker></mat-datepicker>
+                <mat-error>Please enter an effective date</mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="w-full md:w-1/4" *ngIf="isEdit">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status">
+                    <mat-option *ngFor="let status of statuses" [value]="status.statusId">{{status.statusDescription}}</mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+
+        <!-- GL accounts -->
+        <div class="text-lg font-semibold mt-4 mb-1">GL accounts</div>
+        <div class="text-secondary mb-3">
+            Where this rate's VAT is posted. Leave both empty for a 0% rate (export, EU, exempt).
+        </div>
+        <div class="flex flex-col md:flex-row md:gap-4">
+            <app-lookup-select class="block w-full md:w-1/2" formControlName="purchaseVatAccountId" [options]="accounts"
+                idKey="accountId" codeKey="accountCode" nameKey="accountName"
+                label="Purchase VAT account (input VAT, debit)" placeholder="Select account..." appearance="outline">
+            </app-lookup-select>
+            <app-lookup-select class="block w-full md:w-1/2" formControlName="salesVatAccountId" [options]="accounts"
+                idKey="accountId" codeKey="accountCode" nameKey="accountName"
+                label="Sales VAT account (output VAT, credit)" placeholder="Select account..." appearance="outline">
+            </app-lookup-select>
+        </div>
+        <div *ngIf="missingPurchaseAccount" class="flex items-center text-warn mt-1">
+            <mat-icon class="icon-size-5 mr-2 text-warn" [svgIcon]="'heroicons_outline:exclamation'"></mat-icon>
+            This rate has VAT but no purchase VAT account - purchase invoices using it cannot be posted until one is set.
+        </div>
+    </form>
+</div>

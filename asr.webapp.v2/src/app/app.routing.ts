@@ -214,6 +214,8 @@ export const appRoutes: Route[] = [
                 { path: 'cash', loadChildren: () => import('./modules/financial/cheque/cheque.module').then(m => m.ChequeModule) },
                 { path: 'check', loadChildren: () => import('./modules/financial/cheque/cheque.module').then(m => m.ChequeModule) },
                 { path: 'invoice', loadChildren: () => import('./modules/financial/invoices/purchase/purchase-invoice.module').then(m => m.PurchaseInvoiceModule) },
+                // VAT Setup - backend menu row 10000482 (Invoice > VAT Setup) links to /vat-setup/list.
+                { path: 'vat-setup', loadChildren: () => import('./modules/financial/invoices/vat-setup/vat-setup.module').then(m => m.VatSetupModule) },
                 // Alias for the backend-stored menu link, which points at the old folder
                 // path ('financial/invoices/manual') rather than the registered route
                 // above ('invoice'). This predates the Purchase Invoice rename — the
