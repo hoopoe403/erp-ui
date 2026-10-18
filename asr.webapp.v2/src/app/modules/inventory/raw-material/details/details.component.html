@@ -1,0 +1,180 @@
+<ng-container *transloco="let t">
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between sm:px-3 bg-card dark:bg-transparent">
+        <div class="flex flex-col sm:flex-row flex-0 sm:items-center sm:justify-between p-3 sm:px-10 bg-card dark:bg-transparent">
+            <div class="flex-1 min-w-0">
+                <!-- Breadcrumbs -->
+                <div class="flex flex-wrap items-center font-medium">
+                    <div class="flex items-center ml-1 whitespace-nowrap">
+                        <a [routerLink]="['/inventory/raw-material/raw-material']" class="cursor-pointer whitespace-nowrap text-primary-500">
+                            {{ t('inventory.rawMaterials') }}
+                        </a>
+                    </div>
+                    <div class="flex items-center ml-1 whitespace-nowrap">
+                        <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'"></mat-icon>
+                        {{ rawMaterial?.rawMaterialName || t('inventory.newRawMaterial') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-auto px-6 py-3" fuseScrollbar>
+        <div class="h-2">
+            <mat-progress-bar *ngIf="isLoading || isSaving" mode="indeterminate"></mat-progress-bar>
+        </div>
+        <fuse-alert *ngIf="errorMessage" class="mb-3" [appearance]="'soft'" [type]="'error'">
+            {{ errorMessage }}
+        </fuse-alert>
+
+        <form [formGroup]="form" class="flex flex-col gap-6 pb-4">
+
+            <!-- General -->
+            <div class="flex flex-col px-8 py-6 bg-card shadow rounded-2xl">
+                <div class="text-lg font-semibold mb-4">{{ t('inventory.general') }}</div>
+                <!-- Code and name on one line -->
+                <div class="flex flex-col md:flex-row w-full gap-x-6">
+                    <mat-form-field appearance="outline" class="md:w-1/3 w-full fuse-mat-dense">
+                        <mat-label>{{ t('common.code') }}</mat-label>
+                        <input spellcheck="false" required matInput formControlName="code" maxlength="38" [autocomplete]="'off'"
+                            class="font-mono">
+                        <mat-error>{{ t('inventory.codeRequired') }}</mat-error>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="md:w-2/3 w-full fuse-mat-dense">
+                        <mat-label>{{ t('common.name') }}</mat-label>
+                        <input spellcheck="false" required matInput formControlName="name" maxlength="100" [autocomplete]="'off'">
+                        <mat-error>{{ t('inventory.nameRequired') }}</mat-error>
+                    </mat-form-field>
+                </div>
+                <!-- Category and technical number -->
+                <div class="flex flex-col md:flex-row w-full gap-x-6 mt-2">
+                    <mat-form-field appearance="outline" class="md:w-2/3 w-full fuse-mat-dense">
+                        <mat-label>{{ t('inventory.rawMaterialCategory') }}</mat-label>
+                        <mat-select formControlName="category" required (openedChange)="!$event && categoryFilter.setValue('')">
+                            <mat-option>
+                                <ngx-mat-select-search [formControl]="categoryFilter" [placeholderLabel]="t('inventory.searchCodeOrName')"
+                                    [noEntriesFoundLabel]="t('common.notFound')"></ngx-mat-select-search>
+                            </mat-option>
+                            <!-- Parent categories stay visible for context but only leaf categories can be picked -->
+                            <mat-option *ngFor="let category of filteredCategories" [value]="category.rawMaterialCategoryId"
+                                [disabled]="!isLeafCategory(category)">
+                                <span class="font-mono text-secondary mr-2">{{ category.fullCode }}</span>{{ category.fullName }}
+                            </mat-option>
+                        </mat-select>
+                        <!-- Opens the category tree in a new tab so the unsaved form isn't lost -->
+                        <a mat-icon-button matSuffix target="_blank" [matTooltip]="t('inventory.categoryTree')"
+                            [routerLink]="['/inventory/raw-material/raw-material-category/tree']" (click)="$event.stopPropagation()">
+                            <mat-icon [svgIcon]="'heroicons_outline:collection'"></mat-icon>
+                        </a>
+                        <mat-error *ngIf="form.controls['category'].hasError('required')">{{ t('inventory.categoryRequired') }}</mat-error>
+                        <mat-error *ngIf="form.controls['category'].hasError('notLeaf')">{{ t('inventory.categoryMustBeLeaf') }}</mat-error>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="md:w-1/3 w-full fuse-mat-dense">
+                        <mat-label>{{ t('inventory.technicalNumber') }}</mat-label>
+                        <input spellcheck="false" matInput formControlName="technicalNumber" maxlength="20" [autocomplete]="'off'"
+                            class="font-mono">
+                    </mat-form-field>
+                </div>
+                <!-- Unit, account and status -->
+                <div class="flex flex-col md:flex-row w-full gap-x-6 mt-2">
+                    <app-lookup-select class="block md:w-1/3 w-full" formControlName="unit" [options]="units"
+                        idKey="unitId" codeKey="unitCode" nameKey="unitName"
+                        [label]="t('inventory.unit')" [placeholder]="t('common.search')" appearance="outline">
+                    </app-lookup-select>
+                    <app-lookup-select class="block md:w-1/3 w-full" formControlName="account" [options]="accounts"
+                        idKey="accountChartId" codeKey="accountChartCode" nameKey="accountChartName"
+                        [label]="t('inventory.account')" [placeholder]="t('common.search')" appearance="outline">
+                    </app-lookup-select>
+                    <mat-form-field appearance="outline" floatLabel="always" class="md:w-1/3 w-full fuse-mat-dense">
+                        <mat-label>{{ t('common.status') }}</mat-label>
+                        <mat-select formControlName="status">
+                            <mat-option *ngFor="let status of statuses" [value]="status.statusId">
+                                {{ status.statusDescription }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                <div *ngIf="rawMaterial" class="flex flex-wrap gap-x-6 text-sm text-secondary pt-2">
+                    <span>{{ t('common.createdBy') }}: {{ rawMaterial.userFullName }}</span>
+                    <span>{{ t('common.updatedAt') }}: {{ rawMaterial.changeDate | date:'yyyy-MM-dd HH:mm' }}</span>
+                </div>
+            </div>
+
+            <!-- Attributes: any attribute, one value each -->
+            <div class="flex flex-col px-8 py-6 bg-card shadow rounded-2xl">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-1">
+                    <div class="text-lg font-semibold">{{ t('inventory.attributes') }}</div>
+                    <mat-form-field appearance="outline" class="w-full sm:w-80 fuse-mat-dense fuse-mat-no-subscript">
+                        <mat-icon matPrefix class="icon-size-5" [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                        <mat-select [formControl]="attributePicker" [placeholder]="t('inventory.addAttribute')"
+                            (openedChange)="!$event && attributeFilter.setValue('')">
+                            <mat-option>
+                                <ngx-mat-select-search [formControl]="attributeFilter" [placeholderLabel]="t('inventory.searchCodeOrName')"
+                                    [noEntriesFoundLabel]="t('common.notFound')"></ngx-mat-select-search>
+                            </mat-option>
+                            <mat-option *ngFor="let attribute of attributeOptions" [value]="attribute.attributeId">
+                                <span class="font-mono text-secondary mr-2">{{ attribute.attributeCode }}</span>
+                                <span>{{ attribute.attributeName }}</span>
+                                <span class="text-hint ml-2">· {{ attribute.dataType }}<ng-container *ngIf="attribute.unitName">, {{ attribute.unitName }}</ng-container></span>
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                <div class="text-sm text-secondary mb-4">{{ t('inventory.rawMaterialAttributesHint') }}</div>
+
+                <div *ngIf="!lines.length" class="py-8 text-center text-secondary">
+                    {{ t('inventory.noAttributesAdded') }}
+                </div>
+
+                <div *ngIf="lines.length" class="flex flex-col rounded-lg border divide-y">
+                    <div class="hidden sm:flex gap-x-4 px-4 py-2 text-sm font-semibold text-secondary bg-gray-50 dark:bg-transparent">
+                        <div class="sm:w-2/5">{{ t('inventory.attribute') }}</div>
+                        <div class="sm:flex-auto">{{ t('inventory.value') }}</div>
+                        <div class="sm:w-10"></div>
+                    </div>
+                    <div *ngFor="let line of lines" [formGroup]="line.form"
+                        class="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1 px-4 py-2">
+                        <div class="sm:w-2/5 min-w-0">
+                            <div class="font-medium truncate">{{ line.attributeName }}</div>
+                            <div class="text-sm font-mono text-secondary truncate">{{ line.attributeCode }}</div>
+                        </div>
+                        <div class="sm:flex-auto min-w-0">
+                            <mat-form-field *ngIf="line.isList" appearance="outline" class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                <mat-select formControlName="valueId" [placeholder]="t('inventory.noValue')">
+                                    <mat-option [value]="null">-</mat-option>
+                                    <mat-option *ngFor="let value of allowedValues(line)" [value]="value.attributeValueId">
+                                        {{ value.attributeValue }}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                            <mat-form-field *ngIf="line.isNumber" appearance="outline" class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                <input matInput type="number" formControlName="valueNum" [placeholder]="t('inventory.noValue')">
+                                <span matSuffix *ngIf="line.unitName" class="text-secondary ml-2">{{ line.unitName }}</span>
+                            </mat-form-field>
+                            <mat-form-field *ngIf="!line.isList && !line.isNumber" appearance="outline" class="w-full fuse-mat-dense fuse-mat-no-subscript">
+                                <input matInput formControlName="valueText" maxlength="4000" [placeholder]="t('inventory.noValue')">
+                                <span matSuffix *ngIf="line.unitName" class="text-secondary ml-2">{{ line.unitName }}</span>
+                            </mat-form-field>
+                        </div>
+                        <div class="sm:w-10 flex justify-end">
+                            <button mat-icon-button type="button" [matTooltip]="t('common.remove')" [disabled]="isSaving"
+                                (click)="removeAttribute(line)">
+                                <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2">
+                <button *ngIf="rawMaterial" mat-button type="button" [disabled]="isSaving || form.pristine" (click)="cancel()">
+                    {{ t('common.reset') }}
+                </button>
+                <button mat-flat-button color="primary" type="button" [disabled]="isLoading || isSaving" (click)="save()">
+                    {{ isNew ? t('common.create') : t('common.save') }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+</ng-container>

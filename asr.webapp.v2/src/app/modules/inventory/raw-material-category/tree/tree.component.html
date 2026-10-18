@@ -1,0 +1,116 @@
+<ng-container *transloco="let t">
+<div class="absolute inset-0 flex flex-col min-w-0 overflow-hidden bg-card dark:bg-transparent raw-material-category-tree">
+
+    <!-- Header -->
+    <div class="relative flex flex-col flex-0 gap-3 py-4 px-6 md:px-8 border-b">
+        <div class="absolute inset-x-0 bottom-0" *ngIf="isLoading">
+            <mat-progress-bar [mode]="'indeterminate'"></mat-progress-bar>
+        </div>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="flex-1 min-w-0">
+                <!-- Breadcrumbs -->
+                <div class="flex flex-wrap items-center font-medium">
+                    <a [routerLink]="['/inventory/raw-material/raw-material-category']" class="whitespace-nowrap text-primary-500 cursor-pointer">
+                        {{ t('inventory.rawMaterialCategories') }}
+                    </a>
+                    <mat-icon class="icon-size-5 text-secondary mx-1 mat-icon-rtl-mirror" [svgIcon]="'heroicons_solid:chevron-right'"></mat-icon>
+                    <span class="text-secondary">{{ t('inventory.categoryTree') }}</span>
+                </div>
+            </div>
+            <button mat-flat-button [color]="'primary'" (click)="addRoot()">
+                <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
+                <span class="ml-2 mr-1">{{ t('inventory.addRootCategory') }}</span>
+            </button>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="flex flex-wrap items-center gap-2">
+            <mat-form-field class="fuse-mat-dense fuse-mat-no-subscript fuse-mat-rounded flex-auto sm:flex-none sm:w-96">
+                <mat-icon matPrefix [svgIcon]="'heroicons_outline:search'"></mat-icon>
+                <input matInput [autocomplete]="'off'" [placeholder]="t('inventory.searchCodeOrName')"
+                    [ngModel]="treeFilter" (ngModelChange)="applyTreeFilter($event)">
+                <button mat-icon-button matSuffix *ngIf="treeFilter" (click)="applyTreeFilter('')"
+                    [matTooltip]="t('common.clear')">
+                    <mat-icon [svgIcon]="'heroicons_outline:x'"></mat-icon>
+                </button>
+            </mat-form-field>
+            <button mat-icon-button [disabled]="!treeControl.dataNodes?.length"
+                [matTooltip]="allExpanded ? t('inventory.collapseAll') : t('inventory.expandAll')"
+                [attr.aria-label]="allExpanded ? t('inventory.collapseAll') : t('inventory.expandAll')"
+                (click)="toggleExpandAll()">
+                <mat-icon>{{ allExpanded ? 'unfold_less' : 'unfold_more' }}</mat-icon>
+            </button>
+            <button mat-icon-button [matTooltip]="t('common.refresh')" [disabled]="isLoading"
+                (click)="reloadCategories(selectedId)">
+                <mat-icon [svgIcon]="'heroicons_outline:refresh'"></mat-icon>
+            </button>
+        </div>
+    </div>
+
+    <!-- Tree, full page -->
+    <div class="flex-auto overflow-y-auto py-2">
+        <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
+            <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding [matTreeNodePaddingIndent]="28"
+                class="cursor-pointer pr-2 mx-2 md:mx-4 rounded-lg hover:bg-hover"
+                [ngClass]="{ 'bg-primary-50 dark:bg-primary-900 dark:bg-opacity-40': node.id === selectedId }"
+                tabindex="0" (click)="editCategory(node.category)" (keydown.enter)="editCategory(node.category)">
+                <button mat-icon-button matTreeNodeToggle class="flex-shrink-0" [disabled]="!node.expandable"
+                    (click)="$event.stopPropagation()" [attr.aria-label]="'Toggle ' + node.category.rawMaterialCategoryName">
+                    <mat-icon class="mat-icon-rtl-mirror" *ngIf="node.expandable">
+                        {{ treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
+                    </mat-icon>
+                </button>
+                <div class="flex-auto flex items-center gap-2 min-w-0">
+                    <span class="rounded-full w-2 h-2 flex-shrink-0" [ngClass]="node.category.statusColor"
+                        [matTooltip]="node.category.statusDescription"></span>
+                    <span class="font-mono text-sm text-secondary flex-shrink-0">{{ node.category.fullCode }}</span>
+                    <span class="truncate" [class.font-semibold]="node.expandable">{{ node.category.rawMaterialCategoryName }}</span>
+                    <span *ngIf="node.expandable" class="text-sm text-hint flex-shrink-0">({{ childCount(node) }})</span>
+                </div>
+                <span *ngIf="node.category.attributes?.length"
+                    class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 bg-primary-50 text-primary-800 dark:bg-primary-900 dark:text-primary-50"
+                    [matTooltip]="attributeSummary(node.category)">
+                    <mat-icon class="icon-size-3 text-current" [svgIcon]="'heroicons_outline:tag'"></mat-icon>
+                    {{ node.category.attributes.length }}
+                    <span class="hidden sm:inline">{{ t('inventory.attributes') | lowercase }}</span>
+                </span>
+                <div class="tree-row-actions flex items-center flex-shrink-0 ml-1">
+                    <button mat-icon-button [matTooltip]="t('inventory.addSubCategory')"
+                        (click)="$event.stopPropagation(); addChild(node.id)">
+                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:plus-circle'"></mat-icon>
+                    </button>
+                    <button mat-icon-button [matTooltip]="t('common.edit')"
+                        (click)="$event.stopPropagation(); editCategory(node.category)">
+                        <mat-icon class="icon-size-5" [svgIcon]="'heroicons_outline:pencil'"></mat-icon>
+                    </button>
+                </div>
+            </mat-tree-node>
+        </mat-tree>
+
+        <!-- Empty / error states -->
+        <div *ngIf="!isLoading && treeControl.dataNodes?.length === 0"
+            class="flex flex-col items-center justify-center text-center p-16">
+            <mat-icon class="icon-size-16 text-hint"
+                [svgIcon]="loadError ? 'heroicons_outline:exclamation-circle' : 'heroicons_outline:folder-open'"></mat-icon>
+            <ng-container *ngIf="loadError">
+                <div class="mt-3 text-2xl font-semibold text-secondary">{{ loadError }}</div>
+                <button mat-flat-button class="mt-4" [color]="'primary'" (click)="loadData(null)">
+                    {{ t('common.refresh') }}
+                </button>
+            </ng-container>
+            <ng-container *ngIf="!loadError && treeFilter">
+                <div class="mt-3 text-2xl font-semibold text-secondary">{{ t('common.noResults') }}</div>
+                <button mat-button class="mt-2" [color]="'primary'" (click)="applyTreeFilter('')">
+                    {{ t('common.clear') }}
+                </button>
+            </ng-container>
+            <ng-container *ngIf="!loadError && !treeFilter">
+                <div class="mt-3 text-2xl font-semibold text-secondary">{{ t('common.noData') }}</div>
+                <button mat-flat-button class="mt-4" [color]="'primary'" (click)="addRoot()">
+                    {{ t('inventory.addRootCategory') }}
+                </button>
+            </ng-container>
+        </div>
+    </div>
+</div>
+</ng-container>

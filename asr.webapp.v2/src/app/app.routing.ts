@@ -130,9 +130,6 @@ export const appRoutes: Route[] = [
              // inventory routes
             {path: 'inventory', children:[
                 {
-                    path: 'goods', children: [{ path: 'goods', loadChildren: () => import('app/modules/inventory/goods/goods/goods.module').then(m => m.GoodsModule) }]
-                },
-                {
                     path: 'reports', children: [{ path: 'inventoryDeficit', loadChildren: () => import('app/modules/inventory/reports/deficit/inventory-deficit.module').then(m => m.InventoryDeficitModule) },
                     { path: 'product', loadChildren: () => import('app/modules/inventory/reports/product/product-inventory.module').then(m => m.ProductInventoryModule) },
                     { path: 'goods', loadChildren: () => import('app/modules/inventory/reports/goods/goods-inventory.module').then(m => m.GoodsInventoryModule) }]
@@ -152,6 +149,15 @@ export const appRoutes: Route[] = [
                 },
                 // The earlier category address (/inventory/product-category/...) still works.
                 { path: 'product-category', redirectTo: 'product/product-category' },
+                // Raw materials and their categories: /inventory/raw-material/raw-material and
+                // /inventory/raw-material/raw-material-category.
+                {
+                    path: 'raw-material', children: [
+                        { path: 'raw-material', loadChildren: () => import('app/modules/inventory/raw-material/raw-material.module').then(m => m.RawMaterialModule) },
+                        { path: 'raw-material-category', loadChildren: () => import('app/modules/inventory/raw-material-category/raw-material-category.module').then(m => m.RawMaterialCategoryModule) },
+                        { path: '', pathMatch: 'full', redirectTo: 'raw-material' },
+                    ]
+                },
                 { path: 'transfer', loadChildren: () => import('app/modules/inventory/transfer/transfer.module').then(m => m.TransferModule) },
     
             ]},
