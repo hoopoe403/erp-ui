@@ -124,7 +124,7 @@
 
 <mat-menu #moreMenu="matMenu">
     <ng-template matMenuContent>
-        <button *ngIf="!isPostedList" mat-menu-item [routerLink]="['../details']">
+        <button *ngIf="isOpenList" mat-menu-item [routerLink]="['../details']">
             <mat-icon [svgIcon]="'heroicons_outline:plus'"></mat-icon>
             ADD
         </button>
@@ -161,7 +161,7 @@
                 <div
                     class="border border-solid border-gray-200 rounded-sm flex flex-initial flex-col relative mb-10 pt-4 px-4 pb-3">
                     <h2 class="absolute -top-2.5 left-1.5 m-0 px-2 bg-white">Search Fields</h2>
-                    <div>
+                    <div *ngIf="showStatus">
                         <mat-form-field appearance="outline" class="w-full">
                             <mat-label>Status</mat-label>
                             <mat-select [(value)]="invoiceInfo.statusIdList" placeholder="Status"

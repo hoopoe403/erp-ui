@@ -57,8 +57,9 @@ export class PurchaseInvoice extends BaseModel {
     listView?: PurchaseInvoiceListView;
 }
 
-/** OPEN: Draft, Pending, Approved, Rejected. POSTED: Posted and Cancelled. */
-export type PurchaseInvoiceListView = 'OPEN' | 'POSTED';
+/** OPEN: Draft, Pending, Approved, Rejected. POSTED: Posted and Cancelled.
+ *  TO_APPROVE: Pending Approval, only the ones whose approver is the current user (erp-be decides who that is). */
+export type PurchaseInvoiceListView = 'OPEN' | 'POSTED' | 'TO_APPROVE';
 
 /**
  * Three prices, in order of calculation — "net"/"gross" follow standard

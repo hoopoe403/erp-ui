@@ -19,6 +19,7 @@ const LIST_STATUSES: Record<PurchaseInvoiceListView, number[]> = {
     OPEN: [PURCHASE_INVOICE_STATUS_DRAFT, PURCHASE_INVOICE_STATUS_PENDING_APPROVAL,
         PURCHASE_INVOICE_STATUS_APPROVED, PURCHASE_INVOICE_STATUS_REJECTED],
     POSTED: [PURCHASE_INVOICE_STATUS_POSTED, PURCHASE_INVOICE_STATUS_CANCELLED],
+    TO_APPROVE: [PURCHASE_INVOICE_STATUS_PENDING_APPROVAL],
 };
 import { Paging } from 'app/core/type/paging/paging.type';
 import { FormControl, FormGroup } from '@angular/forms';
@@ -42,7 +43,7 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
     pagination: Paging;
     selection = new SelectionModel<any>(true, []);
     invoiceInfo: PurchaseInvoice;
-    /** OPEN (/invoice/list) or POSTED (/invoice/posted), from the route data. */
+    /** OPEN (/invoice/list), POSTED (/invoice/posted) or TO_APPROVE (/invoice/approvals), from the route data. */
     listView: PurchaseInvoiceListView;
     statuses = [];
     defaultStatuses = [];
@@ -70,7 +71,8 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
         route: ActivatedRoute) {
         //this._unsubscribeAll = new Subject();
 
-        this.listView = route.snapshot.data.listView === 'POSTED' ? 'POSTED' : 'OPEN';
+        const listView = route.snapshot.data.listView;
+        this.listView = listView === 'POSTED' || listView === 'TO_APPROVE' ? listView : 'OPEN';
         this.invoiceInfo = new PurchaseInvoice;
         this.invoiceInfo.listView = this.listView;
         this.columns = [
@@ -80,7 +82,7 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
             { key: 'vendorInvoiceNumber', header: 'Vendor Invoice No', width: '160px' },
             { key: 'postingDate', header: 'Posting Date', width: '120px' },
             { key: 'dueDate', header: 'Due Date', width: '120px' },
-            { key: 'status', header: 'Status', width: '130px' },
+            ...(this.showStatus ? [{ key: 'status', header: 'Status', width: '130px' }] : []),
             { key: 'totalNetAmount', header: 'Amount w/o VAT', width: '150px', align: 'right' },
             { key: 'totalGrossAmount', header: 'Amount w/ VAT', width: '150px', align: 'right' },
             ...(this.isPostedList ? [{ key: 'closed', header: 'Closed', width: '90px' }] : []),
@@ -97,8 +99,18 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
         return this.listView === 'POSTED';
     }
 
+    get isOpenList(): boolean {
+        return this.listView === 'OPEN';
+    }
+
+    /** The approval list holds one status only, so it has no Status column or filter. */
+    get showStatus(): boolean {
+        return this.listView !== 'TO_APPROVE';
+    }
+
     get title(): string {
-        return this.isPostedList ? 'Posted Purchase Invoices' : 'Purchase Invoices';
+        return this.isPostedList ? 'Posted Purchase Invoices'
+            : this.isOpenList ? 'Purchase Invoices' : 'Invoices to Approve';
     }
 
     // -----------------------------------------------------------------------------------------------------
@@ -192,12 +204,12 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
 
     }
     private setForkJoinValues(values: Array<any>): void {
-        // Only this list's statuses can be picked. The posted list starts with all of them, the open one with
-        // the status table's defaults (or all of its statuses when none of them is a default).
+        // Only this list's statuses can be picked. The posted and approval lists start with all of them, the open
+        // one with the status table's defaults (or all of its statuses when none of them is a default).
         const listStatuses = LIST_STATUSES[this.listView];
         this.statuses = (values[0] || []).filter(s => listStatuses.includes(s.statusId));
         this.defaultStatuses = this.statuses
-            .filter(s => this.isPostedList || s.isDefault === 1)
+            .filter(s => !this.isOpenList || s.isDefault === 1)
             .map(s => s.statusId);
         if (this.defaultStatuses.length === 0) {
             this.defaultStatuses = this.statuses.map(s => s.statusId);
@@ -325,7 +337,7 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
             { header: "Vendor Invoice No", dataKey: "vendorInvoiceNumber" },
             { header: "Posting Date", dataKey: "postingDate" },
             { header: "Due Date", dataKey: "dueDate" },
-            { header: "Status", dataKey: "statusDescription" },
+            ...(this.showStatus ? [{ header: "Status", dataKey: "statusDescription" }] : []),
             { header: "Amount w/o VAT", dataKey: "totalNetAmount" },
             { header: "Amount w/ VAT", dataKey: "totalGrossAmount" }
         ];
@@ -343,7 +355,7 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
                     element.vendorInvoiceNumber,
                     element.postingDate,
                     element.dueDate,
-                    element.statusDescription,
+                    ...(this.showStatus ? [element.statusDescription] : []),
                     this.transformDecimal(element.totalNetAmount),
                     this.transformDecimal(element.totalGrossAmount),
                 ];
@@ -405,10 +417,12 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
             basedColumnName: "dueDate",
             excelColumnName: "Due Date",
         });
-        columns.push({
-            basedColumnName: "statusDescription",
-            excelColumnName: "Status",
-        });
+        if (this.showStatus) {
+            columns.push({
+                basedColumnName: "statusDescription",
+                excelColumnName: "Status",
+            });
+        }
         columns.push({
             basedColumnName: "totalNetAmount",
             excelColumnName: "Amount w/o VAT",
@@ -435,7 +449,7 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
         footerData.push([...columns.slice(2).map(() => ""), "QTY", qty]);
 
         this.excelService.exportAsExcelFile(
-            this.isPostedList ? "PostedPurchaseInvoice" : "PurchaseInvoice",
+            this.isPostedList ? "PostedPurchaseInvoice" : this.isOpenList ? "PurchaseInvoice" : "PurchaseInvoiceToApprove",
             "",
             columns,
             obj,

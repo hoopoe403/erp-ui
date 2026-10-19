@@ -23,6 +23,14 @@ export const PurchaseInvoiceRoutes: Route[] = [
                 component: PurchaseInvoiceListComponent,
                 data: { listView: 'POSTED' },
             },
+            // Invoices to Approve - an approver's inbox (/invoice/approvals): Pending Approval invoices assigned
+            // to the current user. Same list, no Status column, no ADD.
+            {
+                path: 'approvals',
+                pathMatch: 'full',
+                component: PurchaseInvoiceListComponent,
+                data: { listView: 'TO_APPROVE' },
+            },
             {
                 path: 'details/:id',
                 component: PurchaseInvoiceDetailsComponent,
