@@ -49,7 +49,16 @@ export class PurchaseInvoice extends BaseModel {
     totalNetAmount: number;
     totalVatAmount: number;
     totalGrossAmount: number;
+    /** Still to be paid: empty until posted, the gross amount once posted, 0 when cancelled (read-only, from erp-be). */
+    remainingAmount?: number | null;
+    /** Nothing left to pay (read-only, from erp-be). */
+    closed?: boolean;
+    /** Search only: which list is read - erp-be never mixes the two. */
+    listView?: PurchaseInvoiceListView;
 }
+
+/** OPEN: Draft, Pending, Approved, Rejected. POSTED: Posted and Cancelled. */
+export type PurchaseInvoiceListView = 'OPEN' | 'POSTED';
 
 /**
  * Three prices, in order of calculation — "net"/"gross" follow standard

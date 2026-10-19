@@ -14,7 +14,14 @@ export const PurchaseInvoiceRoutes: Route[] = [
                 path: 'list',
                 pathMatch: 'full',
                 component: PurchaseInvoiceListComponent,
-
+                data: { listView: 'OPEN' },
+            },
+            // Posted Invoices - backend menu row under Invoice links to /invoice/posted. Same list, no ADD.
+            {
+                path: 'posted',
+                pathMatch: 'full',
+                component: PurchaseInvoiceListComponent,
+                data: { listView: 'POSTED' },
             },
             {
                 path: 'details/:id',

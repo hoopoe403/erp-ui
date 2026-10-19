@@ -7,7 +7,19 @@ import { debounceTime, switchMap, map } from 'rxjs/operators';
 import { takeUntil } from 'rxjs/operators';
 import { fuseAnimations } from "../../../../../../@fuse/animations";
 import { PurchaseInvoiceService } from "../purchase-invoice.service";
-import { PurchaseInvoice } from "../purchase-invoice.types";
+import { PurchaseInvoice, PurchaseInvoiceListView } from "../purchase-invoice.types";
+import { ActivatedRoute } from '@angular/router';
+import {
+    PURCHASE_INVOICE_STATUS_APPROVED, PURCHASE_INVOICE_STATUS_CANCELLED, PURCHASE_INVOICE_STATUS_DRAFT,
+    PURCHASE_INVOICE_STATUS_PENDING_APPROVAL, PURCHASE_INVOICE_STATUS_POSTED, PURCHASE_INVOICE_STATUS_REJECTED
+} from '../../../shared/financial-constants';
+
+/** The statuses each list shows - erp-be enforces the same split (PurchaseInvoiceListView). */
+const LIST_STATUSES: Record<PurchaseInvoiceListView, number[]> = {
+    OPEN: [PURCHASE_INVOICE_STATUS_DRAFT, PURCHASE_INVOICE_STATUS_PENDING_APPROVAL,
+        PURCHASE_INVOICE_STATUS_APPROVED, PURCHASE_INVOICE_STATUS_REJECTED],
+    POSTED: [PURCHASE_INVOICE_STATUS_POSTED, PURCHASE_INVOICE_STATUS_CANCELLED],
+};
 import { Paging } from 'app/core/type/paging/paging.type';
 import { FormControl, FormGroup } from '@angular/forms';
 import jsPDF from 'jspdf';
@@ -22,17 +34,31 @@ import { ExcelHeader } from 'app/shared/excel/excel.types';
         /* language=SCSS */
         `
             .invoices-grid {
-                grid-template-columns: 100px 100px auto 70px;
+                grid-template-columns: 130px 100px auto 70px;
 
                 @screen md {
-                    grid-template-columns: 100px 120px auto 120px 120px 120px 70px;
+                    grid-template-columns: 130px 100px auto 130px 130px 70px;
                 }
 
                 @screen lg {
-                    grid-template-columns: 100px 120px auto 120px 120px 130px 130px 100px 70px;
+                    grid-template-columns: 130px 100px auto 130px 100px 100px 110px 130px 130px 70px;
                 }
                 @screen print{
-                    grid-template-columns: 100px 120px auto 120px 120px 130px 130px 100px;
+                    grid-template-columns: 130px 100px auto 130px 100px 100px 110px 130px 130px;
+                }
+            }
+            .invoices-grid.posted-grid {
+                grid-template-columns: 130px 100px auto 70px;
+
+                @screen md {
+                    grid-template-columns: 130px 100px auto 130px 130px 70px 70px;
+                }
+
+                @screen lg {
+                    grid-template-columns: 130px 100px auto 130px 100px 100px 110px 130px 130px 70px 70px;
+                }
+                @screen print{
+                    grid-template-columns: 130px 100px auto 130px 100px 100px 110px 130px 130px 70px;
                 }
             }
         `
@@ -48,6 +74,8 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
     pagination: Paging;
     selection = new SelectionModel<any>(true, []);
     invoiceInfo: PurchaseInvoice;
+    /** OPEN (/invoice/list) or POSTED (/invoice/posted), from the route data. */
+    listView: PurchaseInvoiceListView;
     statuses = [];
     defaultStatuses = [];
     frmAdvancedSearch = new FormGroup({
@@ -70,10 +98,21 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
         private cdr: ChangeDetectorRef,
         private _decimalPipe: DecimalPipe,
         private excelService: ExcelService,
-        private _changeDetectorRef: ChangeDetectorRef) {
+        private _changeDetectorRef: ChangeDetectorRef,
+        route: ActivatedRoute) {
         //this._unsubscribeAll = new Subject();
 
+        this.listView = route.snapshot.data.listView === 'POSTED' ? 'POSTED' : 'OPEN';
         this.invoiceInfo = new PurchaseInvoice;
+        this.invoiceInfo.listView = this.listView;
+    }
+
+    get isPostedList(): boolean {
+        return this.listView === 'POSTED';
+    }
+
+    get title(): string {
+        return this.isPostedList ? 'Posted Purchase Invoices' : 'Purchase Invoices';
     }
 
     // -----------------------------------------------------------------------------------------------------
@@ -167,12 +206,16 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
 
     }
     private setForkJoinValues(values: Array<any>): void {
-        this.statuses = values[0];
-        this.defaultStatuses = [];
-        this.statuses.forEach(element => {
-            if (element.isDefault === 1)
-                this.defaultStatuses.push(element.statusId);
-        });
+        // Only this list's statuses can be picked. The posted list starts with all of them, the open one with
+        // the status table's defaults (or all of its statuses when none of them is a default).
+        const listStatuses = LIST_STATUSES[this.listView];
+        this.statuses = (values[0] || []).filter(s => listStatuses.includes(s.statusId));
+        this.defaultStatuses = this.statuses
+            .filter(s => this.isPostedList || s.isDefault === 1)
+            .map(s => s.statusId);
+        if (this.defaultStatuses.length === 0) {
+            this.defaultStatuses = this.statuses.map(s => s.statusId);
+        }
         this.frmAdvancedSearch.controls["status"].setValue(this.defaultStatuses);
         this.invoiceInfo.statusIdList = this.defaultStatuses;
         this.invoices = values[1].purchaseInvoices;
@@ -279,7 +322,7 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
         var pdf = new jsPDF("l");
 
         pdf.setFontSize(20);
-        pdf.text("PurchaseInvoice", 14, 8);
+        pdf.text(this.title, 14, 8);
         pdf.setFontSize(12);
         pdf.setTextColor(99);
         let header = [];
@@ -293,30 +336,39 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
             { header: "Number", dataKey: "invoiceNumber" },
             { header: "Vendor No", dataKey: "creditorCode" },
             { header: "Vendor Name", dataKey: "creditorName" },
+            { header: "Vendor Invoice No", dataKey: "vendorInvoiceNumber" },
             { header: "Posting Date", dataKey: "postingDate" },
             { header: "Due Date", dataKey: "dueDate" },
+            { header: "Status", dataKey: "statusDescription" },
             { header: "Amount w/o VAT", dataKey: "totalNetAmount" },
-            { header: "Amount w/ VAT", dataKey: "totalGrossAmount" },
-            { header: "Status", dataKey: "statusDescription" }
+            { header: "Amount w/ VAT", dataKey: "totalGrossAmount" }
         ];
+        if (this.isPostedList) {
+            header.push({ header: "Closed", dataKey: "closed" });
+        }
 
         this.invoices$.subscribe((items) =>
             items.forEach((element: any) => {
                 qty = qty + 1;
-                tableData.push([
+                const row = [
                     element.invoiceNumber,
                     element.creditorCode,
                     element.creditorName,
+                    element.vendorInvoiceNumber,
                     element.postingDate,
                     element.dueDate,
+                    element.statusDescription,
                     this.transformDecimal(element.totalNetAmount),
                     this.transformDecimal(element.totalGrossAmount),
-                    element.statusDescription,
-                ]);
+                ];
+                if (this.isPostedList) {
+                    row.push(this.closedText(element));
+                }
+                tableData.push(row);
             })
         );
         footer = [
-            ["QTY", "", "", "", "", "", "", qty]
+            ["QTY", ...header.slice(2).map(() => ""), qty]
         ];
 
         (pdf as any).autoTable({
@@ -356,12 +408,20 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
             excelColumnName: "Vendor Name",
         });
         columns.push({
+            basedColumnName: "vendorInvoiceNumber",
+            excelColumnName: "Vendor Invoice No",
+        });
+        columns.push({
             basedColumnName: "postingDate",
             excelColumnName: "Posting Date",
         });
         columns.push({
             basedColumnName: "dueDate",
             excelColumnName: "Due Date",
+        });
+        columns.push({
+            basedColumnName: "statusDescription",
+            excelColumnName: "Status",
         });
         columns.push({
             basedColumnName: "totalNetAmount",
@@ -371,23 +431,25 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
             basedColumnName: "totalGrossAmount",
             excelColumnName: "Amount w/ VAT",
         });
-        columns.push({
-            basedColumnName: "statusDescription",
-            excelColumnName: "Status",
-        });
+        if (this.isPostedList) {
+            columns.push({
+                basedColumnName: "closedText",
+                excelColumnName: "Closed",
+            });
+        }
 
         this.invoices$.subscribe((items) =>
             items.forEach((element) => {
                 qty = qty + 1;
-                obj.push(element);
+                obj.push({ ...element, closedText: this.closedText(element) } as PurchaseInvoice);
             })
         );
         let footerData = [];
 
-        footerData.push(["", "", "", "", "", "", "QTY", qty]);
+        footerData.push([...columns.slice(2).map(() => ""), "QTY", qty]);
 
         this.excelService.exportAsExcelFile(
-            "PurchaseInvoice",
+            this.isPostedList ? "PostedPurchaseInvoice" : "PurchaseInvoice",
             "",
             columns,
             obj,
@@ -398,6 +460,11 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
 
         obj = [];
 
+    }
+
+    /** Yes when nothing is left to pay. */
+    closedText(invoice: PurchaseInvoice): string {
+        return invoice.closed ? 'Yes' : 'No';
     }
 
     transformDecimal(num) {

@@ -14,8 +14,10 @@
                         </mat-icon>
                         <a *ngIf="pageType==='new'" [routerLink]="['../list']" style="cursor: pointer;"
                             class="whitespace-nowrap text-primary-500">Purchase Invoices</a>
-                        <a *ngIf="pageType==='edit'" [routerLink]="['../../list']" style="cursor: pointer;"
+                        <a *ngIf="pageType==='edit' && !isInPostedList" [routerLink]="['../../list']" style="cursor: pointer;"
                             class="whitespace-nowrap text-primary-500">Purchase Invoices</a>
+                        <a *ngIf="pageType==='edit' && isInPostedList" [routerLink]="['../../posted']" style="cursor: pointer;"
+                            class="whitespace-nowrap text-primary-500">Posted Invoices</a>
                         <mat-icon class="icon-size-5 text-secondary" [svgIcon]="'heroicons_solid:chevron-right'">
                         </mat-icon>
                         <a>{{titleInfo}}</a>

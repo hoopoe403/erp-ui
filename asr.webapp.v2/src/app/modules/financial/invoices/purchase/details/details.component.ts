@@ -25,7 +25,7 @@ import { CurrencyLookupService } from '../../../shared/lookup/currency-lookup.se
 import {
     AccountOption, CostCenterOption, CurrencyOption, FixedAssetOption, VatGroupOption, VendorOption
 } from '../../../shared/master-data.types';
-import { DEFAULT_CURRENCY_ABBREVIATION, PURCHASE_INVOICE_STATUS_DRAFT, PURCHASE_INVOICE_STATUS_POSTED } from '../../../shared/financial-constants';
+import { DEFAULT_CURRENCY_ABBREVIATION, PURCHASE_INVOICE_STATUS_CANCELLED, PURCHASE_INVOICE_STATUS_DRAFT, PURCHASE_INVOICE_STATUS_POSTED } from '../../../shared/financial-constants';
 import { LookupOption } from '../../../shared/lookup-option.type';
 
 /** Shown in the success alert - the same text erp-be's envelope used to send. */
@@ -78,6 +78,12 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
 
     readonly STATUS_DRAFT = PURCHASE_INVOICE_STATUS_DRAFT;
     readonly STATUS_POSTED = PURCHASE_INVOICE_STATUS_POSTED;
+
+    /** Posted and cancelled invoices live in the Posted Invoices list - the breadcrumb leads back there. */
+    get isInPostedList(): boolean {
+        const status = this.invoiceInfo?.status;
+        return status === PURCHASE_INVOICE_STATUS_POSTED || status === PURCHASE_INVOICE_STATUS_CANCELLED;
+    }
 
     /**
      * Whether the current user may take a workflow step now. erp-be decides it for every
