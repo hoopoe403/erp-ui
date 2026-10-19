@@ -1295,11 +1295,35 @@ export class PurchaseInvoiceDetailsComponent implements OnInit, OnDestroy {
                 && this._runWorkflowStep(this.service.cancel(this.invoiceInfo.purchaseInvoiceId), 'Invoice cancelled'));
     }
 
-    /** Posted -> Draft: cancels the posting and reopens this invoice to be changed and posted again. */
+    /**
+     * Posted -> Cancelled, plus a new draft invoice (new number) to fix and post instead. The original is never
+     * changed again; the page moves to the new invoice, where the vendor's corrected invoice number is entered.
+     */
     correct(): void {
-        this._confirm('Correct invoice', 'Cancel the posting and reopen this invoice as a draft, to change it and post it again?', 'Correct')
-            .subscribe((confirmed) => confirmed
-                && this._runWorkflowStep(this.service.correct(this.invoiceInfo.purchaseInvoiceId), 'Posting cancelled - the invoice is a draft again'));
+        const original = this.invoiceInfo.invoiceNumber;
+        this._confirm('Correct invoice',
+            `Cancel ${original} (its posting is reversed) and create a new draft invoice from it? Enter the vendor's corrected invoice number on the new one.`,
+            'Correct')
+            .subscribe((confirmed) => {
+                if (!confirmed) {
+                    return;
+                }
+                this.dismissAlert('successMessage');
+                this.dismissAlert('errorMessage');
+                this.isLoading = true;
+                this.actionDisable = true;
+                this.service.correct(this.invoiceInfo.purchaseInvoiceId).subscribe({
+                    next: (created) => {
+                        this.id = created.purchaseInvoiceId;
+                        this.invoiceInfo.purchaseInvoiceId = created.purchaseInvoiceId;
+                        // Same as a newly created invoice: the URL now names the new one, so a reload stays on it.
+                        const urlTree = this._router.createUrlTree(['details', created.purchaseInvoiceId], { relativeTo: this.route.parent });
+                        this._location.replaceState(this._router.serializeUrl(urlTree));
+                        this._afterWorkflowStep(`${original} cancelled - new invoice ${created.invoiceNumber} created. Enter the vendor's corrected invoice number, then post it.`);
+                    },
+                    error: (err) => this._onRequestError(err)
+                });
+            });
     }
 
     private _confirm(title: string, message: string, confirmLabel: string): Observable<boolean> {
