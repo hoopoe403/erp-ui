@@ -35,6 +35,7 @@ import { ExcelService } from '../../../../shared/excel/excel.service';
 import { LookupSelectModule } from '../../shared/lookup-select/lookup-select.module';
 import { LineItemsTableModule } from '../../shared/line-items-table/line-items-table.module';
 import { FileAttachmentsModule } from '../../shared/file-attachments/file-attachments.module';
+import { DataTableModule } from 'app/shared/data-table/data-table.module';
 @NgModule({
     declarations: [
         PurchaseInvoiceComponent,
@@ -71,7 +72,8 @@ import { FileAttachmentsModule } from '../../shared/file-attachments/file-attach
         FuseDrawerModule,
         LookupSelectModule,
         LineItemsTableModule,
-        FileAttachmentsModule
+        FileAttachmentsModule,
+        DataTableModule
     ],
     providers: [
         DecimalPipe, ExcelService

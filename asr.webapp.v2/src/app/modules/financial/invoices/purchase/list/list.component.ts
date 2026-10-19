@@ -26,43 +26,11 @@ import jsPDF from 'jspdf';
 import { DecimalPipe, formatDate } from '@angular/common';
 import { ExcelService } from 'app/shared/excel/excel.service';
 import { ExcelHeader } from 'app/shared/excel/excel.types';
+import { DataTableColumn } from 'app/shared/data-table/data-table.types';
 
 @Component({
     selector: 'purchase-invoices-list',
     templateUrl: './list.component.html',
-    styles: [
-        /* language=SCSS */
-        `
-            .invoices-grid {
-                grid-template-columns: 130px 100px auto 70px;
-
-                @screen md {
-                    grid-template-columns: 130px 100px auto 130px 130px 70px;
-                }
-
-                @screen lg {
-                    grid-template-columns: 130px 100px auto 130px 100px 100px 110px 130px 130px 70px;
-                }
-                @screen print{
-                    grid-template-columns: 130px 100px auto 130px 100px 100px 110px 130px 130px;
-                }
-            }
-            .invoices-grid.posted-grid {
-                grid-template-columns: 130px 100px auto 70px;
-
-                @screen md {
-                    grid-template-columns: 130px 100px auto 130px 130px 70px 70px;
-                }
-
-                @screen lg {
-                    grid-template-columns: 130px 100px auto 130px 100px 100px 110px 130px 130px 70px 70px;
-                }
-                @screen print{
-                    grid-template-columns: 130px 100px auto 130px 100px 100px 110px 130px 130px 70px;
-                }
-            }
-        `
-    ],
     animations: fuseAnimations,
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -105,7 +73,25 @@ export class PurchaseInvoiceListComponent implements OnInit, OnDestroy {
         this.listView = route.snapshot.data.listView === 'POSTED' ? 'POSTED' : 'OPEN';
         this.invoiceInfo = new PurchaseInvoice;
         this.invoiceInfo.listView = this.listView;
+        this.columns = [
+            { key: 'invoiceNumber', header: 'No.', width: '150px' },
+            { key: 'creditorCode', header: 'Vendor No', width: '110px' },
+            { key: 'creditorName', header: 'Vendor Name', width: '220px' },
+            { key: 'vendorInvoiceNumber', header: 'Vendor Invoice No', width: '160px' },
+            { key: 'postingDate', header: 'Posting Date', width: '120px' },
+            { key: 'dueDate', header: 'Due Date', width: '120px' },
+            { key: 'status', header: 'Status', width: '130px' },
+            { key: 'totalNetAmount', header: 'Amount w/o VAT', width: '150px', align: 'right' },
+            { key: 'totalGrossAmount', header: 'Amount w/ VAT', width: '150px', align: 'right' },
+            ...(this.isPostedList ? [{ key: 'closed', header: 'Closed', width: '90px' }] : []),
+        ];
     }
+
+    /** The table's columns; the first one (No.) stays in place and links to the invoice. */
+    readonly columns: DataTableColumn<PurchaseInvoice>[];
+
+    /** Opens the invoice - the same page as the row menu's View. */
+    invoiceLink = (invoice: PurchaseInvoice): any[] => ['../details', invoice.purchaseInvoiceId];
 
     get isPostedList(): boolean {
         return this.listView === 'POSTED';

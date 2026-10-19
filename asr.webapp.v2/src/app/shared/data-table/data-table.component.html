@@ -1,0 +1,37 @@
+<div class="data-table-wrapper" (scroll)="onScroll($event)">
+    <table class="data-table" [class.scrolled]="scrolled">
+        <thead>
+            <tr>
+                <th *ngFor="let column of columns" [style.min-width]="column.width"
+                    [class.text-right]="column.align === 'right'"
+                    [mat-sort-header]="column.key" [disabled]="column.sortable === false"
+                    [arrowPosition]="column.align === 'right' ? 'before' : 'after'">
+                    {{column.header}}
+                </th>
+                <th *ngIf="hasActions" class="data-table-actions print:hidden">{{actionsHeader}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let row of rows; trackBy: trackBy">
+                <td *ngFor="let column of columns; let first = first" [style.min-width]="column.width"
+                    [class.text-right]="column.align === 'right'">
+                    <ng-template #content>
+                        <ng-container *ngIf="cellTemplate(column.key) as template; else plain">
+                            <ng-container *ngTemplateOutlet="template; context: {$implicit: row, column: column}">
+                            </ng-container>
+                        </ng-container>
+                        <ng-template #plain>{{text(row, column)}}</ng-template>
+                    </ng-template>
+                    <a *ngIf="first && rowLink; else unlinked" class="data-table-link" [routerLink]="rowLink(row)">
+                        <ng-container *ngTemplateOutlet="content"></ng-container>
+                    </a>
+                    <ng-template #unlinked><ng-container *ngTemplateOutlet="content"></ng-container></ng-template>
+                </td>
+                <td *ngIf="hasActions" class="data-table-actions print:hidden">
+                    <ng-container *ngTemplateOutlet="cellTemplate('actions'); context: {$implicit: row}">
+                    </ng-container>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

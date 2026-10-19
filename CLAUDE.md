@@ -38,6 +38,15 @@ Other established patterns to reuse rather than reinvent:
   (`modules/financial/shared/file-attachments/`) — upload/open/download/delete against
   erp-be's `<record>/{id}/files` endpoints. The feature's service only builds the path
   (see `PurchaseInvoiceService.filesPath()`); don't write per-feature upload code.
+- List pages: `<data-table>` (`app/shared/data-table/`, import `DataTableModule`) — the
+  first column stays fixed while the others scroll sideways, the header stays on top, and
+  `[rowLink]` makes the first column's text a link to the record. The list passes
+  `[columns]` (`DataTableColumn`: key = field + sort id, header, min width, align) and
+  `[rows]`; custom cells (badges, amounts, buttons) go in
+  `<ng-template dataTableCell="<key>" let-row>`, row buttons in `dataTableCell="actions"`.
+  Put `matSort` on the `<data-table>` element so the page's `@ViewChild(MatSort)` still
+  works. Reference: purchase invoice `list/`. Use it for new lists instead of hand-built
+  CSS grids, and move old lists (sales, expense) over when touching them.
 
 General bar: clean code, Angular 13+ best practices, DRY. Don't repeat logic that
 already exists in a service/component elsewhere — extend or reuse it. Keep components
